@@ -1,5 +1,9 @@
 package com.nisovin.magicspells.util;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+import com.nisovin.magicspells.util.performance.PerformanceRecorder;
+import com.nisovin.magicspells.util.performance.PerformanceExecution.Operation;
+
 import java.util.Map;
 import java.util.HashMap;
 
@@ -152,15 +156,19 @@ public class InventoryUtil {
 	 * Counts how many items in {@code inventory} match {@code itemData}.
 	 */
 	public static int inventoryCount(Inventory inventory, MagicItemData itemData) {
-		if (inventory == null || itemData == null) return 0;
-		int count = 0;
-		ItemStack[] items = inventory.getContents();
-		for (ItemStack itemStack : items) {
-			if (itemStack == null) continue;
+		try (var scope = PerformanceDiagnostics.EXECUTION
+				.enter(Operation.INVENTORY_SCAN, null, "")) {
+			if (inventory == null || itemData == null) return 0;
+			int count = 0;
+			ItemStack[] items = inventory.getContents();
+			scope.add(PerformanceRecorder.Counter.INVENTORY_SLOTS, items.length);
+			for (ItemStack itemStack : items) {
+				if (itemStack == null) continue;
 
-			if (MagicItems.matches(itemData, itemStack)) count += itemStack.getAmount();
+				if (MagicItems.matches(itemData, itemStack)) count += itemStack.getAmount();
+			}
+			return count;
 		}
-		return count;
 	}
 
 	public static boolean inventoryContains(EntityEquipment entityEquipment, Map.Entry<MagicItemData, Integer> item) {

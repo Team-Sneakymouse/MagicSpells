@@ -1,5 +1,8 @@
 package com.nisovin.magicspells;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+import com.nisovin.magicspells.util.performance.PerformanceExecution.Operation;
+
 import java.io.*;
 
 import java.util.*;
@@ -583,7 +586,9 @@ public class MagicSpells extends JavaPlugin {
 				}
 			}
 
-			spell.initialize();
+			try (var audit = PerformanceDiagnostics.EXECUTION.enter(Operation.INITIALIZE, spell.getInternalName(), "")) {
+				spell.initialize();
+			}
 		}
 		log("...done");
 
@@ -780,7 +785,9 @@ public class MagicSpells extends JavaPlugin {
 		pm.callEvent(new ConditionsLoadingEvent(plugin, conditionManager));
 
 		for (Spell spell : spells.values()) {
-			spell.initializeModifiers();
+			try (var audit = PerformanceDiagnostics.EXECUTION.enter(Operation.INITIALIZE, spell.getInternalName(), "")) {
+				spell.initializeModifiers();
+			}
 		}
 
 		if (enableManaSystem) {
@@ -806,7 +813,9 @@ public class MagicSpells extends JavaPlugin {
 		for (Spell spell : spells.values()) {
 			if (!(spell instanceof PassiveSpell))
 				continue;
-			((PassiveSpell) spell).initializeListeners();
+			try (var audit = PerformanceDiagnostics.EXECUTION.enter(Operation.INITIALIZE, spell.getInternalName(), "")) {
+				((PassiveSpell) spell).initializeListeners();
+			}
 		}
 
 		log("...passive listeners loaded: " + passiveManager.getListeners().size());
@@ -2034,6 +2043,14 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static void registerEvents(final Listener listener, EventPriority customPriority) {
+		Spell owner = listener instanceof Spell spell ? spell :
+				listener instanceof com.nisovin.magicspells.spells.passive.util.PassiveListener passive
+				? passive.getPassiveSpell() : null;
+		registerEvents(owner, listener, customPriority);
+	}
+
+	public static void registerEvents(Spell owner, final Listener listener, EventPriority customPriority) {
+		final String auditOwner = owner == null ? PerformanceDiagnostics.EXECUTION.owner() : owner.getInternalName();
 		if (customPriority == null)
 			customPriority = EventPriority.NORMAL;
 		Method[] methods;
@@ -2061,6 +2078,7 @@ public class MagicSpells extends JavaPlugin {
 
 			final Class<? extends Event> eventClass = checkClass.asSubclass(Event.class);
 			method.setAccessible(true);
+			final String auditDetail = listener.getClass().getName() + "." + method.getName();
 			EventExecutor executor = new EventExecutor() {
 				final String eventKey = plugin.enableProfiling
 						? "Event:" + listener.getClass().getName().replace("com.nisovin.magicspells.", "") + '.'
@@ -2073,7 +2091,9 @@ public class MagicSpells extends JavaPlugin {
 						if (!eventClass.isAssignableFrom(event.getClass()))
 							return;
 						long start = System.nanoTime();
-						method.invoke(listener, event);
+						try (var audit = PerformanceDiagnostics.EXECUTION.enter(Operation.EVENT, auditOwner, auditDetail)) {
+							method.invoke(listener, event);
+						}
 						if (plugin.enableProfiling) {
 							Long total = plugin.profilingTotalTime.get(eventKey);
 							if (total == null)
@@ -2101,9 +2121,15 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static int scheduleDelayedTask(final Runnable task, long delay) {
-		return Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, !plugin.enableErrorLogging ? task : () -> {
+		return scheduleDelayedTask(null, task, delay);
+	}
+
+	public static int scheduleDelayedTask(Spell owner, final Runnable task, long delay) {
+		Runnable measured = PerformanceDiagnostics.EXECUTION.task(
+				owner == null ? null : owner.getInternalName(), "delayed", task);
+		return Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, !plugin.enableErrorLogging ? measured : () -> {
 			try {
-				task.run();
+				measured.run();
 			} catch (Exception e) {
 				handleException(e);
 			}
@@ -2111,9 +2137,15 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static int scheduleRepeatingTask(final Runnable task, long delay, long interval) {
-		return Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, !plugin.enableErrorLogging ? task : () -> {
+		return scheduleRepeatingTask(null, task, delay, interval);
+	}
+
+	public static int scheduleRepeatingTask(Spell owner, final Runnable task, long delay, long interval) {
+		Runnable measured = PerformanceDiagnostics.EXECUTION.task(
+				owner == null ? null : owner.getInternalName(), "interval:" + interval, task);
+		return Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, !plugin.enableErrorLogging ? measured : () -> {
 			try {
-				task.run();
+				measured.run();
 			} catch (Exception e) {
 				handleException(e);
 			}
@@ -2288,6 +2320,7 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public void unload() {
+		PerformanceDiagnostics.stop("plugin_unload", true);
 		loaded = false;
 
 		// Save cooldowns

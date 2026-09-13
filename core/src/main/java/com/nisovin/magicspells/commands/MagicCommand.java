@@ -1,5 +1,7 @@
 package com.nisovin.magicspells.commands;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+
 import java.util.*;
 import java.io.File;
 import java.util.regex.Pattern;
@@ -656,6 +658,57 @@ public class MagicCommand extends BaseCommand {
 		if (noPermission(issuer.getIssuer(), Perm.COMMAND_PROFILE_REPORT)) return;
 		MagicSpells.profilingReport();
 		issuer.sendMessage(MagicSpells.getTextColor() + "Created profiling report.");
+	}
+
+	@Subcommand("perf")
+	@Description("Show performance capture status.")
+	@HelpPermission(permission = Perm.COMMAND_PROFILE_REPORT)
+	public static void onPerformance(CommandIssuer issuer) {
+		onPerformanceStatus(issuer);
+	}
+
+	@Subcommand("perf status")
+	@CommandCompletion("@nothing")
+	@Description("Show performance capture status.")
+	@HelpPermission(permission = Perm.COMMAND_PROFILE_REPORT)
+	public static void onPerformanceStatus(CommandIssuer issuer) {
+		if (!MagicSpells.isLoaded()) return;
+		if (noPermission(issuer.getIssuer(), Perm.COMMAND_PROFILE_REPORT)) return;
+		issuer.sendMessage("[MS-PERF] " + (PerformanceDiagnostics.isActive() ? "Recording." : "Idle."));
+	}
+
+	@Subcommand("perf start")
+	@Syntax("[seconds]")
+	@CommandCompletion("15|30|60|120|300 @nothing")
+	@Description("Start a bounded performance capture for 1..300 seconds, default 60.")
+	@HelpPermission(permission = Perm.COMMAND_PROFILE_REPORT)
+	public static void onPerformanceStart(CommandIssuer issuer, @Optional Integer seconds) {
+		if (!MagicSpells.isLoaded()) return;
+		if (noPermission(issuer.getIssuer(), Perm.COMMAND_PROFILE_REPORT)) return;
+		int duration = seconds == null ? 60 : seconds;
+		try {
+			CommandSender sender = issuer.getIssuer();
+			PerformanceDiagnostics.start(duration, sender);
+			issuer.sendMessage("[MS-PERF] Recording for " + duration + " seconds; you will receive the report path when saved.");
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			issuer.sendMessage("[MS-PERF] " + e.getMessage());
+		}
+	}
+
+	@Subcommand("perf stop")
+	@CommandCompletion("@nothing")
+	@Description("Stop collection and queue the report for saving.")
+	@HelpPermission(permission = Perm.COMMAND_PROFILE_REPORT)
+	public static void onPerformanceStop(CommandIssuer issuer) {
+		if (!MagicSpells.isLoaded()) return;
+		if (noPermission(issuer.getIssuer(), Perm.COMMAND_PROFILE_REPORT)) return;
+		try {
+			var path = PerformanceDiagnostics.stop("manual", false);
+			issuer.sendMessage(path == null ? "[MS-PERF] No capture running." :
+					"[MS-PERF] Report queued: " + path + "; the capture initiator will be notified when saved.");
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			issuer.sendMessage("[MS-PERF] " + e.getMessage());
+		}
 	}
 
 	@Subcommand("debug")

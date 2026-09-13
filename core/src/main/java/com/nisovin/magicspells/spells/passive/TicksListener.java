@@ -149,7 +149,7 @@ public class TicksListener extends PassiveListener {
 
 		public Ticker(PassiveSpell passiveSpell, int interval) {
 			this.passiveSpell = passiveSpell;
-			taskId = MagicSpells.scheduleRepeatingTask(this, interval, interval);
+			taskId = MagicSpells.scheduleRepeatingTask(passiveSpell, this, interval, interval);
 			profilingKey = MagicSpells.profilingEnabled() ? "PassiveTick:" + interval : null;
 			entities = new HashSet<>();
 		}

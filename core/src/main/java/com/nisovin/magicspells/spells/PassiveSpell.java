@@ -1,5 +1,8 @@
 package com.nisovin.magicspells.spells;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+import com.nisovin.magicspells.util.performance.PerformanceExecution.Operation;
+
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
@@ -149,7 +152,7 @@ public class PassiveSpell extends Spell {
 			listener.setPassiveSpell(this);
 			listener.setEventPriority(priority);
 			listener.initialize(args);
-			MagicSpells.registerEvents(listener, priority);
+			MagicSpells.registerEvents(this, listener, priority);
 			passiveListeners.add(listener);
 			trigCount++;
 		}
@@ -239,7 +242,7 @@ public class PassiveSpell extends Spell {
 		int delay = this.delay.get(caster, target, power, null);
 		if (delay < 0)
 			return activateSpells(caster, target, location, power);
-		MagicSpells.scheduleDelayedTask(() -> activateSpells(caster, target, location, power), delay);
+		scheduleDelayedTask(() -> activateSpells(caster, target, location, power), delay);
 		return false;
 	}
 
@@ -256,139 +259,142 @@ public class PassiveSpell extends Spell {
 	// DEBUG INFO: level 3, target cancelled (UL)
 	// DEBUG INFO: level 3, passive spell cancelled
 	private boolean activateSpells(LivingEntity caster, LivingEntity target, Location location, float power) {
-		if (!triggerList.canTarget(caster, true))
-			return false;
-		SpellCastState state = getCastState(caster);
-		if (caster instanceof Player) {
-			MagicSpells.debug(3, "Activating passive spell '" + name + "' for player " + caster.getName() + " (state: "
-					+ state + ')');
-		} else {
-			MagicSpells.debug(3, "Activating passive spell '" + name + "' for livingEntity " + caster.getUniqueId()
-					+ " (state: " + state + ')');
-		}
-
-		if (state != SpellCastState.NORMAL && sendFailureMessages) {
-			if (state == SpellCastState.ON_COOLDOWN) {
-				sendMessage(strOnCooldown, caster, null, "%c", Math.round(getCooldown(caster)) + "");
+		try (var scope = PerformanceDiagnostics.EXECUTION
+				.enter(Operation.PASSIVE, getInternalName(), "")) {
+			if (!triggerList.canTarget(caster, true))
 				return false;
+			SpellCastState state = getCastState(caster);
+			if (caster instanceof Player) {
+				MagicSpells.debug(3, "Activating passive spell '" + name + "' for player " + caster.getName() + " (state: "
+						+ state + ')');
+			} else {
+				MagicSpells.debug(3, "Activating passive spell '" + name + "' for livingEntity " + caster.getUniqueId()
+						+ " (state: " + state + ')');
 			}
 
-			if (state == SpellCastState.MISSING_REAGENTS) {
-				MagicSpells.sendMessage(strMissingReagents, caster, MagicSpells.NULL_ARGS);
-				if (MagicSpells.showStrCostOnMissingReagents() && strCost != null && !strCost.isEmpty()) {
-					MagicSpells.sendMessage("    (" + strCost + ')', caster, MagicSpells.NULL_ARGS);
-				}
-			}
-			return false;
-		}
-
-		if (disabled || state != SpellCastState.NORMAL)
-			return false;
-
-		float chance = this.chance.get(caster, target, power, null) / 100;
-		if (chance < 1 && random.nextFloat() > chance)
-			return false;
-
-		disabled = true;
-		try {
-			SpellCastEvent castEvent = new SpellCastEvent(this, caster, SpellCastState.NORMAL, power, null, cooldown,
-					reagents.clone(), 0);
-			EventUtil.call(castEvent);
-
-			if (castEvent.isCancelled() || castEvent.getSpellCastState() != SpellCastState.NORMAL) {
-				MagicSpells.debug(3, "   Passive spell cancelled");
-				return false;
-			}
-
-			if (castEvent.haveReagentsChanged() && !hasReagents(caster, castEvent.getReagents())) {
-				return false;
-			}
-
-			power = castEvent.getPower();
-
-			if (target != null) {
-				SpellTargetEvent targetEvent = new SpellTargetEvent(this, caster, target, power);
-				if (!targetEvent.callEvent()) {
-					MagicSpells.debug(3, "    Target cancelled (TE)");
-
+			if (state != SpellCastState.NORMAL && sendFailureMessages) {
+				if (state == SpellCastState.ON_COOLDOWN) {
+					sendMessage(strOnCooldown, caster, null, "%c", Math.round(getCooldown(caster)) + "");
 					return false;
 				}
 
-				power = targetEvent.getPower();
-				target = targetEvent.getTarget();
+				if (state == SpellCastState.MISSING_REAGENTS) {
+					MagicSpells.sendMessage(strMissingReagents, caster, MagicSpells.NULL_ARGS);
+					if (MagicSpells.showStrCostOnMissingReagents() && strCost != null && !strCost.isEmpty()) {
+						MagicSpells.sendMessage("    (" + strCost + ')', caster, MagicSpells.NULL_ARGS);
+					}
+				}
+				return false;
 			}
 
-			if (location != null) {
-				SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(this, caster, location, power);
-				if (!targetEvent.callEvent()) {
-					MagicSpells.debug(3, "    Target cancelled (TL)");
+			if (disabled || state != SpellCastState.NORMAL)
+				return false;
 
+			float chance = this.chance.get(caster, target, power, null) / 100;
+			if (chance < 1 && random.nextFloat() > chance)
+				return false;
+
+			disabled = true;
+			try {
+				SpellCastEvent castEvent = new SpellCastEvent(this, caster, SpellCastState.NORMAL, power, null, cooldown,
+						reagents.clone(), 0);
+				EventUtil.call(castEvent);
+
+				if (castEvent.isCancelled() || castEvent.getSpellCastState() != SpellCastState.NORMAL) {
+					MagicSpells.debug(3, "   Passive spell cancelled");
 					return false;
 				}
 
-				power = targetEvent.getPower();
-				location = targetEvent.getTargetLocation();
-			}
-
-			SpellData data = new SpellData(caster, target, location, power, null);
-			setCooldown(caster, castEvent.getCooldown());
-			boolean spellEffectsDone = false;
-
-			for (Subspell spell : spells) {
-				MagicSpells.debug(3, "    Casting spell effect '" + spell.getSpell().getName() + '\'');
-				if (castWithoutTarget) {
-					MagicSpells.debug(3, "    Casting without target");
-
-					spell.subcast(caster, power, null);
-					if (!spellEffectsDone) {
-						playSpellEffects(EffectPosition.CASTER, caster, power, null);
-						spellEffectsDone = true;
-					}
-
-					continue;
+				if (castEvent.haveReagentsChanged() && !hasReagents(caster, castEvent.getReagents())) {
+					return false;
 				}
 
-				if (target != null && !isActuallyNonTargeted(spell.getSpell())) {
-					MagicSpells.debug(3, "    Casting with target entity");
+				power = castEvent.getPower();
 
-					spell.subcast(caster, target, power, null);
-					if (!spellEffectsDone) {
-						playSpellEffects(caster, target, data);
-						spellEffectsDone = true;
+				if (target != null) {
+					SpellTargetEvent targetEvent = new SpellTargetEvent(this, caster, target, power);
+					if (!targetEvent.callEvent()) {
+						MagicSpells.debug(3, "    Target cancelled (TE)");
+
+						return false;
 					}
 
-					continue;
+					power = targetEvent.getPower();
+					target = targetEvent.getTarget();
 				}
 
 				if (location != null) {
-					MagicSpells.debug(3, "    Casting with target location");
+					SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(this, caster, location, power);
+					if (!targetEvent.callEvent()) {
+						MagicSpells.debug(3, "    Target cancelled (TL)");
 
-					spell.subcast(caster, location, power, null);
-					if (!spellEffectsDone) {
-						playSpellEffects(caster, location, data);
-						spellEffectsDone = true;
+						return false;
 					}
 
-					continue;
+					power = targetEvent.getPower();
+					location = targetEvent.getTargetLocation();
 				}
 
-				MagicSpells.debug(3, "    Casting normally");
+				SpellData data = new SpellData(caster, target, location, power, null);
+				setCooldown(caster, castEvent.getCooldown());
+				boolean spellEffectsDone = false;
 
-				spell.subcast(caster, power, null);
-				if (!spellEffectsDone) {
-					playSpellEffects(EffectPosition.CASTER, caster, data);
-					spellEffectsDone = true;
+				for (Subspell spell : spells) {
+					MagicSpells.debug(3, "    Casting spell effect '" + spell.getSpell().getName() + '\'');
+					if (castWithoutTarget) {
+						MagicSpells.debug(3, "    Casting without target");
+
+						spell.subcast(caster, power, null);
+						if (!spellEffectsDone) {
+							playSpellEffects(EffectPosition.CASTER, caster, power, null);
+							spellEffectsDone = true;
+						}
+
+						continue;
+					}
+
+					if (target != null && !isActuallyNonTargeted(spell.getSpell())) {
+						MagicSpells.debug(3, "    Casting with target entity");
+
+						spell.subcast(caster, target, power, null);
+						if (!spellEffectsDone) {
+							playSpellEffects(caster, target, data);
+							spellEffectsDone = true;
+						}
+
+						continue;
+					}
+
+					if (location != null) {
+						MagicSpells.debug(3, "    Casting with target location");
+
+						spell.subcast(caster, location, power, null);
+						if (!spellEffectsDone) {
+							playSpellEffects(caster, location, data);
+							spellEffectsDone = true;
+						}
+
+						continue;
+					}
+
+					MagicSpells.debug(3, "    Casting normally");
+
+					spell.subcast(caster, power, null);
+					if (!spellEffectsDone) {
+						playSpellEffects(EffectPosition.CASTER, caster, data);
+						spellEffectsDone = true;
+					}
 				}
+
+				removeReagents(caster, castEvent.getReagents());
+				sendMessage(strCastSelf, caster, MagicSpells.NULL_ARGS);
+				SpellCastedEvent castedEvent = new SpellCastedEvent(this, caster, SpellCastState.NORMAL, power, null,
+						castEvent.getCooldown(), castEvent.getReagents(), PostCastAction.HANDLE_NORMALLY);
+				EventUtil.call(castedEvent);
+				return true;
+			} finally {
+				disabled = false;
 			}
-
-			removeReagents(caster, castEvent.getReagents());
-			sendMessage(strCastSelf, caster, MagicSpells.NULL_ARGS);
-			SpellCastedEvent castedEvent = new SpellCastedEvent(this, caster, SpellCastState.NORMAL, power, null,
-					castEvent.getCooldown(), castEvent.getReagents(), PostCastAction.HANDLE_NORMALLY);
-			EventUtil.call(castedEvent);
-			return true;
-		} finally {
-			disabled = false;
 		}
 	}
 

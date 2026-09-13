@@ -1,5 +1,8 @@
 package com.nisovin.magicspells;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+import com.nisovin.magicspells.util.performance.PerformanceExecution.Operation;
+
 import de.slikey.effectlib.Effect;
 
 import net.kyori.adventure.text.Component;
@@ -914,30 +917,32 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	public final SpellCastResult cast(LivingEntity livingEntity, Location location, float power, String[] args) {
-		setCurrentCastLocation(location);
-		try {
-			SpellCastEvent spellCast = preCast(livingEntity, location, power, args);
-			if (spellCast == null)
-				return new SpellCastResult(SpellCastState.CANT_CAST, PostCastAction.HANDLE_NORMALLY);
-			PostCastAction action;
-			int castTime = spellCast.getCastTime();
-			if (castTime <= 0 || spellCast.getSpellCastState() != SpellCastState.NORMAL)
-				action = handleCast(spellCast);
-			else if (!preCastTimeCheck(livingEntity, args))
-				action = PostCastAction.ALREADY_HANDLED;
-			else {
-				action = PostCastAction.DELAYED;
-				sendMessage(strCastStart, livingEntity, livingEntity, null, location, args);
-				playSpellEffects(EffectPosition.START_CAST, livingEntity, new SpellData(livingEntity, null, location, power, args));
-				if (MagicSpells.useExpBarAsCastTimeBar())
-					MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(),
-							new DelayedSpellCastWithBar(spellCast));
-				else
-					MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(), new DelayedSpellCast(spellCast));
+		try (var audit = PerformanceDiagnostics.EXECUTION.enter(Operation.SPELL, internalName, "")) {
+			setCurrentCastLocation(location);
+			try {
+				SpellCastEvent spellCast = preCast(livingEntity, location, power, args);
+				if (spellCast == null)
+					return new SpellCastResult(SpellCastState.CANT_CAST, PostCastAction.HANDLE_NORMALLY);
+				PostCastAction action;
+				int castTime = spellCast.getCastTime();
+				if (castTime <= 0 || spellCast.getSpellCastState() != SpellCastState.NORMAL)
+					action = handleCast(spellCast);
+				else if (!preCastTimeCheck(livingEntity, args))
+					action = PostCastAction.ALREADY_HANDLED;
+				else {
+					action = PostCastAction.DELAYED;
+					sendMessage(strCastStart, livingEntity, livingEntity, null, location, args);
+					playSpellEffects(EffectPosition.START_CAST, livingEntity, new SpellData(livingEntity, null, location, power, args));
+					if (MagicSpells.useExpBarAsCastTimeBar())
+						MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(),
+								new DelayedSpellCastWithBar(spellCast));
+					else
+						MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(), new DelayedSpellCast(spellCast));
+				}
+				return new SpellCastResult(spellCast.getSpellCastState(), action);
+			} finally {
+				setCurrentCastLocation(null);
 			}
-			return new SpellCastResult(spellCast.getSpellCastState(), action);
-		} finally {
-			setCurrentCastLocation(null);
 		}
 	}
 
@@ -1012,30 +1017,32 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	// DEBUG INFO: level 3, cooldown #
 	// DEBUG INFO: level 3, args argsvalue
 	PostCastAction handleCast(SpellCastEvent spellCast) {
-		long start = System.nanoTime();
-		LivingEntity caster = spellCast.getCaster();
-		SpellCastState state = spellCast.getSpellCastState();
-		String[] args = spellCast.getSpellArgs();
-		float power = spellCast.getPower();
-		debug(3, "    Power: " + power);
-		debug(3, "    Cooldown: " + cooldown);
-		if (MagicSpells.isDebug() && args != null && args.length > 0)
-			debug(3, "    Args: {" + Util.arrayJoin(args, ',') + '}');
-		PostCastAction action = castSpell(caster, state, power, args);
-		if (MagicSpells.hasProfilingEnabled()) {
-			Long total = MagicSpells.getProfilingTotalTime().get(profilingKey);
-			if (total == null)
-				total = (long) 0;
-			total += System.nanoTime() - start;
-			MagicSpells.getProfilingTotalTime().put(profilingKey, total);
-			Integer runs = MagicSpells.getProfilingRuns().get(profilingKey);
-			if (runs == null)
-				runs = 0;
-			runs += 1;
-			MagicSpells.getProfilingRuns().put(profilingKey, runs);
+		try (var audit = PerformanceDiagnostics.EXECUTION.enter(Operation.SPELL, internalName, "execute")) {
+			long start = System.nanoTime();
+			LivingEntity caster = spellCast.getCaster();
+			SpellCastState state = spellCast.getSpellCastState();
+			String[] args = spellCast.getSpellArgs();
+			float power = spellCast.getPower();
+			debug(3, "    Power: " + power);
+			debug(3, "    Cooldown: " + cooldown);
+			if (MagicSpells.isDebug() && args != null && args.length > 0)
+				debug(3, "    Args: {" + Util.arrayJoin(args, ',') + '}');
+			PostCastAction action = castSpell(caster, state, power, args);
+			if (MagicSpells.hasProfilingEnabled()) {
+				Long total = MagicSpells.getProfilingTotalTime().get(profilingKey);
+				if (total == null)
+					total = (long) 0;
+				total += System.nanoTime() - start;
+				MagicSpells.getProfilingTotalTime().put(profilingKey, total);
+				Integer runs = MagicSpells.getProfilingRuns().get(profilingKey);
+				if (runs == null)
+					runs = 0;
+				runs += 1;
+				MagicSpells.getProfilingRuns().put(profilingKey, runs);
+			}
+			postCast(spellCast, action);
+			return action;
 		}
-		postCast(spellCast, action);
-		return action;
 	}
 
 	// FIXME save the results of the redundant calculations or be cleaner about it
@@ -1360,11 +1367,14 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @return true if the player has the reagents, false otherwise
 	 */
 	protected boolean hasReagents(LivingEntity livingEntity) {
-		if (reagents == null) {
-			MagicSpells.error("Null reagents found:" + internalName);
-			return true;
+		try (var scope = PerformanceDiagnostics.EXECUTION
+				.enter(Operation.REAGENTS, getInternalName(), "configured")) {
+			if (reagents == null) {
+				MagicSpells.error("Null reagents found:" + internalName);
+				return true;
+			}
+			return reagents.hasAll(livingEntity);
 		}
-		return reagents.hasAll(livingEntity);
 	}
 
 	// FIXME this doesn't seem strictly tied to Spell logic, could probably be moved
@@ -1376,11 +1386,14 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @return true if the player has the reagents, false otherwise
 	 */
 	protected boolean hasReagents(LivingEntity livingEntity, SpellReagents reagents) {
-		if (reagents == null) {
-			MagicSpells.error("Null reagents found:" + internalName);
-			return true;
+		try (var scope = PerformanceDiagnostics.EXECUTION
+				.enter(Operation.REAGENTS, getInternalName(), "event")) {
+			if (reagents == null) {
+				MagicSpells.error("Null reagents found:" + internalName);
+				return true;
+			}
+			return reagents.hasAll(livingEntity);
 		}
-		return reagents.hasAll(livingEntity);
 	}
 
 	/**
@@ -2044,7 +2057,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	protected void registerEvents(Listener listener) {
-		MagicSpells.registerEvents(listener);
+		MagicSpells.registerEvents(this, listener, EventPriority.NORMAL);
 	}
 
 	protected void unregisterEvents(Listener listener) {
@@ -2052,11 +2065,11 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	protected int scheduleDelayedTask(Runnable task, int delay) {
-		return MagicSpells.scheduleDelayedTask(task, delay);
+		return MagicSpells.scheduleDelayedTask(this, task, delay);
 	}
 
 	protected int scheduleRepeatingTask(Runnable task, int delay, int interval) {
-		return MagicSpells.scheduleRepeatingTask(task, delay, interval);
+		return MagicSpells.scheduleRepeatingTask(this, task, delay, interval);
 	}
 
 	protected CastItem[] setupCastItems(String[] items, String errorMessage) {
