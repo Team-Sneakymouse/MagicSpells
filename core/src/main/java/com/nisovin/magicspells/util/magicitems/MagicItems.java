@@ -1,5 +1,7 @@
 package com.nisovin.magicspells.util.magicitems;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+
 import java.util.*;
 
 import net.kyori.adventure.text.Component;
@@ -81,6 +83,7 @@ public class MagicItems {
 	}
 
 	public static boolean matches(MagicItemData pattern, ItemStack stack, boolean pdcIdentityMatch) {
+		PerformanceDiagnostics.RECORDER.matchCall();
 		if (pattern == null || stack == null)
 			return false;
 

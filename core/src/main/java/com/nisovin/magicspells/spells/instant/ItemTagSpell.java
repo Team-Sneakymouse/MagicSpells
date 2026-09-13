@@ -1,5 +1,8 @@
 package com.nisovin.magicspells.spells.instant;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+import com.nisovin.magicspells.util.performance.PerformanceRecorder;
+
 import java.util.Map;
 import java.util.HashMap;
 
@@ -90,9 +93,19 @@ public class ItemTagSpell extends InstantSpell implements Listener {
      * the item.
      */
     private void tagInventory(Inventory inventory, Player player) {
+        try (var scope = PerformanceDiagnostics.RECORDER
+                .enter("item_tag", getInternalName(), inventory.getType().name())) {
+            scope.add(PerformanceRecorder.Counter.MAPPING_COUNT, mapping.size());
+            tagInventoryMeasured(inventory, player, scope);
+        }
+    }
+
+    private void tagInventoryMeasured(Inventory inventory, Player player,
+            PerformanceRecorder.Scope scope) {
         if (isBagOfHoldingGui(inventory))
             return;
         ItemStack[] contents = inventory.getContents();
+        scope.add(PerformanceRecorder.Counter.INVENTORY_SLOTS, contents.length);
         boolean changed = false;
 
         for (int i = 0; i < contents.length; i++) {
@@ -101,6 +114,7 @@ public class ItemTagSpell extends InstantSpell implements Listener {
                 continue;
 
             ItemMeta meta = item.getItemMeta();
+            scope.add(PerformanceRecorder.Counter.ITEMS_EXAMINED, 1);
             if (meta != null && meta.getPersistentDataContainer().has(
                     new NamespacedKey("sneakybagofholding", "gui_display"),
                     PersistentDataType.BYTE)) {
@@ -138,6 +152,7 @@ public class ItemTagSpell extends InstantSpell implements Listener {
                     }
 
                     contents[i] = updated;
+                    scope.add(PerformanceRecorder.Counter.ITEMS_UPDATED, 1);
                     MagicItemBehaviors.applyFromData(updated, updateSource.getMagicItemData(), player);
                     if (player != null)
                         MagicItemExpirationScheduler.scheduleFromItem(player, updated);

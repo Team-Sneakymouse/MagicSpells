@@ -1,5 +1,7 @@
 package com.nisovin.magicspells;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+
 import java.io.*;
 
 import java.util.*;
@@ -2288,6 +2290,7 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public void unload() {
+		PerformanceDiagnostics.stop("plugin_unload", true);
 		loaded = false;
 
 		// Save cooldowns

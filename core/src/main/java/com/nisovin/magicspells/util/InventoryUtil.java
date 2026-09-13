@@ -1,5 +1,8 @@
 package com.nisovin.magicspells.util;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+import com.nisovin.magicspells.util.performance.PerformanceRecorder;
+
 import java.util.Map;
 import java.util.HashMap;
 
@@ -152,9 +155,18 @@ public class InventoryUtil {
 	 * Counts how many items in {@code inventory} match {@code itemData}.
 	 */
 	public static int inventoryCount(Inventory inventory, MagicItemData itemData) {
+		try (var scope = PerformanceDiagnostics.RECORDER
+				.enter("inventory_scan", null, "")) {
+			return inventoryCountMeasured(inventory, itemData, scope);
+		}
+	}
+
+	private static int inventoryCountMeasured(Inventory inventory, MagicItemData itemData,
+			PerformanceRecorder.Scope scope) {
 		if (inventory == null || itemData == null) return 0;
 		int count = 0;
 		ItemStack[] items = inventory.getContents();
+		scope.add(PerformanceRecorder.Counter.INVENTORY_SLOTS, items.length);
 		for (ItemStack itemStack : items) {
 			if (itemStack == null) continue;
 

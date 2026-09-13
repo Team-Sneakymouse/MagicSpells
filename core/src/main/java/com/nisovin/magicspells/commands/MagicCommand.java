@@ -1,5 +1,7 @@
 package com.nisovin.magicspells.commands;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+
 import java.util.*;
 import java.io.File;
 import java.util.regex.Pattern;
@@ -656,6 +658,35 @@ public class MagicCommand extends BaseCommand {
 		if (noPermission(issuer.getIssuer(), Perm.COMMAND_PROFILE_REPORT)) return;
 		MagicSpells.profilingReport();
 		issuer.sendMessage(MagicSpells.getTextColor() + "Created profiling report.");
+	}
+
+	@Subcommand("perf")
+	@Syntax("<start [seconds]|stop|status>")
+	@Description("Collect bounded per-spell performance measurements.")
+	@HelpPermission(permission = Perm.COMMAND_PROFILE_REPORT)
+	public static void onPerformance(CommandIssuer issuer, String[] args) {
+		if (!MagicSpells.isLoaded()) return;
+		if (noPermission(issuer.getIssuer(), Perm.COMMAND_PROFILE_REPORT)) return;
+		String action = args.length == 0 ? "status" : args[0].toLowerCase(java.util.Locale.ROOT);
+		try {
+			switch (action) {
+				case "start" -> {
+					if (args.length > 2) throw new IllegalArgumentException("Usage: /ms perf start [1..300 seconds]");
+					int seconds = args.length == 2 ? Integer.parseInt(args[1]) : 60;
+					PerformanceDiagnostics.start(seconds);
+					issuer.sendMessage("[MS-PERF] Recording for " + seconds + " seconds; report path will be logged on completion.");
+				}
+				case "stop" -> {
+					var path = PerformanceDiagnostics.stop("manual", false);
+					issuer.sendMessage(path == null ? "[MS-PERF] No capture running." : "[MS-PERF] Report queued: " + path);
+				}
+				case "status" -> issuer.sendMessage("[MS-PERF] " +
+						(PerformanceDiagnostics.RECORDER.isActive() ? "Recording." : "Idle."));
+				default -> issuer.sendMessage("Usage: /ms perf <start [seconds]|stop|status>");
+			}
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			issuer.sendMessage("[MS-PERF] " + e.getMessage());
+		}
 	}
 
 	@Subcommand("debug")

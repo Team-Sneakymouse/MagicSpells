@@ -1,5 +1,8 @@
 package com.nisovin.magicspells.spells;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+import com.nisovin.magicspells.util.performance.PerformanceRecorder;
+
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
@@ -256,6 +259,14 @@ public class PassiveSpell extends Spell {
 	// DEBUG INFO: level 3, target cancelled (UL)
 	// DEBUG INFO: level 3, passive spell cancelled
 	private boolean activateSpells(LivingEntity caster, LivingEntity target, Location location, float power) {
+		try (var scope = PerformanceDiagnostics.RECORDER
+				.enter("passive", getInternalName(), "")) {
+			scope.add(PerformanceRecorder.Counter.ACTIVATIONS, 1);
+			return activateSpellsMeasured(caster, target, location, power);
+		}
+	}
+
+	private boolean activateSpellsMeasured(LivingEntity caster, LivingEntity target, Location location, float power) {
 		if (!triggerList.canTarget(caster, true))
 			return false;
 		SpellCastState state = getCastState(caster);

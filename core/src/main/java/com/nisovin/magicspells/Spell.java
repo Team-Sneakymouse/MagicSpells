@@ -1,5 +1,7 @@
 package com.nisovin.magicspells;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+
 import de.slikey.effectlib.Effect;
 
 import net.kyori.adventure.text.Component;
@@ -1360,6 +1362,13 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @return true if the player has the reagents, false otherwise
 	 */
 	protected boolean hasReagents(LivingEntity livingEntity) {
+		try (var scope = PerformanceDiagnostics.RECORDER
+				.enter("reagents", getInternalName(), "configured")) {
+			return hasConfiguredReagentsMeasured(livingEntity);
+		}
+	}
+
+	private boolean hasConfiguredReagentsMeasured(LivingEntity livingEntity) {
 		if (reagents == null) {
 			MagicSpells.error("Null reagents found:" + internalName);
 			return true;
@@ -1376,6 +1385,13 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @return true if the player has the reagents, false otherwise
 	 */
 	protected boolean hasReagents(LivingEntity livingEntity, SpellReagents reagents) {
+		try (var scope = PerformanceDiagnostics.RECORDER
+				.enter("reagents", getInternalName(), "event")) {
+			return hasEventReagentsMeasured(livingEntity, reagents);
+		}
+	}
+
+	private boolean hasEventReagentsMeasured(LivingEntity livingEntity, SpellReagents reagents) {
 		if (reagents == null) {
 			MagicSpells.error("Null reagents found:" + internalName);
 			return true;

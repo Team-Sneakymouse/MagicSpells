@@ -1,5 +1,8 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+import com.nisovin.magicspells.util.performance.PerformanceRecorder;
+
 import java.util.Set;
 import java.util.HashSet;
 
@@ -146,9 +149,11 @@ public class TicksListener extends PassiveListener {
 
 		private final int taskId;
 		private final String profilingKey;
+		private final String diagnosticInterval;
 
 		public Ticker(PassiveSpell passiveSpell, int interval) {
 			this.passiveSpell = passiveSpell;
+			diagnosticInterval = Integer.toString(interval);
 			taskId = MagicSpells.scheduleRepeatingTask(this, interval, interval);
 			profilingKey = MagicSpells.profilingEnabled() ? "PassiveTick:" + interval : null;
 			entities = new HashSet<>();
@@ -164,6 +169,14 @@ public class TicksListener extends PassiveListener {
 
 		@Override
 		public void run() {
+			try (var scope = PerformanceDiagnostics.RECORDER
+					.enter("passive_ticker", passiveSpell.getInternalName(), diagnosticInterval)) {
+				scope.add(PerformanceRecorder.Counter.REGISTERED_ENTITIES, entities.size());
+				runMeasured();
+			}
+		}
+
+		private void runMeasured() {
 			long start = System.nanoTime();
 
 			for (LivingEntity entity : new HashSet<>(entities)) {
