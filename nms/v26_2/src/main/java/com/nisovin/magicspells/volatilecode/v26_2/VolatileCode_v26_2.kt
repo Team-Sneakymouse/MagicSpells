@@ -335,7 +335,7 @@ class VolatileCode_v26_2(helper: VolatileCodeHelper) : VolatileCodeHandle(helper
     }
 
     override fun sendToastEffect(receiver: Player, icon: ItemStack, frameType: Frame, text: KyoriComponent) {
-        val iconNms = CraftItemStack.asNMSCopy(icon)
+        val iconNms = CraftItemStack.asTemplate(icon)
         val textNms = PaperAdventure.asVanilla(text)
         val description = PaperAdventure.asVanilla(KyoriComponent.empty())
         val frame = try {
@@ -345,7 +345,7 @@ class VolatileCode_v26_2(helper: VolatileCodeHelper) : VolatileCodeHandle(helper
         }
 
         val advancement = Advancement.Builder.advancement()
-            .display(iconNms.item, textNms, description, null, frame, true, false, true)
+            .display(iconNms, textNms, description, null, frame, true, false, true)
             .addCriterion("impossible", Criterion(ImpossibleTrigger(), ImpossibleTrigger.TriggerInstance()))
             .build(toastKey)
         val progress = AdvancementProgress()
@@ -353,19 +353,20 @@ class VolatileCode_v26_2(helper: VolatileCodeHelper) : VolatileCodeHandle(helper
         progress.grantProgress("impossible")
 
         val player = (receiver as CraftPlayer).handle
+        // 26.2 added showAdvancements; false suppresses the toast UI on the client.
         player.connection.send(ClientboundUpdateAdvancementsPacket(
             false,
             Collections.singleton(advancement),
             Collections.emptySet(),
             Collections.singletonMap(toastKey, progress),
-            false
+            true
         ))
         player.connection.send(ClientboundUpdateAdvancementsPacket(
             false,
             Collections.emptySet(),
             Collections.singleton(toastKey),
             Collections.emptyMap(),
-            false
+            true
         ))
     }
 
