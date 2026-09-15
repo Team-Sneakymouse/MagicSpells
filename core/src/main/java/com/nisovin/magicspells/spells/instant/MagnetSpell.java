@@ -1,7 +1,6 @@
 package com.nisovin.magicspells.spells.instant;
 
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Collection;
 
 import org.bukkit.Location;
@@ -23,6 +22,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 
 	private ConfigData<Double> radius;
 	private ConfigData<Double> velocity;
+	private ConfigData<Integer> maxTargets;
 
 	private boolean teleport;
 	private boolean forcePickup;
@@ -36,6 +36,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 
 		radius = getConfigDataDouble("radius", 5);
 		velocity = getConfigDataDouble("velocity", 1);
+		maxTargets = getConfigDataInt("max-targets", 100);
 
 		teleport = getConfigBoolean("teleport-items", false);
 		forcePickup = getConfigBoolean("force-pickup", false);
@@ -78,30 +79,34 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 	private List<Item> getNearbyItems(LivingEntity caster, Location center, float power, String[] args) {
+		int maxTargets = this.maxTargets.get(caster, null, power, args);
+		if (maxTargets <= 0)
+			return List.of();
+
 		double radius = this.radius.get(caster, null, power, args);
 		if (powerAffectsRadius)
 			radius *= power;
 		radius = Math.min(radius, MagicSpells.getGlobalRadius());
 
 		Collection<Entity> entities = center.getWorld().getNearbyEntities(center, radius, radius, radius);
-		List<Item> ret = new ArrayList<>();
+		MagnetItemBuckets<Item> buckets = new MagnetItemBuckets<>(radius, maxTargets);
+		Location itemLocation = center.clone();
 		for (Entity e : entities) {
 			if (!(e instanceof Item i))
+				continue;
+			if (i.isDead())
+				continue;
+			if (!forcePickup && i.getPickupDelay() >= i.getTicksLived())
 				continue;
 			ItemStack stack = i.getItemStack();
 			if (InventoryUtil.isNothing(stack))
 				continue;
-			if (i.isDead())
-				continue;
 
-			if (forcePickup) {
-				i.setPickupDelay(0);
-				ret.add(i);
-			} else if (i.getPickupDelay() < i.getTicksLived()) {
-				ret.add(i);
-			}
+			i.getLocation(itemLocation);
+			buckets.add(i, itemLocation.getX() - center.getX(), itemLocation.getY() - center.getY(),
+					itemLocation.getZ() - center.getZ());
 		}
-		return ret;
+		return buckets.select();
 	}
 
 	private void magnet(LivingEntity caster, Location location, Collection<Item> items, float power, String[] args) {
@@ -119,6 +124,8 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 
 	private void magnet(LivingEntity caster, Location origin, Item item, float power, String[] args, SpellData data,
 			double velocity) {
+		if (forcePickup)
+			item.setPickupDelay(0);
 		if (removeItemGravity)
 			item.setGravity(false);
 		if (teleport)
