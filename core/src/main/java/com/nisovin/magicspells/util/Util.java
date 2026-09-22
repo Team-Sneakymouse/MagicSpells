@@ -239,64 +239,31 @@ public class Util {
 		return sb.toString();
 	}
 
+	/**
+	 * Splits a parameter string on whitespace, treating {@code "} or {@code '} as text
+	 * qualifiers: spaces inside a matched quote pair belong to that argument, and the
+	 * quote characters themselves are not included in the result.
+	 *
+	 * @param string input to split
+	 * @param max    maximum number of arguments; if {@code > 0}, the last argument
+	 *               consumes the remainder of the input (quotes in that remainder are
+	 *               not specially parsed)
+	 * @see ParamUtil#splitParams(String, int)
+	 */
 	public static String[] splitParams(String string, int max) {
-		String[] words = string.trim().split(" ");
-		if (words.length <= 1) return words;
-
-		char quote = ' ';
-		List<String> list = new ArrayList<>();
-		StringBuilder building = new StringBuilder();
-
-		for (String word : words) {
-			if (word.isEmpty()) continue;
-			if (max > 0 && list.size() == max - 1) {
-				if (building.length() > 0) building.append(" ");
-				building.append(word);
-				continue;
-			}
-
-			if (quote == ' ') {
-				if (word.length() == 1 || (word.charAt(0) != '"' && word.charAt(0) != '\'')) {
-					list.add(word);
-					continue;
-				}
-
-				quote = word.charAt(0);
-
-				if (quote == word.charAt(word.length() - 1)) {
-					quote = ' ';
-					list.add(word.substring(1, word.length() - 1));
-					continue;
-				}
-
-				building = new StringBuilder(word.substring(1));
-				continue;
-			}
-
-			if (word.charAt(word.length() - 1) == quote) {
-				list.add(building.toString() + ' ' + word.substring(0, word.length() - 1));
-				building = new StringBuilder();
-				quote = ' ';
-				continue;
-			}
-			building.append(' ').append(word);
-		}
-
-		if (building.length() > 0) list.add(building.toString());
-
-		return list.toArray(new String[0]);
+		return ParamUtil.splitParams(string, max);
 	}
 
 	public static String[] splitParams(String string) {
-		return splitParams(string, 0);
+		return ParamUtil.splitParams(string);
 	}
 
 	public static String[] splitParams(String[] split, int max) {
-		return splitParams(arrayJoin(split, ' '), max);
+		return ParamUtil.splitParams(split, max);
 	}
 
 	public static String[] splitParams(String[] split) {
-		return splitParams(arrayJoin(split, ' '), 0);
+		return ParamUtil.splitParams(split);
 	}
 
 	public static boolean removeFromInventory(Player player, Inventory inventory, Map.Entry<MagicItemData, Integer> item) {
