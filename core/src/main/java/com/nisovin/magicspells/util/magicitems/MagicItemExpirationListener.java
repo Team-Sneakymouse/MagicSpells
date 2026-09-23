@@ -150,10 +150,13 @@ public class MagicItemExpirationListener implements Listener {
 
 	private boolean processItemDrop(Item drop, Player owner) {
 		ItemStack item = drop.getItemStack();
-		ExpirationResult result = MagicItemBehaviors.updateExpiresLineIfNeeded(item, owner);
-		if (result == ExpirationResult.UPDATE)
+		// Pass null owner so ground-item expiry does not fire inventory expire events.
+		ExpirationResult result = MagicItemBehaviors.updateExpiresLineIfNeeded(item, null);
+		if (result == ExpirationResult.UPDATE) {
 			drop.setItemStack(item);
-		else if (result == ExpirationResult.EXPIRED) {
+			if (owner != null)
+				MagicItemExpirationScheduler.scheduleFromItem(owner, item);
+		} else if (result == ExpirationResult.EXPIRED) {
 			drop.remove();
 			return true;
 		}

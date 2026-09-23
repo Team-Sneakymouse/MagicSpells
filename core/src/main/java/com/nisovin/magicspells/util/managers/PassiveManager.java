@@ -96,6 +96,7 @@ public class PassiveManager {
 		addListener("enchant", EnchantListener.class);
 		addListener("entitytarget", EntityTargetListener.class);
 		addListener("equip", EquipListener.class);
+		addListener("expireitem", ExpireItemListener.class);
 		addListener("fataldamage", FatalDamageListener.class);
 		addListener("fish", FishListener.class);
 		addListener("foodlevelchange", FoodLevelChangeListener.class);

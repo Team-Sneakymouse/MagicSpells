@@ -7,6 +7,7 @@ import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -15,6 +16,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
+import com.nisovin.magicspells.events.MagicItemExpireEvent;
 import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute;
@@ -194,8 +196,11 @@ public final class MagicItemBehaviors {
 		if (expiresAt == null)
 			return ExpirationResult.NO_UPDATE;
 
-		if (expiresAt < System.currentTimeMillis())
+		if (expiresAt < System.currentTimeMillis()) {
+			if (owner != null)
+				Bukkit.getPluginManager().callEvent(new MagicItemExpireEvent(owner, item));
 			return ExpirationResult.EXPIRED;
+		}
 
 		List<Component> lore = meta.hasLore() ? meta.lore() : new ArrayList<>();
 		if (lore == null)
