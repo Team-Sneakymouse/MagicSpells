@@ -816,14 +816,16 @@ public class MagicCommand extends BaseCommand {
 		public void onCastSelf(CommandIssuer issuer, String[] args) {
 			if (!MagicSpells.isLoaded()) return;
 			if (noPermission(issuer.getIssuer(), Perm.COMMAND_CAST_SELF)) return;
-			args = Util.splitParams(args);
-			if (args[0].isEmpty()) throw new InvalidCommandArgument();
 
-			// This is an abstract way to preserve an old command alias for the "ms cast as" command. ("c forcecast")
-			if (args[0].equals("forcecast")) {
+			// Old alias for "ms cast as" ("c forcecast"). Detect before splitParams so onCastAs
+			// is the only place that quote-splits — otherwise spaced quoted args are broken apart.
+			if (args.length > 0 && args[0].equals("forcecast")) {
 				onCastAs(issuer, Arrays.copyOfRange(args, 1, args.length));
 				return;
 			}
+
+			args = Util.splitParams(args);
+			if (args[0].isEmpty()) throw new InvalidCommandArgument();
 
 			Spell spell = getSpell(issuer, args[0]);
 			if (spell == null) return;
