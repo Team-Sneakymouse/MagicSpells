@@ -22,8 +22,8 @@ public class DestroyItemListener extends PassiveListener {
 
 	private final Set<MagicItemData> items = new HashSet<>();
 
-    @Override
-    public void initialize(String var) {
+	@Override
+	public void initialize(String var) {
 		if (var == null || var.isEmpty()) return;
 
 		String[] split = var.split("\\|");
@@ -38,25 +38,21 @@ public class DestroyItemListener extends PassiveListener {
 
 			items.add(itemData);
 		}
-    }
+	}
 
-    @OverridePriority
+	@OverridePriority
 	@EventHandler
-    public void onEntityDamage(EntityDamageEvent event) {
-        if (!(event.getEntity() instanceof Item item)) return;
+	public void onEntityDamage(EntityDamageEvent event) {
+		if (!(event.getEntity() instanceof Item item)) return;
 		if (!isCancelStateOk(event.isCancelled())) return;
 
-        DamageCause cause = event.getCause();
-        if (!(cause.equals(DamageCause.FIRE) || cause.equals(DamageCause.FIRE_TICK) || cause.equals(DamageCause.LAVA))) return;
-        if (event.getDamage() < item.getHealth()) return;
+		DamageCause cause = event.getCause();
+		if (!(cause.equals(DamageCause.FIRE) || cause.equals(DamageCause.FIRE_TICK) || cause.equals(DamageCause.LAVA))) return;
+		// Match FatalDamageListener: item damage uses final damage, not base damage.
+		if (event.getFinalDamage() < item.getHealth()) return;
 
-		UUID uuid = item.getThrower();
-
-		if (uuid == null) return;
-
-        Player caster = Bukkit.getPlayer(item.getThrower());
-
-        if (caster == null) return;
+		Player caster = resolveDropper(item);
+		if (caster == null) return;
 
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
@@ -65,15 +61,31 @@ public class DestroyItemListener extends PassiveListener {
 		}
 
 		boolean casted = passiveSpell.activate(caster, item.getLocation());
-        
-		if (cancelDefaultAction(casted)) event.setCancelled(true);
-    }
 
-    private boolean contains(ItemStack item) {
+		if (cancelDefaultAction(casted)) {
+			event.setCancelled(true);
+			// Cancelling EntityDamageEvent is not always enough for Item entities in
+			// fire/lava (damage may still apply). Keep the drop alive explicitly.
+			item.setFireTicks(0);
+			if (item.getHealth() <= event.getFinalDamage()) item.setHealth(5);
+		}
+	}
+
+	/**
+	 * Player drops set thrower; some paths only set owner. Prefer thrower, fall back to owner.
+	 */
+	private static Player resolveDropper(Item item) {
+		UUID uuid = item.getThrower();
+		if (uuid == null) uuid = item.getOwner();
+		if (uuid == null) return null;
+		return Bukkit.getPlayer(uuid);
+	}
+
+	private boolean contains(ItemStack item) {
 		for (MagicItemData data : items) {
 			if (MagicItems.matches(data, item)) return true;
 		}
 		return false;
 	}
-    
+
 }
