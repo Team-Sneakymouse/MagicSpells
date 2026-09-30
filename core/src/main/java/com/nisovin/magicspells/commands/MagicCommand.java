@@ -4,6 +4,7 @@ import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
 
 import java.util.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.regex.Pattern;
 
 import com.nisovin.magicspells.util.io.AtomicFiles;
@@ -592,6 +593,27 @@ public class MagicCommand extends BaseCommand {
 
 	@Subcommand("util")
 	public class UtilCommands extends BaseCommand {
+
+		@Subcommand("savemagicitems")
+		@CommandCompletion("@nothing")
+		@Description("Save all loaded Magic Item internal names to a text file.")
+		@HelpPermission(permission = Perm.COMMAND_UTIL_SAVE_MAGIC_ITEMS)
+		public void onSaveMagicItems(CommandIssuer issuer) {
+			if (!MagicSpells.isLoaded()) return;
+			if (noPermission(issuer.getIssuer(), Perm.COMMAND_UTIL_SAVE_MAGIC_ITEMS)) return;
+
+			List<String> names = new ArrayList<>(MagicItems.getMagicItemKeys());
+			Collections.sort(names);
+			File file = new File(PLUGIN_FOLDER, "magicitem-names.txt");
+			String content = names.isEmpty() ? "" : String.join("\n", names) + "\n";
+			try {
+				AtomicFiles.writeUtf8(file.toPath(), content);
+			} catch (IOException e) {
+				MagicSpells.error("Failed to save Magic Item names: " + e.getMessage());
+				throw new ConditionFailedException("Magic Item names could not be saved.");
+			}
+			issuer.sendMessage(MagicSpells.getTextColor() + "Saved " + names.size() + " Magic Item names to '" + file.getPath() + "'.");
+		}
 
 		@Subcommand("download")
 		@Syntax("<url> <fileName>")

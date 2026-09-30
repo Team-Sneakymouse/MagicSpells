@@ -535,6 +535,7 @@ public class MagicSpells extends JavaPlugin {
 		addPermission(pm, "command.util.download", PermissionDefault.OP);
 		addPermission(pm, "command.util.update", PermissionDefault.OP);
 		addPermission(pm, "command.util.saveskin", PermissionDefault.OP);
+		addPermission(pm, "command.util.savemagicitems", PermissionDefault.OP);
 		addPermission(pm, "command.profilereport", PermissionDefault.OP);
 		addPermission(pm, "command.debug", PermissionDefault.OP);
 		addPermission(pm, "command.taskinfo", PermissionDefault.OP);
