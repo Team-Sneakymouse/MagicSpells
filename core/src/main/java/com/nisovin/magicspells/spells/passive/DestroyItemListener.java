@@ -48,8 +48,10 @@ public class DestroyItemListener extends PassiveListener {
 
 		DamageCause cause = event.getCause();
 		if (!(cause.equals(DamageCause.FIRE) || cause.equals(DamageCause.FIRE_TICK) || cause.equals(DamageCause.LAVA))) return;
-		// Match FatalDamageListener: item damage uses final damage, not base damage.
-		if (event.getFinalDamage() < item.getHealth()) return;
+
+		// Fatal check: skip when already cancelled — a prior cancel-default-action may have
+		// restored health so monitors with require-cancelled-event can still cook.
+		if (!event.isCancelled() && event.getFinalDamage() < item.getHealth()) return;
 
 		Player caster = resolveDropper(item);
 		if (caster == null) return;
@@ -64,8 +66,9 @@ public class DestroyItemListener extends PassiveListener {
 
 		if (cancelDefaultAction(casted)) {
 			event.setCancelled(true);
-			// Cancelling EntityDamageEvent is not always enough for Item entities in
-			// fire/lava (damage may still apply). Keep the drop alive explicitly.
+			// Cancelling alone is not reliable for Item entities in fire/lava — restore health
+			// and clear fire so the drop survives. MONITOR cooks skip the fatal check when
+			// already cancelled (see above).
 			item.setFireTicks(0);
 			if (item.getHealth() <= event.getFinalDamage()) item.setHealth(5);
 		}

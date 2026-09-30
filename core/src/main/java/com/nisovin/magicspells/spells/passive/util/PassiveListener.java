@@ -47,8 +47,10 @@ public abstract class PassiveListener implements Listener {
 	
 	public boolean isCancelStateOk(boolean cancelled) {
 		if (passiveSpell == null) return false;
+		// require-cancelled-event means we only want cancelled triggers; ignore-cancelled
+		// must not reject those or the two options can never both be satisfied.
+		if (passiveSpell.requireCancelledEvent()) return cancelled;
 		if (passiveSpell.ignoreCancelled() && cancelled) return false;
-		if (passiveSpell.requireCancelledEvent() && !cancelled) return false;
 		return true;
 	}
 
