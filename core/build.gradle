@@ -7,7 +7,7 @@ plugins {
 
 repositories {
     flatDir {
-        // Third-party plugins not published to a Maven repo (CMI / CMILib / SneakyVaults).
+        // Third-party plugins not published to a Maven repo (CMI / CMILib).
         dirs '../libs'
     }
     maven {
@@ -33,10 +33,10 @@ dependencies {
 
     implementation(name:'CMI-9.8.9.8', ext:'jar')
     implementation(name:'CMILib1.5.9.9', ext:'jar')
-    implementation(name:'SneakyVaults-1.0-SNAPSHOT', ext:'jar')
     implementation(group: "commons-codec", name: "commons-codec", version: "1.16.1")
     compileOnly(group: "io.github.team-sneakymouse", name: "sneakycharactermanager-paper", version: "2026.10.09-84db8a554af1") { transitive = false }
     compileOnly(group: "io.github.team-sneakymouse", name: "sneakybagofholding", version: "2026.10.09-a79a55f6d44b") { transitive = false }
+    compileOnly(group: "io.github.team-sneakymouse", name: "sneakyvaults", version: "2026.10.09-306ea91d36ff") { transitive = false }
     implementation(group: "com.comphenix.protocol", name: "ProtocolLib", version: "5.1.0") { transitive = false }
     implementation(group: "com.github.libraryaddict", name: "LibsDisguises", version: "v10.0.25") { transitive = false }
     // VaultAPI only — Vault is provided at runtime. Avoid vault:master-SNAPSHOT (JitPack metadata flaky).
