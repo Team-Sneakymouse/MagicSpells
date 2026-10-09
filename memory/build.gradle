@@ -1,7 +1,3 @@
 dependencies {
     implementation project(":core")
 }
-
-jar {
-    archiveFileName = "MagicSpellsMemory.jar"
-}

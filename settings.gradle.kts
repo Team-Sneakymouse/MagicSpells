@@ -7,22 +7,12 @@ val localGradleProperties = java.util.Properties().also { properties ->
     }
 }
 
-// Expose on each Project for findProperty() (signing.*, preflight in build.gradle).
-// Repo-local signing.* and mavenCentral* always win over ~/.gradle/gradle.properties.
+// Expose repo-local sneakyrp credentials for findProperty() / PasswordCredentials.
 gradle.beforeProject {
     localGradleProperties.forEach { key, value ->
         val name = key.toString()
-        if (name.startsWith("signing.") || name.startsWith("mavenCentral")) {
+        if (name.startsWith("sneakyrp") || findProperty(name) == null) {
             extensions.extraProperties.set(name, value.toString())
-        } else if (findProperty(name) == null) {
-            extensions.extraProperties.set(name, value.toString())
-        }
-    }
-    // useGpgCmd() reads signing.gnupg.keyName, not signing.keyId; without keyName gpg uses its default key.
-    val useGpgCmd = findProperty("signing.gnupg.useGpgCmd")?.toString() != "false"
-    if (useGpgCmd && findProperty("signing.gnupg.keyName") == null) {
-        findProperty("signing.keyId")?.toString()?.let { keyId ->
-            extensions.extraProperties.set("signing.gnupg.keyName", keyId)
         }
     }
 }

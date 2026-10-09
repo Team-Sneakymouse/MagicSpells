@@ -2,7 +2,3 @@ dependencies {
     implementation project(":core")
     implementation(group: "com.github.TownyAdvanced", name: "Towny", version: "0.98.3.0") { transitive = false }
 }
-
-jar {
-    archiveFileName = "MagicSpellsTowny.jar"
-}

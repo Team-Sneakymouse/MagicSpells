@@ -3,7 +3,3 @@ dependencies {
     //implementation ":MassiveCore"
     //implementation ":Factions"
 }
-
-jar {
-    archiveFileName = "MagicSpellsFactions.jar"
-}

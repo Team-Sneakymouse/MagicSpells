@@ -2,7 +2,3 @@ dependencies {
     implementation project(":core")
     compileOnly(group: "com.github.MilkBowl", name: "VaultAPI", version: "1.7.1") { transitive = false }
 }
-
-jar {
-    archiveFileName = "MagicSpellsShop.jar"
-}

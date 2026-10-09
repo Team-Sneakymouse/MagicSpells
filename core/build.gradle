@@ -83,10 +83,10 @@ shadowJar {
     relocate("co.aikar.locales", "com.nisovin.magicspells.shaded.locales")
     // Non-empty classifier: empty classifier registers shadowJar as a second main (null) artifact for Maven publish.
     archiveClassifier.set("shaded")
-    archiveFileName.set("MagicSpells.jar")
+    archiveFileName.set("MagicSpells-${project.version}.jar")
 }
 
-// Maven Central publishes the plain library JAR only; shadowJar is for the Paper plugins folder.
+// Maven publishes the plain library JAR only; shadowJar is for the Paper plugins folder.
 components.named("java") {
     withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
         skip()

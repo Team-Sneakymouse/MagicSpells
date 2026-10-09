@@ -1,13 +1,33 @@
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
+import org.gradle.api.credentials.PasswordCredentials
+import org.gradle.authentication.http.BasicAuthentication
+
 plugins {
   id("org.jetbrains.kotlin.jvm") version "2.4.10"
   id("dev.magicspells.msjava")
-  // 0.34+ uses Central Portal only (OSSRH removed); 0.36+ requires Kotlin 2.2
-  id("com.vanniktech.maven.publish") version "0.37.0" apply false
 }
 
 wrapper {
   gradleVersion = "9.5.0"
   setDistributionType(Wrapper.DistributionType.ALL)
+}
+
+def gitDerivedVersion = providers.exec {
+  workingDir(rootDir)
+  commandLine("git", "show", "-s", "--format=%ct:%h", "--abbrev=12", "HEAD")
+}.standardOutput.asText.map { commit ->
+  def parts = commit.trim().split(":", 2)
+  def date = DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(ZoneOffset.UTC)
+      .format(Instant.ofEpochSecond(parts[0] as long))
+  "${date}-${parts[1]}"
+}.get()
+
+allprojects {
+  group = "io.github.team-sneakymouse"
+  version = gitDerivedVersion
 }
 
 // Convenience aliases so ./gradlew runServer works from the MagicSpells root
@@ -18,49 +38,33 @@ tasks.register("runServer") {
   dependsOn(":core:runServer")
 }
 
-gradle.taskGraph.whenReady { graph ->
-  def publishingToCentral = graph.allTasks.any { task ->
-    task.name.endsWith("publishToMavenCentral") ||
-      task.name.endsWith("publishAndReleaseToMavenCentral") ||
-      task.name.contains("publishAllPublicationsToMavenCentral") ||
-      task.name.contains("publishMavenPublicationToMavenCentral")
+def mavenArtifactIdFor = { Project project ->
+  switch (project.path) {
+    case ":core":
+      return "magicspells-core"
+    case ":nms:shared":
+      return "magicspells-nms-shared"
+    default:
+      return "magicspells-${project.name}"
   }
-  if (!publishingToCentral) {
-    return
-  }
+}
 
-  def missing = []
-  if (!findProperty("mavenCentralUsername")) {
-    missing.add("mavenCentralUsername")
-  }
-  if (!findProperty("mavenCentralPassword")) {
-    missing.add("mavenCentralPassword")
-  }
-  def useGpgCmd = findProperty("signing.gnupg.useGpgCmd")?.toString() != "false"
-  def hasInMemoryKey = findProperty("signing.inMemoryKey") != null
-
-  if (!findProperty("signing.keyId") && !hasInMemoryKey) {
-    missing.add("signing.keyId (or signing.inMemoryKey)")
-  }
-  if (!findProperty("signing.password")) {
-    missing.add("signing.password")
-  }
-  if (!useGpgCmd && !hasInMemoryKey && !findProperty("signing.secretKeyRingFile")) {
-    missing.add("signing.secretKeyRingFile (or set signing.gnupg.useGpgCmd=true)")
-  }
-  if (useGpgCmd && !hasInMemoryKey) {
-    def gpgKeyName = findProperty("signing.gnupg.keyName") ?: findProperty("signing.keyId")
-    if (!gpgKeyName) {
-      missing.add("signing.gnupg.keyName (or signing.keyId; required with signing.gnupg.useGpgCmd=true)")
-    }
-  }
-
-  if (!missing.isEmpty()) {
-    throw new GradleException(
-      "Maven Central publish is not configured. Add these properties to .gradle/gradle.properties " +
-        "(in this repo, gitignored) or ~/.gradle/gradle.properties (see gradle.properties.example):\n  - " +
-        missing.join("\n  - ")
-    )
+def pluginArchiveBaseNameFor = { Project project ->
+  switch (project.path) {
+    case ":core":
+      return "MagicSpells"
+    case ":shop":
+      return "MagicSpellsShop"
+    case ":factions":
+      return "MagicSpellsFactions"
+    case ":memory":
+      return "MagicSpellsMemory"
+    case ":teams":
+      return "MagicSpellsTeams"
+    case ":towny":
+      return "MagicSpellsTowny"
+    default:
+      return null
   }
 }
 
@@ -69,29 +73,32 @@ subprojects {
   apply plugin: "org.jetbrains.kotlin.jvm"
 
   dependencies {
-    // compileOnly: provided by the server at runtime; must not appear as a SNAPSHOT in the Maven Central POM
+    // compileOnly: provided by the server at runtime
     compileOnly(group: "io.papermc.paper", name: "paper-api", version: "26.2.build.116-stable")
   }
 
   processResources {
+    inputs.property("version", version)
     expand(["version": version])
   }
 
-  // Paperweight NMS modules are build-time only; publish library modules to Maven Central.
-  if (project.path != ":nms" && project.path != ":nms:v26_2") {
-    apply plugin: "com.vanniktech.maven.publish"
-
-    group = findProperty("mavenCentralGroup") ?: "io.github.team-sneakymouse"
-
-    def mavenArtifactIdForProject = {
-      switch (project.path) {
-        case ":core":
-          return "magicspells-core"
-        case ":nms:shared":
-          return "magicspells-nms-shared"
-        default:
-          return "magicspells-${project.name}"
+  def pluginArchiveBaseName = pluginArchiveBaseNameFor(project)
+  if (pluginArchiveBaseName != null) {
+    tasks.named("jar", Jar).configure {
+      // :core also builds a shaded deployable JAR; keep the plain library JAR distinct.
+      if (project.path == ":core") {
+        archiveFileName.set("magicspells-core-${project.version}.jar")
+      } else {
+        archiveFileName.set("${pluginArchiveBaseName}-${project.version}.jar")
       }
+    }
+  }
+
+  // Paperweight NMS modules are build-time only; publish library modules to sneakyrp.
+  if (project.path != ":nms" && project.path != ":nms:v26_2") {
+    java {
+      withSourcesJar()
+      withJavadocJar()
     }
 
     tasks.withType(Javadoc).configureEach {
@@ -100,94 +107,79 @@ subprojects {
       failOnError = false
     }
 
-    plugins.withId("signing") {
-      def signingKeyId = findProperty("signing.keyId")?.toString()
-      def gpgKeyName = findProperty("signing.gnupg.keyName")?.toString() ?: signingKeyId
-      if (gpgKeyName != null) {
-        extensions.extraProperties.set("signing.gnupg.keyName", gpgKeyName)
-      }
-      signing {
-        def inMemoryKey = findProperty("signing.inMemoryKey")
-        if (inMemoryKey != null) {
-          // Properties files cannot hold multiline keys; allow escaped newlines.
-          def normalizedKey = inMemoryKey.toString().replace("\\n", "\n")
-          useInMemoryPgpKeys(normalizedKey, findProperty("signing.password")?.toString())
-        } else if (signingKeyId != null || gpgKeyName != null) {
-          def gpgCmdEnabled = findProperty("signing.gnupg.useGpgCmd")?.toString() != "false"
-          if (gpgCmdEnabled) {
-            useGpgCmd()
-          }
-        }
-      }
-    }
-
-    // flatDir/plugin JARs produce runtime deps with null group in Gradle metadata; POM is already filtered.
+    // flatDir/plugin JARs produce runtime deps with null group in Gradle metadata.
     tasks.withType(org.gradle.api.publish.tasks.GenerateModuleMetadata).configureEach {
       enabled = false
     }
 
-    mavenPublishing {
-      publishToMavenCentral(true)
-      if (findProperty("signing.keyId") != null || findProperty("signing.inMemoryKey") != null) {
-        signAllPublications()
-      }
+    publishing {
+      publications {
+        maven(MavenPublication) {
+          from components.java
+          artifactId = mavenArtifactIdFor(project)
 
-      coordinates(
-        project.group as String,
-        mavenArtifactIdForProject(),
-        project.version as String
-      )
+          pom {
+            name.set(findProperty("POM_NAME") ?: "MagicSpells")
+            description.set(findProperty("POM_DESCRIPTION")
+              ?: "Paper plugin framework for configurable spells and server mechanics.")
+            inceptionYear.set(findProperty("POM_INCEPTION_YEAR") ?: "2011")
+            url.set(findProperty("POM_URL") ?: "https://github.com/Team-Sneakymouse/MagicSpells")
 
-      pom {
-        name.set(findProperty("POM_NAME") ?: "MagicSpells")
-        description.set(findProperty("POM_DESCRIPTION")
-          ?: "Paper plugin framework for configurable spells and server mechanics.")
-        inceptionYear.set(findProperty("POM_INCEPTION_YEAR") ?: "2011")
-        url.set(findProperty("POM_URL") ?: "https://github.com/Team-Sneakymouse/MagicSpells")
+            licenses {
+              license {
+                name.set(findProperty("POM_LICENSE_NAME") ?: "GNU General Public License v3.0")
+                url.set(findProperty("POM_LICENSE_URL") ?: "https://www.gnu.org/licenses/gpl-3.0.txt")
+              }
+            }
 
-        licenses {
-          license {
-            name.set(findProperty("POM_LICENSE_NAME") ?: "GNU General Public License v3.0")
-            url.set(findProperty("POM_LICENSE_URL") ?: "https://www.gnu.org/licenses/gpl-3.0.txt")
-          }
-        }
+            developers {
+              developer {
+                id.set(findProperty("POM_DEVELOPER_ID") ?: "team-sneakymouse")
+                name.set(findProperty("POM_DEVELOPER_NAME") ?: "Team Sneakymouse")
+                url.set(findProperty("POM_DEVELOPER_URL") ?: "https://github.com/Team-Sneakymouse")
+              }
+            }
 
-        developers {
-          developer {
-            id.set(findProperty("POM_DEVELOPER_ID") ?: "team-sneakymouse")
-            name.set(findProperty("POM_DEVELOPER_NAME") ?: "Team Sneakymouse")
-            url.set(findProperty("POM_DEVELOPER_URL") ?: "https://github.com/Team-Sneakymouse")
-          }
-        }
+            scm {
+              url.set(findProperty("POM_SCM_URL") ?: "https://github.com/Team-Sneakymouse/MagicSpells")
+              connection.set(findProperty("POM_SCM_CONNECTION")
+                ?: "scm:git:git@github.com:Team-Sneakymouse/MagicSpells.git")
+              developerConnection.set(findProperty("POM_SCM_DEVELOPER_CONNECTION")
+                ?: "scm:git:git@github.com:Team-Sneakymouse/MagicSpells.git")
+            }
 
-        scm {
-          url.set(findProperty("POM_SCM_URL") ?: "https://github.com/Team-Sneakymouse/MagicSpells")
-          connection.set(findProperty("POM_SCM_CONNECTION")
-            ?: "scm:git:git@github.com:Team-Sneakymouse/MagicSpells.git")
-          developerConnection.set(findProperty("POM_SCM_DEVELOPER_CONNECTION")
-            ?: "scm:git:git@github.com:Team-Sneakymouse/MagicSpells.git")
-        }
-
-        // Maven Central rejects SNAPSHOT deps; published API JARs must not pull in plugin-only libraries.
-        withXml {
-          def dependenciesNode = asNode().get("dependencies")
-          if (dependenciesNode == null || dependenciesNode.isEmpty()) {
-            return
-          }
-          def depsContainer = dependenciesNode[0]
-          def allowedGroupPrefixes = ["io.github.team-sneakymouse", "org.jetbrains"]
-          def toRemove = []
-          depsContainer.dependency?.each { dep ->
-            def version = dep.version?.text() ?: ""
-            def groupId = dep.groupId?.text() ?: ""
-            def allowed = allowedGroupPrefixes.any { groupId.startsWith(it) }
-            if (!allowed || version.endsWith("-SNAPSHOT")) {
-              toRemove.add(dep)
+            // Keep published POMs free of plugin-only / SNAPSHOT deps consumers cannot resolve.
+            withXml {
+              def dependenciesNode = asNode().get("dependencies")
+              if (dependenciesNode == null || dependenciesNode.isEmpty()) {
+                return
+              }
+              def depsContainer = dependenciesNode[0]
+              def allowedGroupPrefixes = ["io.github.team-sneakymouse", "org.jetbrains"]
+              def toRemove = []
+              depsContainer.dependency?.each { dep ->
+                def depVersion = dep.version?.text() ?: ""
+                def depGroupId = dep.groupId?.text() ?: ""
+                def allowed = allowedGroupPrefixes.any { depGroupId.startsWith(it) }
+                if (!allowed || depVersion.endsWith("-SNAPSHOT")) {
+                  toRemove.add(dep)
+                }
+              }
+              toRemove.each { depsContainer.remove(it) }
+              if (depsContainer.dependency == null || depsContainer.dependency.isEmpty()) {
+                asNode().remove(depsContainer)
+              }
             }
           }
-          toRemove.each { depsContainer.remove(it) }
-          if (depsContainer.dependency == null || depsContainer.dependency.isEmpty()) {
-            asNode().remove(depsContainer)
+        }
+      }
+      repositories {
+        maven {
+          name = "sneakyrp"
+          url = uri("https://maven.sneakyrp.com/releases")
+          credentials(PasswordCredentials)
+          authentication {
+            basic(BasicAuthentication)
           }
         }
       }
