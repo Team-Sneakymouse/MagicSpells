@@ -58,6 +58,7 @@ public class TakeDamageListener extends PassiveListener {
 
 	@OverridePriority
 	@EventHandler
+	@SuppressWarnings("deprecation") // DamageModifier.ABSORPTION — Paper has no replacement yet
 	public void onDamage(EntityDamageEvent event) {
 		if (!(event.getEntity() instanceof LivingEntity caster)) return;
 		if (!isCancelStateOk(event.isCancelled())) return;

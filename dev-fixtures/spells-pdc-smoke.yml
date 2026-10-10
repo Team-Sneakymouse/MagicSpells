@@ -139,10 +139,12 @@ pdc_bow:
 # --- F. missarrow (ProjectileHitEntity, no metadata) ---
 
 pdc_miss_arrow:
-  spell-class: ".passive.PassiveSpell"
+  spell-class: ".PassiveSpell"
   name: pdc_miss_arrow
   always-granted: true
+  cast-without-target: true
   triggers:
     - missarrow
-  spells: pdc_msg_miss
-  str-cast-self: "PDC: missarrow passive loaded (shoot any bow at a BLOCK)"
+  spells:
+    - pdc_msg_miss
+  str-cast-self: "PDC: missarrow fired (block hit)"

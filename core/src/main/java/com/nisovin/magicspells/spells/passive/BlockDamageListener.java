@@ -58,10 +58,11 @@ public class BlockDamageListener extends PassiveListener {
 
 	@OverridePriority
 	@EventHandler
+	@SuppressWarnings("deprecation") // DamageModifier.BLOCKING — isBlocking() is false mid-hit; no Paper replacement
 	public void onDamage(EntityDamageEvent event) {
 		if (!(event.getEntity() instanceof LivingEntity caster)) return;
 		if (!isCancelStateOk(event.isCancelled())) return;
-		if (event.getDamage(DamageModifier.BLOCKING)==0) return;
+		if (event.getDamage(DamageModifier.BLOCKING) == 0) return;
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 		if (!damageCauses.isEmpty() && !damageCauses.contains(event.getCause())) return;
 

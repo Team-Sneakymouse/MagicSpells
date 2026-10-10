@@ -1,10 +1,10 @@
 package com.nisovin.magicspells.spells.passive;
 
 import java.util.List;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.ArrayList;
 
+import org.bukkit.Registry;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
@@ -13,6 +13,7 @@ import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.EntityPotionEffectEvent.*;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 
 public class PotionEffectListener extends PassiveListener {
@@ -30,9 +31,9 @@ public class PotionEffectListener extends PassiveListener {
 		if (var != null && !var.isEmpty()) {
 			var = var.toUpperCase();
 			String[] splits = var.split(" ");
-			if (!splits[0].equals("*")) { //Asterisks are wildcards, for when you want the parameter to pass on *any* value
-				for (String s : splits[0].split(",")) { //Each parameter can accept a list of options, separated by commas
-					PotionEffectType type = PotionEffectType.getByName(s);
+			if (!splits[0].equals("*")) {
+				for (String s : splits[0].split(",")) {
+					PotionEffectType type = Util.getPotionEffectType(s);
 
 					if (type != null) {
 						types.add(type);
@@ -40,8 +41,11 @@ public class PotionEffectListener extends PassiveListener {
 						MagicSpells.error("Invalid effect '" + s + "' in potioneffect trigger on passive spell '" + passiveSpell.getInternalName() + "'");
 					}
 				}
-			} else
-				types = Arrays.asList(PotionEffectType.values()); //It's dirty, but it works. If a wildcard is used, dump every value into the list.
+			} else {
+				for (PotionEffectType type : Registry.MOB_EFFECT) {
+					types.add(type);
+				}
+			}
 
 			if (splits.length > 1 && !splits[1].equals("*")) {
 				for (String s : splits[1].split(",")) {
@@ -78,7 +82,7 @@ public class PotionEffectListener extends PassiveListener {
 
 		PotionEffectType type = null;
 		PotionEffect effect;
-		switch (event.getAction()) { //The effect used by the event is referenced differently based on the action, so unfortunately this is needed
+		switch (event.getAction()) {
 			case ADDED -> {
 				effect = event.getNewEffect();
 				if (effect != null) type = effect.getType();

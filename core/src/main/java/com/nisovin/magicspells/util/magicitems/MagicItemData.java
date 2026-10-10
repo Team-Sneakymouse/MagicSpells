@@ -925,7 +925,7 @@ public class MagicItemData {
 
 				output
 					.append('"')
-					.append(effect.getType().getName())
+					.append(effect.getType().getKey().getKey())
 					.append(' ')
 					.append(effect.getAmplifier())
 					.append(' ')

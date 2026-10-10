@@ -45,9 +45,13 @@ How to refresh:
 | **`getBedSpawnLocation` / `setBedSpawnLocation`** | `getRespawnLocation` / `setRespawnLocation` | BedCoord* meta + RecallSpell |
 | **`PigZapEvent`** | Paper `EntityZapEvent` + `getBolt()` | LightningSpell |
 | **Deprecated `playSpellEffects(pos, entity)`** | Pass `SpellData` (ConjureSpell) | |
-| **`GlowSpell` ChatColor** | `@SuppressWarnings("deprecation")` | XGlow abandoned; `GlowBuilder#color(ChatColor)` only API |
+| **`sendMultiBlockChange(..., boolean)`** | `sendMultiBlockChange(Map)` only | NovaEffect |
+| **`PotionEffectType` name/values/getByName** | `Registry.MOB_EFFECT` + `PotionEffectKeyNames` | Handler + potioneffect passive |
+| **`DamageModifier` (listeners)** | Still used for ABSORPTION / BLOCKING checks (`@SuppressWarnings`) — Paper has no replacement; `isBlocking()` is false mid-hit | Compat damage event also needs modifier maps (below) |
+| **`GlowSpell` ChatColor** | `@SuppressWarnings("deprecation")` | XGlow abandoned |
 | **Citizens `IsNPCCondition`** | `@SuppressWarnings` on `hasMetadata("NPC")` | External Citizens convention |
 | **Vendored bStats `Metrics`** | Class-level `@SuppressWarnings` | Not worth rewriting |
+| **`MagicSpellsEntityDamageByEntityEvent`** | `@SuppressWarnings("deprecation")` for `DamageModifier` maps | Paper's only non-`forRemoval` ctor still requires them |
 
 **Current `[removal]` count on `:core:compileJava`:** **0**.
 
@@ -58,6 +62,7 @@ Targeted cast smoke: **[MANUAL-TEST-TARGETED-CAST.md](MANUAL-TEST-TARGETED-CAST.
 ChatColor smoke: **[MANUAL-TEST-CHATCOLOR.md](MANUAL-TEST-CHATCOLOR.md)** (signed off).  
 Inversion / misc: **[MANUAL-TEST-INVERSION.md](MANUAL-TEST-INVERSION.md)** (signed off).  
 PDC / metadata: **[MANUAL-TEST-PDC.md](MANUAL-TEST-PDC.md)** (signed off).  
+Xlint clusters: **[MANUAL-TEST-XLINT.md](MANUAL-TEST-XLINT.md)** (`spells-xlint-smoke.yml`).  
 Tracked fixtures under `dev-fixtures/` (copy into `core/run/plugins/MagicSpells/` for `runServer`).
 
 `GlowSpell` is **not** live-testable here (XGlow abandoned / not on the test server).
@@ -66,22 +71,16 @@ Tracked fixtures under `dev-fixtures/` (copy into `core/run/plugins/MagicSpells/
 
 ## Remaining `-Xlint` clusters (next passes)
 
-**Current total: 50** (after Metrics/GlowSpell/IsNPC suppress + bed/pigzap/Conjure fixes). Refresh with the command above.
+**Current total: 34**. Refresh with the command above.
 
-| Cluster | Count | Notes |
-|---------|-------|-------|
-| **`DamageModifier`** | 6 | `EntityDamageEvent` legacy modifiers |
-| **`sendMultiBlockChange`** | 5 | Player multi-block packet overload |
-| **`PotionEffectType` name/values/getByName** | 5 | Prefer registry keys (Sound-style) |
-| **Unchecked casts / raw types** | 5 | Outside Metrics |
-| **InventoryView title** | 3 | Adventure title APIs |
-| **Swim toggle `setCancelled`** | 2 | `EntityToggleSwimEvent` |
-| **`AttributeModifier.getSlot`** | 2 | Prefer `getSlotGroup` |
-| **Falling block spawn** | 2 | |
-| **SuspiciousStew `addCustomEffect`** | 2 | |
-| **Tree gen / tipped arrow / Sign / ItemMeta / WE / recipes / …** | rest | Odds and ends |
-
-No new fixtures for this pass. Re-check PDC lightning on Easy+ (now `EntityZapEvent`). Bed/recall: `getRespawnLocation` — use any existing recall-with-bed config if you want a spot check.
+| Cluster | Notes |
+|---------|-------|
+| **`AttributeModifier.getSlot`** | Prefer `getSlotGroup` |
+| **Swim toggle `setCancelled`** | `EntityToggleSwimEvent` |
+| **InventoryView title** | Adventure title APIs |
+| **Falling block / SuspiciousStew / tree gen** | Spawn & item meta leftovers |
+| **Unchecked casts / raw types** | Outside Metrics |
+| **Odds and ends** | TippedArrow, Sign, ItemMeta lore/CMD, WE edit session, recipes, URL, Scoreboard, … |
 
 ---
 
@@ -92,6 +91,7 @@ No new fixtures for this pass. Re-check PDC lightning on Easy+ (now `EntityZapEv
 - `SoundKeyNamesTest`
 - `ColorUtilTest`
 - `EntityPdcTest` (lightning charge bit packing; live cover in MANUAL-TEST-PDC)
+- `PotionEffectKeyNamesTest`
 - Existing `SpellSnippetValidatorTest` unchanged
 
 Regenerate spell option index for snippet tests: `python3 scripts/wiki/export-test-spell-index.py`

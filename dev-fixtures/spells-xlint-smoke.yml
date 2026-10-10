@@ -1,8 +1,9 @@
-# Live fixture for bed/respawn recall (getRespawnLocation migration).
+# Live fixtures for Xlint cleanup (bed recall, nova fake blocks, potion registry, damage passives).
 # Copy: cp dev-fixtures/spells-xlint-smoke.yml core/run/plugins/MagicSpells/
-# Cast: /c xlint_recall_bed
+# Cast: /c <spell>
 
-# Silences RecallSpell init when mark-spell is required even in bed mode.
+# --- Bed / respawn recall ---
+
 xlint_mark:
   spell-class: ".instant.MarkSpell"
   helper-spell: true
@@ -21,3 +22,88 @@ xlint_recall_bed:
   str-other-world: "XLIN: bed is in another world"
   str-too-far: "XLIN: bed too far"
   str-recall-failed: "XLIN: recall failed"
+
+# --- Nova effect (sendMultiBlockChange without suppressLightUpdates) ---
+
+xlint_nova:
+  spell-class: ".instant.DummySpell"
+  name: xlint_nova
+  always-granted: true
+  str-cast-self: "XLIN: nova (fake fire ring should expand then clear — no real fire)"
+  effects:
+    ring:
+      position: caster
+      effect: nova
+      type: fire
+      radius: 4
+      expand-interval: 2
+      circle-shape: true
+      remove-previous-blocks: true
+
+# --- PotionEffectType registry (type name resolution) ---
+
+xlint_potion:
+  spell-class: ".targeted.PotionEffectSpell"
+  name: xlint_potion
+  always-granted: true
+  range: 20
+  type: speed
+  duration: 60
+  strength: 1
+  targeted: true
+  can-target: players,monsters,animals
+  str-cast-self: "XLIN: applied speed (registry name)"
+  str-no-target: "XLIN: need a living target"
+
+xlint_potion_passive:
+  spell-class: ".PassiveSpell"
+  name: xlint_potion_passive
+  always-granted: true
+  cast-without-target: true
+  triggers:
+    - potioneffect speed ADDED *
+  spells:
+    - xlint_noop
+  str-cast-self: "XLIN: potioneffect passive fired"
+
+# --- Damage event helpers (MagicSpellsEntityDamageByEntityEvent + passives) ---
+
+xlint_pain:
+  spell-class: ".targeted.PainSpell"
+  name: xlint_pain
+  always-granted: true
+  range: 20
+  damage: 1
+  ignore-armor: true
+  check-plugins: true
+  can-target: players,monsters,animals
+  str-cast-self: "XLIN: pain hit (compat damage event OK)"
+  str-no-target: "XLIN: no target"
+
+xlint_noop:
+  spell-class: ".instant.DummySpell"
+  helper-spell: true
+
+# cast-without-target: attacker as SpellTarget often fails (mobs).
+# str-cast-self on the PassiveSpell — PARTIAL subcasts do not send helper messages.
+xlint_takedamage:
+  spell-class: ".PassiveSpell"
+  name: xlint_takedamage
+  always-granted: true
+  cast-without-target: true
+  triggers:
+    - takedamage
+  spells:
+    - xlint_noop
+  str-cast-self: "XLIN: takedamage passive fired"
+
+xlint_blockdamage:
+  spell-class: ".PassiveSpell"
+  name: xlint_blockdamage
+  always-granted: true
+  cast-without-target: true
+  triggers:
+    - blockdamage
+  spells:
+    - xlint_noop
+  str-cast-self: "XLIN: blockdamage passive fired"

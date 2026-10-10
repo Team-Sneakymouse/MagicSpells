@@ -1,25 +1,40 @@
 package com.nisovin.magicspells.handlers;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.potion.PotionType;
 import org.bukkit.potion.PotionEffectType;
+
+import com.nisovin.magicspells.util.PotionEffectKeyNames;
 
 public class PotionEffectHandler {
 
 	private static final Map<String, PotionEffectType> potionEffects = new HashMap<>();
 
 	static {
-		// Add bukkit and minecraft potion effect names
-		for (PotionEffectType potionEffect : PotionEffectType.values()) {
-			potionEffects.put(potionEffect.getName().toLowerCase(), potionEffect);
-			potionEffects.put(potionEffect.getKey().value().toLowerCase(), potionEffect);
+		for (PotionEffectType potionEffect : Registry.MOB_EFFECT) {
+			NamespacedKey key = potionEffect.getKey();
+			if (key == null) continue;
+			potionEffects.put(key.getKey().toLowerCase(Locale.ROOT), potionEffect);
+			potionEffects.put(key.asString().toLowerCase(Locale.ROOT), potionEffect);
 		}
 	}
 
 	public static PotionEffectType getPotionEffectType(String identification) {
-		return potionEffects.get(identification.trim().toLowerCase());
+		if (identification == null || identification.isBlank()) return null;
+		String id = identification.trim().toLowerCase(Locale.ROOT);
+		PotionEffectType mapped = potionEffects.get(id);
+		if (mapped != null) return mapped;
+
+		String namespaced = PotionEffectKeyNames.toNamespacedKeyString(identification);
+		if (namespaced == null) return null;
+		NamespacedKey key = NamespacedKey.fromString(namespaced);
+		if (key == null) return null;
+		return Registry.MOB_EFFECT.get(key);
 	}
 
 	public static PotionType getPotionType(String name) {
