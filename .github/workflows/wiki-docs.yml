@@ -73,7 +73,7 @@ jobs:
           if [ -f scripts/wiki/generate-all.py ]; then
             python3 scripts/wiki/generate-all.py
             python3 scripts/wiki/check-spell-index.py
-            python3 scripts/wiki/check-page-shape.py
+            python3 scripts/wiki/check-page-shape.py --ci
           else
             # Fallback: wiki-local wrappers / legacy scripts
             python3 MagicSpells.wiki/scripts/generate-all.py || python3 MagicSpells.wiki/scripts/generate-spell-index.py
