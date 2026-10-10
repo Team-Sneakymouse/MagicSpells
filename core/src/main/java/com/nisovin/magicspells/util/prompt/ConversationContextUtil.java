@@ -5,6 +5,8 @@ import java.util.Map;
 import org.bukkit.conversations.Conversable;
 import org.bukkit.conversations.ConversationContext;
 
+// Bukkit Conversations API is for-removal; see COMPILE-WARNINGS.md.
+@SuppressWarnings("removal")
 public class ConversationContextUtil {
 
 	public static final String CONVERSABLE_KEY = "magicspells.conversable";

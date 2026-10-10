@@ -4,6 +4,7 @@ import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.handlers.EnchantmentHandler;
+import com.nisovin.magicspells.util.AttributeSpecParser;
 import com.nisovin.magicspells.util.AttributeUtil;
 import com.nisovin.magicspells.util.managers.AttributeManager;
 import org.bukkit.*;
@@ -11,15 +12,14 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Function;
 
 import org.bukkit.util.Vector;
@@ -68,10 +68,10 @@ public class ConfigDataUtil {
 				: (caster, target, location, power, args) -> "add_number";
 		ConfigData<String> slot = parts.length >= 4 ? getString(parts[3])
 				: (caster, target, location, power, args) -> null;
-		UUID uuid = stableUuid(sourceKey, index);
+		NamespacedKey modifierKey = stableModifierKey(sourceKey, index);
 
 		if (attributeName.isConstant() && amount.isConstant() && operation.isConstant() && slot.isConstant()) {
-			AttributeManager.AttributeInfo info = buildAttributeInfo(value, uuid, attributeName.get(null),
+			AttributeManager.AttributeInfo info = buildAttributeInfo(value, modifierKey, attributeName.get(null),
 					amount.get(null), operation.get(null), slot.get(null));
 			return (caster, target, location, power, args) -> info;
 		}
@@ -93,7 +93,7 @@ public class ConfigDataUtil {
 				if (op == null)
 					return null;
 
-				return buildAttributeInfo(value, uuid, name, amt, op,
+				return buildAttributeInfo(value, modifierKey, name, amt, op,
 						slot.get(caster, target, location, power, args));
 			}
 
@@ -220,8 +220,8 @@ public class ConfigDataUtil {
 	}
 
 	@Nullable
-	private static AttributeManager.AttributeInfo buildAttributeInfo(String debugValue, UUID uuid, String attributeName,
-			Double number, String attributeOperation, String slotName) {
+	private static AttributeManager.AttributeInfo buildAttributeInfo(String debugValue, NamespacedKey modifierKey,
+			String attributeName, Double number, String attributeOperation, String slotName) {
 		if (attributeName == null || number == null || attributeOperation == null)
 			return null;
 
@@ -239,24 +239,24 @@ public class ConfigDataUtil {
 			return null;
 		}
 
-		EquipmentSlot slot = null;
+		EquipmentSlotGroup slotGroup = EquipmentSlotGroup.ANY;
 		if (slotName != null && !slotName.isBlank()) {
 			try {
-				slot = EquipmentSlot.valueOf(slotName.toUpperCase());
+				EquipmentSlot slot = EquipmentSlot.valueOf(slotName.toUpperCase());
+				slotGroup = slot.getGroup();
 			} catch (IllegalArgumentException e) {
 				MagicSpells.error("AttributeManager has an invalid attribute slot defined: " + slotName + " ("
 						+ debugValue + ")");
 			}
 		}
 
-		String name = "MagicSpells " + (attributeName.isEmpty() ? "attribute" : attributeName);
-		return new AttributeManager.AttributeInfo(attribute, new AttributeModifier(uuid, name, number, op, slot));
+		return new AttributeManager.AttributeInfo(attribute,
+			new AttributeModifier(modifierKey, number, op, slotGroup));
 	}
 
 	@NotNull
-	private static UUID stableUuid(@Nullable String sourceKey, int index) {
-		String key = (sourceKey == null ? "attributes" : sourceKey) + ":" + index;
-		return UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
+	private static NamespacedKey stableModifierKey(@Nullable String sourceKey, int index) {
+		return new NamespacedKey("magicspells", AttributeSpecParser.stableKeyPath(sourceKey, index));
 	}
 
 	@NotNull

@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
+import org.bukkit.Registry;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -151,8 +152,8 @@ public class VariableManager {
 		addMetaVariableType("held_block", new HeldBlockVariable());
 
 		// meta variable attribute types
-		for (Attribute attribute : Attribute.values()) {
-			String name = attribute.name().toLowerCase();
+		for (Attribute attribute : Registry.ATTRIBUTE) {
+			String name = attribute.getKey().getKey().replace('.', '_').toLowerCase();
 			addMetaVariableType("attribute_" + name, new AttributeVariable(attribute));
 			addMetaVariableType("attribute_" + name + "_base", new AttributeBaseValueVariable(attribute));
 		}

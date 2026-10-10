@@ -8,6 +8,9 @@ import com.google.gson.JsonSyntaxException;
 import com.nisovin.magicspells.MagicSpells;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
+
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -268,7 +271,8 @@ public class AlteredBlockManager {
                 for (Pattern pattern : banner.getPatterns()) {
                     JsonObject entry = new JsonObject();
                     entry.addProperty("color", pattern.getColor().name());
-                    NamespacedKey key = pattern.getPattern().getKey();
+                    NamespacedKey key = RegistryAccess.registryAccess()
+                        .getRegistry(RegistryKey.BANNER_PATTERN).getKey(pattern.getPattern());
                     entry.addProperty("pattern", key != null ? key.toString() : pattern.getPattern().toString());
                     patterns.add(entry);
                 }
@@ -402,18 +406,16 @@ public class AlteredBlockManager {
     }
 
     private static PatternType resolvePatternType(String id) {
-        NamespacedKey key = NamespacedKey.fromString(id);
+        if (id == null || id.isBlank()) return null;
+        var registry = RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN);
+        String trimmed = id.trim();
+        NamespacedKey key = NamespacedKey.fromString(trimmed.contains(":") ? trimmed : "minecraft:" + trimmed.toLowerCase());
         if (key != null) {
-            for (PatternType type : PatternType.values()) {
-                if (key.equals(type.getKey()))
-                    return type;
-            }
+            PatternType typed = registry.get(key);
+            if (typed != null) return typed;
         }
-        try {
-            return PatternType.valueOf(id);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        // Legacy enum-style ids (e.g. STRIPE_BOTTOM → minecraft:stripe_bottom)
+        return registry.get(NamespacedKey.minecraft(trimmed.toLowerCase()));
     }
 
     public class AlteredBlock {

@@ -13,6 +13,8 @@ import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.util.prompt.ConversationContextUtil;
 
+// Bukkit Conversations API is for-removal; keep until a Dialog/chat rewrite. See COMPILE-WARNINGS.md.
+@SuppressWarnings("removal")
 public class ConversationSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private ConversationFactory conversationFactory;

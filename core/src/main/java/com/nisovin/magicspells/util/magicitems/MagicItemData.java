@@ -13,8 +13,11 @@ import com.google.common.collect.Multimap;
 
 import net.kyori.adventure.text.Component;
 
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
+
 import org.bukkit.*;
-import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionType;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.block.banner.Pattern;
@@ -26,6 +29,7 @@ import org.bukkit.attribute.AttributeModifier;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.TxtUtil;
+import com.nisovin.magicspells.util.PotionIdentity;
 
 import static com.nisovin.magicspells.MagicSpells.checkItemPersistentData;
 
@@ -309,7 +313,7 @@ public class MagicItemData {
 		HIDE_TOOLTIP(Boolean.class),
 		INVISIBLE_TOOLTIP(Boolean.class),
 		FAKE_GLINT(Boolean.class),
-		POTION_DATA(PotionData.class),
+		POTION_DATA(PotionType.class),
 		COLOR(Color.class),
 		FIREWORK_EFFECT(FireworkEffect.class),
 		TITLE(String.class),
@@ -535,7 +539,10 @@ public class MagicItemData {
 				.append(",\"swappable\":").append(equippable.swappable())
 				.append(",\"damage-on-hurt\":").append(equippable.damageOnHurt());
 			if (equippable.equipSound() != null) {
-				output.append(",\"equip-sound\":\"").append(equippable.equipSound().name().toLowerCase()).append('"');
+				NamespacedKey soundKey = Registry.SOUNDS.getKey(equippable.equipSound());
+				if (soundKey != null) {
+					output.append(",\"equip-sound\":\"").append(soundKey.asString()).append('"');
+				}
 			}
 			if (equippable.model() != null) {
 				output.append(",\"model\":\"").append(equippable.model().asString()).append('"');
@@ -637,16 +644,12 @@ public class MagicItemData {
 			if (previous) output.append(',');
 			else output.append('{');
 
-			PotionData potionData = (PotionData) getAttribute(MagicItemAttribute.POTION_DATA);
+			PotionType potionType = (PotionType) getAttribute(MagicItemAttribute.POTION_DATA);
 
 			output
 				.append("\"potion-data\":\"")
-				.append(potionData.getType());
-
-			if (potionData.isExtended()) output.append(" extended");
-			else if (potionData.isUpgraded()) output.append(" upgraded");
-
-			output.append('"');
+				.append(PotionIdentity.serialize(potionType.name()))
+				.append('"');
 
 			previous = true;
 		}
@@ -889,9 +892,11 @@ public class MagicItemData {
 			for (Pattern pattern : patterns) {
 				if (previousPattern) output.append(',');
 
+				NamespacedKey patternKey = RegistryAccess.registryAccess()
+					.getRegistry(RegistryKey.BANNER_PATTERN).getKey(pattern.getPattern());
 				output
 					.append('"')
-					.append(pattern.getPattern().name())
+					.append(patternKey != null ? patternKey.asString() : pattern.getPattern().toString())
 					.append(' ')
 					.append(pattern.getColor().name())
 					.append('"');

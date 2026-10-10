@@ -126,7 +126,7 @@ public class ReachSpell extends BuffSpell {
 			EventUtil.call(evt);
 			if (evt.isCancelled()) return;
 			// Remove block
-			targetBlock.getWorld().playEffect(targetBlock.getLocation(), Effect.STEP_SOUND, targetBlock.getType());
+			targetBlock.getWorld().playEffect(targetBlock.getLocation(), Effect.DESTROY_BLOCK, targetBlock.getBlockData());
 			// Drop item
 			if (dropBlocks && player.getGameMode() == GameMode.SURVIVAL) targetBlock.breakNaturally();
 			else targetBlock.setType(Material.AIR);
@@ -145,10 +145,7 @@ public class ReachSpell extends BuffSpell {
 				BlockState prevState = airBlock.getState();
 				
 				// Place block
-				BlockState state = airBlock.getState();
-				state.setType(inHand.getType());
-				state.setData(inHand.getData());
-				state.update(true);
+				airBlock.setBlockData(inHand.getType().createBlockData());
 				
 				// Call event
 				MagicSpellsBlockPlaceEvent evt = new MagicSpellsBlockPlaceEvent(airBlock, prevState, targetBlock, inHand, player, true, bypassDippGen);

@@ -1,0 +1,229 @@
+# Live fixtures for MANUAL-TEST-WARNING-MIGRATION.md
+# Loaded by runServer from this plugins/MagicSpells folder (not shipped defaults).
+# Cast: /ms cast <spell-name>
+
+magic-items:
+  wm_potion_legacy:
+    type: potion
+    name: "&bWM Potion (legacy)"
+    potion-data: swiftness extended
+  wm_potion_modern:
+    type: potion
+    name: "&bWM Potion (modern)"
+    potion-data: long_swiftness
+  wm_attr_sword:
+    type: diamond_sword
+    name: "&cWM Attr Sword"
+    attributes:
+      - generic.attack_damage 8 add_number hand
+  wm_attr_boots:
+    type: leather_boots
+    name: "&aWM Speed Boots"
+    attributes:
+      - generic.movement_speed 0.15 add_scalar feet
+  wm_equip_sound_helm:
+    type: iron_helmet
+    name: "&eWM Equip Sound Helm"
+    equippable:
+      slot: head
+      equip-sound: ENTITY_ITEM_PICKUP
+
+# --- A. Smoke / destroy effects ---
+
+wm_smoke_cloud:
+  spell-class: ".instant.DummySpell"
+  name: wm_smoke_cloud
+  always-granted: true
+  str-cast-self: "WM: smoke cloud"
+  effects:
+    1:
+      position: caster
+      effect: cloud
+
+wm_smoke_swirl:
+  spell-class: ".instant.DummySpell"
+  name: wm_smoke_swirl
+  always-granted: true
+  str-cast-self: "WM: smoke swirl"
+  effects:
+    1:
+      position: caster
+      effect: smokeswirl
+
+wm_smoke_trail:
+  # smoketrail needs start→end (EffectPosition.TRAIL), not a single caster location.
+  spell-class: ".targeted.DummySpell"
+  name: wm_smoke_trail
+  always-granted: true
+  range: 30
+  require-entity-target: false
+  str-cast-self: "WM: smoke trail (look at a block)"
+  str-no-target: "WM: look at a block for the trail"
+  effects:
+    1:
+      position: trail
+      effect: smoketrail
+
+wm_zap:
+  spell-class: ".targeted.ZapSpell"
+  name: wm_zap
+  always-granted: true
+  range: 20
+  drop-block: false
+  check-plugins: false
+  str-cast-self: "WM: zap"
+  str-no-target: "WM: no block"
+
+wm_build:
+  spell-class: ".targeted.BuildSpell"
+  name: wm_build
+  always-granted: true
+  range: 20
+  consume-block: false
+  check-plugins: false
+  str-cast-self: "WM: build"
+  str-cant-build: "WM: cant build"
+
+wm_reach:
+  spell-class: ".buff.ReachSpell"
+  name: wm_reach
+  always-granted: true
+  duration: 60
+  range: 20
+  consume-blocks: false
+  drop-blocks: true
+  str-cast-self: "WM: reach on"
+  str-fade: "WM: reach off"
+
+# --- B. Potions ---
+
+wm_give_potion_legacy:
+  spell-class: ".instant.ConjureSpell"
+  name: wm_give_potion_legacy
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - wm_potion_legacy 1
+  str-cast-self: "WM: gave legacy potion-data item"
+
+wm_give_potion_modern:
+  spell-class: ".instant.ConjureSpell"
+  name: wm_give_potion_modern
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - wm_potion_modern 1
+  str-cast-self: "WM: gave modern potion-data item"
+
+# --- C. Attributes ---
+
+wm_give_attr_sword:
+  spell-class: ".instant.ConjureSpell"
+  name: wm_give_attr_sword
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - wm_attr_sword 1
+  str-cast-self: "WM: gave attribute sword"
+
+wm_give_attr_boots:
+  spell-class: ".instant.ConjureSpell"
+  name: wm_give_attr_boots
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - wm_attr_boots 1
+  str-cast-self: "WM: gave attribute boots"
+
+# --- D. Equip sound ---
+
+wm_give_equip_sound:
+  spell-class: ".instant.ConjureSpell"
+  name: wm_give_equip_sound
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - wm_equip_sound_helm 1
+  str-cast-self: "WM: gave equip-sound helmet"
+
+# --- E. Combat ---
+
+wm_pain:
+  spell-class: ".targeted.PainSpell"
+  name: wm_pain
+  always-granted: true
+  range: 20
+  damage: 2
+  ignore-armor: false
+  check-plugins: true
+  can-target: players,monsters,animals
+  str-cast-self: "WM: pain"
+  str-no-target: "WM: no target"
+
+wm_dot:
+  spell-class: ".targeted.DotSpell"
+  name: wm_dot
+  always-granted: true
+  range: 20
+  damage: 1
+  interval: 20
+  duration: 60
+  check-plugins: true
+  can-target: players,monsters,animals
+  str-cast-self: "WM: dot"
+  str-no-target: "WM: no target"
+
+wm_drainlife:
+  spell-class: ".targeted.DrainlifeSpell"
+  name: wm_drainlife
+  always-granted: true
+  range: 20
+  take-amt: 2
+  give-amt: 1
+  check-plugins: true
+  can-target: players,monsters,animals
+  str-cast-self: "WM: drainlife"
+  str-no-target: "WM: no target"
+
+# --- F. Volley knockback ---
+
+wm_volley_kb:
+  spell-class: ".targeted.VolleySpell"
+  name: wm_volley_kb
+  always-granted: true
+  range: 30
+  arrows: 5
+  speed: 20
+  spread: 50
+  shoot-interval: 0
+  knockback-strength: 2
+  str-cast-self: "WM: volley with knockback"
+  str-no-target: "WM: no target"
+
+wm_volley_nokb:
+  spell-class: ".targeted.VolleySpell"
+  name: wm_volley_nokb
+  always-granted: true
+  range: 30
+  arrows: 5
+  speed: 20
+  spread: 50
+  shoot-interval: 0
+  knockback-strength: 0
+  str-cast-self: "WM: volley without knockback"
+  str-no-target: "WM: no target"
+
+# --- G. Enderman carried block ---
+
+wm_spawn_enderman:
+  spell-class: ".targeted.SpawnEntitySpell"
+  name: wm_spawn_enderman
+  always-granted: true
+  range: 20
+  duration: 200
+  main-hand: dirt
+  # EntityData uses key "entity" (not "type") for EntityType — see Entity-Data / SpawnEntitySpell wiki.
+  entity:
+    entity: enderman
+  str-cast-self: "WM: spawn enderman (should hold dirt)"
+  str-no-target: "WM: no target"

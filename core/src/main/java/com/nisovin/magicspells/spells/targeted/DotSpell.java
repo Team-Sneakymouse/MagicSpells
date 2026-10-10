@@ -203,7 +203,6 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 				EventUtil.call(event);
 				if (event.isCancelled()) return;
 				if (!Boolean.TRUE.equals(avoidDamageModification.get(data))) localDamage = event.getDamage();
-				target.setLastDamageCause(event);
 			}
 
 			SpellApplyDamageEvent event = new SpellApplyDamageEvent(DotSpell.this, caster, target, localDamage, damageType, spellDamageType);

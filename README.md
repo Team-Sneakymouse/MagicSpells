@@ -63,6 +63,8 @@ Simple right?
 
 Unit tests (no live server): `./gradlew :core:test`. Agent testing policy and spell YAML snippet checks (`SpellSnippetValidator`) are documented in [AGENTS.md](AGENTS.md).
 
+After the Paper `[removal]` migration pass, live spot-checks are listed in [MANUAL-TEST-WARNING-MIGRATION.md](MANUAL-TEST-WARNING-MIGRATION.md) (`wm_*` spells in the runServer config).
+
 ---
 ## Maven publication 📦
 

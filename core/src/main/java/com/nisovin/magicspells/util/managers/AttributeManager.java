@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.Collection;
 
+import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
@@ -14,6 +15,8 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.Location;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.AttributeSpec;
+import com.nisovin.magicspells.util.AttributeSpecParser;
 import com.nisovin.magicspells.util.AttributeUtil;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -99,36 +102,31 @@ public class AttributeManager {
 	// get attribute and attribute modifier from string
 	// - [AttributeName] [Number] [Operation]
 	public AttributeInfo getAttributeInfo(String str) {
-		String[] args = str.trim().split("\\s+");
-
-		if (args.length < 3)
-			return null;
-
-		String attributeName = args[0];
-
-		double number;
+		AttributeSpec spec;
 		try {
-			number = Double.parseDouble(args[1]);
-		} catch (NumberFormatException e) {
-			DebugHandler.debugNumberFormat(e);
+			spec = AttributeSpecParser.parse(str, true);
+		} catch (IllegalArgumentException e) {
+			if (e.getCause() instanceof NumberFormatException nfe) {
+				DebugHandler.debugNumberFormat(nfe);
+			}
 			return null;
 		}
 
-		String attributeOperation = args[2];
-
-		Attribute attribute = AttributeUtil.getAttribute(attributeName);
+		Attribute attribute = AttributeUtil.getAttribute(spec.attributeName());
 		if (attribute == null) {
-			MagicSpells.error("AttributeManager has an invalid attribute defined: " + attributeName);
+			MagicSpells.error("AttributeManager has an invalid attribute defined: " + spec.attributeName());
 			return null;
 		}
 
-		AttributeModifier.Operation operation = AttributeUtil.getOperation(attributeOperation);
+		AttributeModifier.Operation operation = AttributeUtil.getOperation(spec.operationName());
 		if (operation == null) {
-			MagicSpells.error("AttributeManager has an invalid attribute operation defined: " + attributeOperation);
+			MagicSpells.error("AttributeManager has an invalid attribute operation defined: " + spec.operationName());
 			return null;
 		}
 
-		return new AttributeInfo(attribute, new AttributeModifier("MagicSpells " + attributeName, number, operation));
+		NamespacedKey key = new NamespacedKey("magicspells",
+			AttributeSpecParser.stableKeyPath(spec.attributeName(), 0));
+		return new AttributeInfo(attribute, new AttributeModifier(key, spec.amount(), operation));
 	}
 
 	/**

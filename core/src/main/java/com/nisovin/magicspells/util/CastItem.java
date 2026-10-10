@@ -11,7 +11,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.enchantments.Enchantment;
@@ -19,6 +19,7 @@ import org.bukkit.enchantments.Enchantment;
 import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.PotionIdentity;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.util.magicitems.CustomModelDataValues;
@@ -39,7 +40,7 @@ public class CastItem {
 	private boolean unbreakable = false;
 
 	private Color color = null;
-	private PotionData potionData = null;
+	private PotionType potionType = null;
 	private String title = null;
 	private String author = null;
 
@@ -75,7 +76,7 @@ public class CastItem {
 			if (!MagicSpells.ignoreCastItemCustomModelData()) customModelData = ItemUtil.getCustomModelDataValues(meta);
 			if (!MagicSpells.ignoreCastItemBreakability()) unbreakable = meta.isUnbreakable();
 			if (!MagicSpells.ignoreCastItemColor()) color = LeatherArmorHandler.getColor(meta);
-			if (!MagicSpells.ignoreCastItemPotionType()) potionData = PotionHandler.getPotionData(meta);
+			if (!MagicSpells.ignoreCastItemPotionType()) potionType = PotionHandler.getPotionType(meta);
 			if (!MagicSpells.ignoreCastItemTitle()) title = WrittenBookHandler.getTitle(meta);
 			if (!MagicSpells.ignoreCastItemAuthor()) author = WrittenBookHandler.getAuthor(meta);
 			if (!MagicSpells.ignoreCastItemEnchants()) enchants = meta.getEnchants();
@@ -139,7 +140,7 @@ public class CastItem {
 					color = (Color) data.getAttribute(COLOR);
 
 				if (!MagicSpells.ignoreCastItemPotionType() && data.hasAttribute(POTION_DATA))
-					potionData = (PotionData) data.getAttribute(POTION_DATA);
+					potionType = (PotionType) data.getAttribute(POTION_DATA);
 
 				if (!MagicSpells.ignoreCastItemTitle() && data.hasAttribute(TITLE))
 					title = (String) data.getAttribute(TITLE);
@@ -198,7 +199,7 @@ public class CastItem {
 			&& (MagicSpells.ignoreCastItemCustomModelData() || Objects.equals(customModelData, i.customModelData))
 			&& (MagicSpells.ignoreCastItemBreakability() || unbreakable == i.unbreakable)
 			&& (MagicSpells.ignoreCastItemColor() || Objects.equals(color, i.color))
-			&& (MagicSpells.ignoreCastItemPotionType() || Objects.equals(potionData, i.potionData))
+			&& (MagicSpells.ignoreCastItemPotionType() || Objects.equals(potionType, i.potionType))
 			&& (MagicSpells.ignoreCastItemTitle() || Objects.equals(title, i.title))
 			&& (MagicSpells.ignoreCastItemAuthor() || Objects.equals(author, i.author))
 			&& (MagicSpells.ignoreCastItemEnchants() || Objects.equals(enchants, i.enchants))
@@ -209,7 +210,7 @@ public class CastItem {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(type, name, amount, durability, customModelData, unbreakable, color, potionData, title, author, enchants, lore, magicitemName, permanentData);
+		return Objects.hash(type, name, amount, durability, customModelData, unbreakable, color, potionType, title, author, enchants, lore, magicitemName, permanentData);
 	}
 
 	@Override
@@ -289,18 +290,14 @@ public class CastItem {
 			previous = true;
 		}
 
-		if (!MagicSpells.ignoreCastItemPotionType() && potionData != null) {
+		if (!MagicSpells.ignoreCastItemPotionType() && potionType != null) {
 			if (previous) output.append(',');
             else output.append("{");
 
 			output
 				.append("\"potiondata\":\"")
-				.append(potionData.getType());
-
-			if (potionData.isExtended()) output.append(" extended");
-			else if (potionData.isUpgraded()) output.append(" upgraded");
-
-			output.append('"');
+				.append(PotionIdentity.serialize(potionType.name()))
+				.append('"');
 
 			previous = true;
 		}

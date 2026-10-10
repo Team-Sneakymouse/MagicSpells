@@ -613,6 +613,11 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 						MobUtil.setTarget(preSpawned, target);
 				});
 
+		if (entity == null) {
+			MagicSpells.error("SpawnEntitySpell '" + internalName + "' failed to spawn entity (check entity.entity type).");
+			return;
+		}
+
 		if (mountList != null && !mountList.isEmpty())
 			createMounts(caster, target, power, args, entity, duration);
 
@@ -702,7 +707,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 		if (entity instanceof Enderman) {
 			if (mainHandItem != null && !BlockUtils.isAir(mainHandItem.getType())) {
-				((Enderman) entity).setCarriedMaterial(mainHandItem.getData());
+				((Enderman) entity).setCarriedBlock(mainHandItem.getType().createBlockData());
 			}
 		} else if (entity instanceof LivingEntity) {
 			EntityEquipment entityEquipment = ((LivingEntity) entity).getEquipment();

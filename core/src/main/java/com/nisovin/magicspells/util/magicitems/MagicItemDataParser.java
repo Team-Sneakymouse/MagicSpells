@@ -28,13 +28,13 @@ import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.text.Component;
 
 import org.bukkit.*;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.block.banner.PatternType;
@@ -42,9 +42,12 @@ import org.bukkit.attribute.AttributeModifier;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.AttributeSpecParser;
 import com.nisovin.magicspells.util.AttributeUtil;
+import com.nisovin.magicspells.util.SoundUtil;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.handlers.EnchantmentHandler;
+import com.nisovin.magicspells.util.itemreader.PotionHandler;
 import com.nisovin.magicspells.util.itemreader.CustomModelDataHandler;
 import com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute;
 import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.*;
@@ -209,11 +212,11 @@ public class MagicItemDataParser {
 									Sound equipSound = null;
 									if (equippable.has("equip-sound")) {
 										try {
-											equipSound = Sound.valueOf(equippable.get("equip-sound").getAsString().trim().toUpperCase());
+											equipSound = SoundUtil.resolve(equippable.get("equip-sound").getAsString().trim());
 										} catch (IllegalArgumentException ignored) {}
 									} else if (equippable.has("equip_sound")) {
 										try {
-											equipSound = Sound.valueOf(equippable.get("equip_sound").getAsString().trim().toUpperCase());
+											equipSound = SoundUtil.resolve(equippable.get("equip_sound").getAsString().trim());
 										} catch (IllegalArgumentException ignored) {}
 									}
 									NamespacedKey model = null;
@@ -287,20 +290,8 @@ public class MagicItemDataParser {
 						case "potiontype":
 						case "potion-type":
 						case "potion_type":
-							String[] potionDataArgs = value.getAsString().split(" ");
-
 							try {
-								PotionType potionType = PotionType.valueOf(potionDataArgs[0].toUpperCase());
-								boolean extended = false, upgraded = false;
-
-								if (potionDataArgs.length > 1) {
-									if (potionDataArgs[1].equalsIgnoreCase("extended")) extended = true;
-									else if (potionDataArgs[1].equalsIgnoreCase("upgraded")) upgraded = true;
-								}
-
-								PotionData potionData = new PotionData(potionType, extended, upgraded);
-
-								data.setAttribute(POTION_DATA, potionData);
+								data.setAttribute(POTION_DATA, PotionHandler.resolvePotionType(value.getAsString()));
 							} catch (IllegalArgumentException e) {
 								DebugHandler.debugIllegalArgumentException(e);
 							}
@@ -420,7 +411,10 @@ public class MagicItemDataParser {
 									} catch (Exception ignored) {}
 								}
 
-								AttributeModifier modifier = new AttributeModifier(java.util.UUID.randomUUID(), attributeArgs[0], val, operation, slot);
+								EquipmentSlotGroup slotGroup = slot == null ? EquipmentSlotGroup.ANY : slot.getGroup();
+								NamespacedKey modifierKey = new NamespacedKey("magicspells",
+									AttributeSpecParser.stableKeyPath(attributeArgs[0], itemAttributes.size()));
+								AttributeModifier modifier = new AttributeModifier(modifierKey, val, operation, slotGroup);
 								itemAttributes.put(attribute, modifier);
 							}
 

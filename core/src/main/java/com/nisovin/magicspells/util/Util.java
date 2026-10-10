@@ -934,6 +934,7 @@ public class Util {
 			}
 
 			@Override
+			@SuppressWarnings("removal")
 			public boolean setProperty(@NotNull Property property, int i) {
 				return false;
 			}

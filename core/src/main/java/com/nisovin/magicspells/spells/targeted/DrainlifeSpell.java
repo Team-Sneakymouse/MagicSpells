@@ -161,7 +161,6 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 						return false;
 					if (!avoidDamageModification)
 						take = event.getDamage();
-					target.setLastDamageCause(event);
 				}
 
 				SpellApplyDamageEvent event = new SpellApplyDamageEvent(this, caster, target, take, damageType,

@@ -26,6 +26,7 @@ Paper MagicSpells fork for Lords of Minecraft. Prefer this file plus workspace r
 | Bukkit-free `util/` / extracted helpers | Plain **JUnit 5** (see `ParamUtil` + `SplitParamsTest`) |
 | Spell YAML surface (class + option keys) | **`SpellSnippetValidator`** tests (index-backed; no live server) |
 | Live spell behavior / targeting / effects | **`runServer`** + `spells-test.yml` (or dedicated `spells-*.yml`) |
+| Warning-migration spot-checks | Checklist: `MANUAL-TEST-WARNING-MIGRATION.md`; fixtures: `dev-fixtures/spells-warning-migration.yml` → copy into `core/run/plugins/MagicSpells/` |
 
 Do **not** add MockBukkit for full cast graphs unless a dedicated harness exists. Prefer extracting logic out of Bukkit-heavy types (`ParamUtil` pattern) so tests stay cheap.
 

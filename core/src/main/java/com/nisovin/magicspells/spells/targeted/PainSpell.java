@@ -126,7 +126,6 @@ public class PainSpell extends TargetedSpell implements TargetedEntitySpell, Dam
 			EventUtil.call(event);
 			if (event.isCancelled()) return false;
 			if (!Boolean.TRUE.equals(avoidDamageModification.get(caster, target, power, args))) localDamage = event.getDamage();
-			target.setLastDamageCause(event);
 		}
 
 		SpellApplyDamageEvent event = new SpellApplyDamageEvent(this, caster, target, localDamage, damageCause, spellDamageType);

@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.components.UseCooldownComponent;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.handlers.DebugHandler;
+import com.nisovin.magicspells.util.SoundUtil;
 import com.nisovin.magicspells.util.magicitems.ItemComponentValues;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 
@@ -89,7 +90,7 @@ public class DataComponentsHandler {
 			ItemComponentValues.JukeboxPlayable playable = (ItemComponentValues.JukeboxPlayable) data.getAttribute(JUKEBOX_PLAYABLE);
 			JukeboxPlayableComponent component = meta.getJukeboxPlayable();
 			component.setSongKey(playable.songKey());
-			component.setShowInTooltip(playable.showInTooltip());
+			// show-in-tooltip is no longer on the Paper component; retained on MagicItemData for serialize compat only
 			meta.setJukeboxPlayable(component);
 		}
 	}
@@ -131,7 +132,7 @@ public class DataComponentsHandler {
 			JukeboxPlayableComponent playable = meta.getJukeboxPlayable();
 			NamespacedKey songKey = playable.getSongKey();
 			if (songKey != null) {
-				data.setAttribute(JUKEBOX_PLAYABLE, new ItemComponentValues.JukeboxPlayable(songKey, playable.isShowInTooltip()));
+				data.setAttribute(JUKEBOX_PLAYABLE, new ItemComponentValues.JukeboxPlayable(songKey, true));
 			}
 		}
 	}
@@ -260,10 +261,9 @@ public class DataComponentsHandler {
 
 		Sound equipSound = null;
 		if (section.isString("equip-sound")) {
-			String soundName = section.getString("equip-sound").trim().toUpperCase();
-			try {
-				equipSound = Sound.valueOf(soundName);
-			} catch (IllegalArgumentException e) {
+			String soundName = section.getString("equip-sound").trim();
+			equipSound = SoundUtil.resolve(soundName);
+			if (equipSound == null) {
 				MagicSpells.error("Invalid equip-sound '" + soundName + "' for magic item equippable component.");
 			}
 		}
@@ -309,7 +309,6 @@ public class DataComponentsHandler {
 
 		JukeboxPlayableComponent component = meta.getJukeboxPlayable();
 		component.setSongKey(songKey);
-		component.setShowInTooltip(showInTooltip);
 		meta.setJukeboxPlayable(component);
 
 		data.setAttribute(JUKEBOX_PLAYABLE, new ItemComponentValues.JukeboxPlayable(songKey, showInTooltip));

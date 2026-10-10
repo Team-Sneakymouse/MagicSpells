@@ -18,6 +18,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.ConfigurationSection;
@@ -28,6 +29,7 @@ import com.nisovin.magicspells.util.DataUtil;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.ItemUtil;
 import com.nisovin.magicspells.util.itemreader.*;
+import com.nisovin.magicspells.util.AttributeSpecParser;
 import com.nisovin.magicspells.util.AttributeUtil;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.handlers.EnchantmentHandler;
@@ -520,7 +522,7 @@ public class MagicItems {
 			}
 			case POTION_DATA -> {
 				if (meta instanceof org.bukkit.inventory.meta.PotionMeta potionMeta) {
-					potionMeta.setBasePotionData(new org.bukkit.potion.PotionData(org.bukkit.potion.PotionType.WATER));
+					potionMeta.setBasePotionType(org.bukkit.potion.PotionType.WATER);
 				}
 			}
 			case POTION_EFFECTS -> {
@@ -832,10 +834,17 @@ public class MagicItems {
 					if (args.length < 2) continue;
 
 					Attribute attribute = AttributeUtil.getAttribute(args[0]);
+					if (attribute == null) {
+						MagicSpells.error("Invalid attribute '" + args[0] + "' on magic item.");
+						continue;
+					}
 					double value = Double.parseDouble(args[1]);
 
 					AttributeModifier.Operation operation = AttributeModifier.Operation.ADD_NUMBER;
-					if (args.length >= 3) operation = AttributeUtil.getOperation(args[2]);
+					if (args.length >= 3) {
+						AttributeModifier.Operation parsed = AttributeUtil.getOperation(args[2]);
+						if (parsed != null) operation = parsed;
+					}
 
 					EquipmentSlot slot = null;
 					if (args.length >= 4) {
@@ -844,7 +853,10 @@ public class MagicItems {
 						} catch (Exception ignored) {}
 					}
 
-					AttributeModifier modifier = new AttributeModifier(java.util.UUID.randomUUID(), args[0], value, operation, slot);
+					EquipmentSlotGroup slotGroup = slot == null ? EquipmentSlotGroup.ANY : slot.getGroup();
+					NamespacedKey modifierKey = new NamespacedKey("magicspells",
+						AttributeSpecParser.stableKeyPath(args[0], itemAttributes.size()));
+					AttributeModifier modifier = new AttributeModifier(modifierKey, value, operation, slotGroup);
 					attributeManager.addItemAttribute(item, attribute, modifier);
 					itemAttributes.put(attribute, modifier);
 				}

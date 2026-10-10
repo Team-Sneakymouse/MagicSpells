@@ -12,6 +12,7 @@ import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
@@ -39,9 +40,10 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 	public ZapSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
+		// Always non-null: empty allowed list means "any block not disallowed".
+		allowedBlockTypes = EnumSet.noneOf(Material.class);
 		List<String> allowed = getConfigStringList("allowed-block-types", null);
 		if (allowed != null) {
-			allowedBlockTypes = EnumSet.noneOf(Material.class);
 			for (String s : allowed) {
 				Material m = Util.getMaterial(s);
 				if (m == null)
@@ -51,10 +53,10 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 			}
 		}
 
+		disallowedBlockTypes = EnumSet.noneOf(Material.class);
 		List<String> disallowed = getConfigStringList("disallowed-block-types",
 				Arrays.asList("bedrock", "lava", "water"));
 		if (disallowed != null) {
-			disallowedBlockTypes = EnumSet.noneOf(Material.class);
 			for (String s : disallowed) {
 				Material m = Util.getMaterial(s);
 				if (m == null)
@@ -157,11 +159,11 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (dropNormal)
 				target.breakNaturally();
 			else
-				target.getWorld().dropItemNaturally(target.getLocation(), target.getState().getData().toItemStack(1));
+				target.getWorld().dropItemNaturally(target.getLocation(), new ItemStack(target.getType()));
 		}
 
 		if (playBreakEffect)
-			target.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
+			target.getWorld().playEffect(target.getLocation(), Effect.DESTROY_BLOCK, target.getBlockData());
 
 		SpellData data = new SpellData(player, target.getLocation(), power, args);
 		if (!playerNull)

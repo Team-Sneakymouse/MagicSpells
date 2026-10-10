@@ -8,7 +8,6 @@ import io.papermc.paper.advancement.AdvancementDisplay.Frame;
 import net.kyori.adventure.text.Component;
 
 import org.bukkit.inventory.Inventory;
-import org.bukkit.EntityEffect;
 import org.bukkit.inventory.ItemStack;
 
 public class VolatileCodeDisabled extends VolatileCodeHandle {
@@ -79,7 +78,7 @@ public class VolatileCodeDisabled extends VolatileCodeHandle {
 	
 	@Override
 	public void playHurtAnimation(LivingEntity entity, float yaw) {
-		entity.playEffect(EntityEffect.HURT);
+		entity.playHurtAnimation(yaw);
 	}
 
 	@Override

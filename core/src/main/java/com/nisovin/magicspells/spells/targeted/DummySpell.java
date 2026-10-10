@@ -66,7 +66,8 @@ public class DummySpell extends TargetedSpell
 				if (loc == null)
 					return noTarget(caster, args);
 
-				playSpellEffects(EffectPosition.TARGET, loc, power, args);
+				// Include trail / reverse-line (start→end), same as castAtLocation(caster, loc).
+				playSpellEffects(caster, loc, power, args);
 				sendMessages(caster, loc, args);
 
 				return PostCastAction.NO_MESSAGES;

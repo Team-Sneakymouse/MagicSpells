@@ -371,59 +371,70 @@ public class EntityData {
 			return null;
 
 		boolean[] displayHack = new boolean[] { false, false };
-		Entity entity = switch (entityType) {
-			case FALLING_BLOCK -> {
-				BlockData blockData = fallingBlockData.get(data);
-				if (blockData == null)
-					yield null;
+		Entity entity;
+		try {
+			entity = switch (entityType) {
+				case FALLING_BLOCK -> {
+					BlockData blockData = fallingBlockData.get(data);
+					if (blockData == null)
+						yield null;
 
-				Entity e = startLoc.getWorld().spawnFallingBlock(startLoc, blockData);
-				if (consumer != null)
-					consumer.accept(e);
-
-				yield e;
-			}
-			case ITEM -> {
-				Material material = dropItemMaterial.get(data);
-				if (material == null)
-					yield null;
-
-				Entity e = startLoc.getWorld().dropItem(startLoc, new ItemStack(material));
-				if (consumer != null)
-					consumer.accept(e);
-
-				yield e;
-			}
-			default -> {
-				Class<? extends Entity> entityClass = entityType.getEntityClass();
-				if (entityClass == null)
-					yield null;
-
-				yield startLoc.getWorld().spawn(startLoc, entityClass, e -> {
-					Collection<Transformer<?, ?>> transformers = options.get(entityType);
-					// noinspection rawtypes
-					for (Transformer transformer : transformers)
-						// noinspection unchecked
-						transformer.apply(e, data);
-
+					Entity e = startLoc.getWorld().spawnFallingBlock(startLoc, blockData);
 					if (consumer != null)
 						consumer.accept(e);
 
-					if (EntityType.valueOf("ITEM_DISPLAY") != null && e instanceof ItemDisplay) {
-						MagicItem magicItem = item.get(data);
-						if (magicItem != null)
-							((ItemDisplay) e).setItemStack(magicItem.getItemStack());
-					}
+					yield e;
+				}
+				case ITEM -> {
+					Material material = dropItemMaterial.get(data);
+					if (material == null)
+						yield null;
 
-					if (EntityType.valueOf("BLOCK_DISPLAY") != null && e instanceof Display) {
-						displayHack[0] = true;
-						displayHack[1] = e.isVisibleByDefault();
+					Entity e = startLoc.getWorld().dropItem(startLoc, new ItemStack(material));
+					if (consumer != null)
+						consumer.accept(e);
 
-						e.setVisibleByDefault(false);
-					}
-				});
-			}
-		};
+					yield e;
+				}
+				default -> {
+					Class<? extends Entity> entityClass = entityType.getEntityClass();
+					if (entityClass == null)
+						yield null;
+
+					// Paper throws IllegalStateException for monsters in Peaceful; catch below.
+					yield startLoc.getWorld().spawn(startLoc, entityClass, e -> {
+						Collection<Transformer<?, ?>> transformers = options.get(entityType);
+						// noinspection rawtypes
+						for (Transformer transformer : transformers)
+							// noinspection unchecked
+							transformer.apply(e, data);
+
+						if (consumer != null)
+							consumer.accept(e);
+
+						if (EntityType.valueOf("ITEM_DISPLAY") != null && e instanceof ItemDisplay) {
+							MagicItem magicItem = item.get(data);
+							if (magicItem != null)
+								((ItemDisplay) e).setItemStack(magicItem.getItemStack());
+						}
+
+						if (EntityType.valueOf("BLOCK_DISPLAY") != null && e instanceof Display) {
+							displayHack[0] = true;
+							displayHack[1] = e.isVisibleByDefault();
+
+							e.setVisibleByDefault(false);
+						}
+					});
+				}
+			};
+		} catch (IllegalStateException e) {
+			MagicSpells.error("Failed to spawn " + entityType + " at " + startLoc.getWorld().getName()
+				+ " (" + e.getMessage() + ")");
+			return null;
+		}
+
+		if (entity == null)
+			return null;
 
 		if (displayHack[0]) {
 			entity.teleport(startLoc);

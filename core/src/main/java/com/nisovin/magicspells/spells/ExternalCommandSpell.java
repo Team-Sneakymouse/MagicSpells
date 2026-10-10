@@ -24,6 +24,8 @@ import com.nisovin.magicspells.util.ValidTargetList;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
+// Conversations fallback (no ProtocolLib) uses for-removal API; see COMPILE-WARNINGS.md.
+@SuppressWarnings("removal")
 public class ExternalCommandSpell extends TargetedSpell implements TargetedEntitySpell {
 	
 	private static MessageBlocker messageBlocker;

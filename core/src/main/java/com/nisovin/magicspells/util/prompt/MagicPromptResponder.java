@@ -13,6 +13,8 @@ import com.nisovin.magicspells.Subspell;
 
 import com.nisovin.magicspells.MagicSpells;
 
+// Bukkit Conversations API is for-removal; see COMPILE-WARNINGS.md.
+@SuppressWarnings("removal")
 public class MagicPromptResponder {
 
 	String variableName;

@@ -1,6 +1,6 @@
 # Compile warnings backlog
 
-Snapshot from `:core:compileJava` on the DvZ fork (Paper / Bukkit for-removal APIs, plus a few WorldEdit leftovers that were already cleared).
+Snapshot from `:core:compileJava` on the DvZ fork (Paper / Bukkit for-removal APIs).
 
 **Note:** `javac` reports at most **100** warnings per compile. Clearing a large cluster can make previously hidden warnings appear until the true total drops below 100.
 
@@ -18,50 +18,54 @@ For ordinary (non-removal) deprecations and unchecked casts, enable lint (curren
 
 ---
 
-## Done (mechanical, no behavior change expected)
+## Done (`[removal]` cleared or intentionally suppressed)
 
-| API | Change | Files |
+| API | Change | Notes |
 |-----|--------|-------|
-| WorldEdit `BlockVector3` / `BlockVector2` `.getX/Y/Z()` | → `.x()` / `.y()` / `.z()` | `PasteSpell`, `FillSpell`, `LocationMatchesSchematicCondition` |
-| `org.bukkit.util.Consumer` | → `java.util.function.Consumer` | `EntityData` |
+| WorldEdit `BlockVector` getters | `.x()` / `.y()` / `.z()` | Mechanical |
+| `org.bukkit.util.Consumer` | `java.util.function.Consumer` | Mechanical |
+| **Bukkit Conversations** | `@SuppressWarnings("removal")` | Keep until Dialog/chat rewrite; unused on LoM |
+| **`PotionData`** | `PotionIdentity` + `PotionType` / `setBasePotionType` | Unit-tested grammar; legacy `extended`/`upgraded` still accepted |
+| **`Effect.SMOKE` / `STEP_SOUND`** | `SMOKE_SHOOT` / `DESTROY_BLOCK` | Spot-check via `spells-test.yml` smoke fixtures |
+| **`AttributeModifier` legacy ctors / `Attribute.values()`** | `NamespacedKey` + `EquipmentSlotGroup`; `Registry.ATTRIBUTE`; `AttributeSpecParser` | Unit-tested parse/UUID |
+| **`OldEnum.name()` (Sound / Pattern)** | Registry keys | Serialize with `Registry.*.getKey` |
+| **`PatternType` values/valueOf/getKey** | `RegistryKey.BANNER_PATTERN` | |
+| **`MaterialData` / `ItemStack.getData` / Enderman carried** | `BlockData` / `setCarriedBlock` / `ItemStack(Material)` | |
+| **`Entity.setLastDamageCause`** | Removed (internal API) | Damage events still fired |
+| **`AbstractArrow.setKnockbackStrength`** | `setWeapon` + Punch enchant | |
+| **`Sound.valueOf`** | `SoundUtil` / `SoundKeyNames` | Unit-tested key shaping |
+| **`JukeboxPlayable` show-in-tooltip** | Stopped calling no-op API | Config flag kept for serialize only |
+| **`EntityDamageByEntityEvent` legacy ctor** | `DamageSource` builder | |
+| **`EntityEffect.HURT`** | `playHurtAnimation` | |
+| **`InventoryView.Property`** | `@SuppressWarnings` on stub | Dummy inventory only |
+
+**Current `[removal]` count on `:core:compileJava`:** **0** (as of this migration pass).
+
+## Manual / live verification
+
+See **[MANUAL-TEST-WARNING-MIGRATION.md](MANUAL-TEST-WARNING-MIGRATION.md)** for the human checklist.  
+Tracked fixtures: `dev-fixtures/spells-warning-migration.yml` (copy into `core/run/plugins/MagicSpells/` for `runServer`).
 
 ---
 
-## Remaining `[removal]` warnings (need real migration / testing)
+## Remaining when `-Xlint:deprecation` / `unchecked` is enabled
 
-| Cluster | Approx. share | Main files | Why not a blind rename | Suggested direction |
-|---------|---------------|------------|------------------------|---------------------|
-| **Bukkit Conversations** (`Conversation`, `ConversationFactory`, `Prompt`, `Conversable`, …) | ~46 of the current 100 | `ConversationSpell`, `ExternalCommandSpell`, `util/prompt/*`, `ConfigReaderUtil` | Entire API is for-removal | Rewrite prompts (Adventure / custom UI) or `@SuppressWarnings("removal")` until replaced |
-| **`PotionData` / `PotionMeta.setBasePotionData` / `getBasePotionData`** | ~15 | `MagicItems`, `MagicItemData`, `CastItem`, `PotionHandler` | Potion identity & magic-item matching | `PotionType` / `setBasePotionType`; fixture-test item round-trips |
-| **`Effect.SMOKE` / `Effect.STEP_SOUND`** | ~11 | `CloudEffect`, `SmokeSwirl*`, `BuildSpell`, `MaterializeSpell`, `ReachSpell`, `ZapSpell` | Visuals can differ | Map to `Particle` (or current Effect constants); spot-check in-game |
-| **`Attribute` / `AttributeModifier` constructors / `Attribute.values()`** | ~5 | `AttributeManager`, `AttributeUtil`, `ConfigDataUtil`, `MagicItems`, `VariableManager` | Slot / key / builder semantics | Attribute modifier builder + registry |
-| **Legacy `MaterialData` / `ItemStack.getData` / Enderman carried** | ~5 | `ReachSpell`, `SpawnEntitySpell`, `ZapSpell` | BlockData rewrite | `BlockData` / modern entity APIs |
-| **`OldEnum.name()`** | ~4 | `MagicItemData`, `AttributeUtil`, `VariableManager` | Serialized string form may change | Prefer `key().asString()` / registry names; check configs |
-| **`PatternType` values / valueOf / getKey** | ~4 | `AlteredBlockManager` | Banner pattern registry | Registry lookup by namespaced key |
-| **`Entity.setLastDamageCause`** | 3 | `PainSpell`, `DotSpell`, `DrainlifeSpell` | Affects damage attribution / other plugins | Confirm Paper replacement or drop if redundant with modern damage API |
-| **`JukeboxPlayableComponent` show-in-tooltip** | ~3 | `DataComponentsHandler` | Component API churn | Follow current Paper item component docs |
-| **`AbstractArrow.setKnockbackStrength`** | 2 | `VolleySpell` | Knockback semantics | Use current arrow knockback / weapon API |
-| **`Sound.valueOf`** | 1 | `DataComponentsHandler` | Enum → registry | `Registry.SOUNDS` / namespaced key |
-| **`EntityDamageByEntityEvent` legacy constructor** | 1 | `MagicSpellsEntityDamageByEntityEvent` | Custom damage event wiring | Modern damage event / `DamageSource` construction |
-
----
-
-## Extra warnings when full `-Xlint:deprecation` / `unchecked` is on
-
-These do not always appear in the default for-removal-only output:
+These do not appear in the default for-removal-only output:
 
 | Cluster | Notes |
 |---------|--------|
-| **`ChatColor`** | Many call sites (`MagicSpells`, `MagicItemBehaviors`). Migrate to Adventure; spot-check `§` / legacy codes. |
-| **Deprecated `Targeted*Spell` overloads** (no-`args`) | Implementations must override until interfaces drop them. Prefer `@SuppressWarnings("deprecation")` on those methods rather than “fixing” the override away. |
+| **`ChatColor`** | Many call sites. Migrate to Adventure; spot-check legacy codes. |
+| **Deprecated `Targeted*Spell` overloads** (no-`args`) | Prefer `@SuppressWarnings("deprecation")` on overrides. |
 | **Unchecked casts** | `CastItem`, `MagicItemData`, `MagicItems` — generics cleanup or suppress. |
-| **Misc** | `World.getPVP`, `BookMeta` string pages, `FixedMetadataValue`, `JavaPlugin.getDescription`, WorldEdit `ClipboardFormats.findByFile`, etc. — each needs a small, tested migration. |
+| **Misc** | `World.getPVP`, `BookMeta` string pages, `FixedMetadataValue`, `JavaPlugin.getDescription`, WorldEdit `ClipboardFormats.findByFile`, etc. |
 
 ---
 
-## Priority suggestion
+## Unit tests added with this work
 
-1. Suppress or isolate **Conversations** if that feature is rare on LoM (stops drowning the warning list).
-2. **PotionData** next (touches magic items / matching).
-3. **Effect → Particle** for smoke effects (localized, easy to verify visually).
-4. Leave Attribute / Pattern / MaterialData for dedicated item-meta passes.
+- `PotionIdentityTest`
+- `AttributeSpecParserTest`
+- `SoundKeyNamesTest`
+- Existing `SpellSnippetValidatorTest` unchanged
+
+Regenerate spell option index for snippet tests: `python3 scripts/wiki/export-test-spell-index.py`

@@ -139,7 +139,7 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 			}
 		}
 
-		if (playBreakEffect) block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType());
+		if (playBreakEffect) block.getWorld().playEffect(block.getLocation(), Effect.DESTROY_BLOCK, block.getBlockData());
 
 		playSpellEffects(player, block.getLocation(), power, args);
 

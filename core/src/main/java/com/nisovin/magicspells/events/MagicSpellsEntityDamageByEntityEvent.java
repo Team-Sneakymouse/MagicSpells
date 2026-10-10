@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.HashMap;
 
 import org.bukkit.entity.Entity;
+import org.bukkit.damage.DamageType;
+import org.bukkit.damage.DamageSource;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import com.nisovin.magicspells.Spell;
@@ -16,7 +18,9 @@ public class MagicSpellsEntityDamageByEntityEvent extends EntityDamageByEntityEv
 	private final Spell spell;
 
 	public MagicSpellsEntityDamageByEntityEvent(Entity damager, Entity damagee, DamageCause cause, double damage, Spell spell) {
-		super(damager, damagee, cause, getModTemplate(damage), getModifierFunctionTemplate(0D));
+		super(damager, damagee, cause,
+			DamageSource.builder(DamageType.GENERIC).withCausingEntity(damager).withDirectEntity(damager).build(),
+			getModTemplate(damage), getModifierFunctionTemplate(0D), false);
 		this.spell = spell;
 	}
 	

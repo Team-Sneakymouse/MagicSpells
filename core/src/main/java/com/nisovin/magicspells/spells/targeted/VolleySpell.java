@@ -6,14 +6,17 @@ import java.util.HashMap;
 import java.util.ArrayList;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.util.Vector;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
@@ -172,7 +175,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 				float spread = this.spread.get(caster, target, power, args) / 10f;
 
 				Arrow arrow = from.getWorld().spawnArrow(spawn, v, speed, spread);
-				arrow.setKnockbackStrength(knockbackStrength.get(caster, target, power, args));
+				applyArrowKnockback(arrow, knockbackStrength.get(caster, target, power, args));
 				arrow.setCritical(critical);
 				arrow.setGravity(gravity);
 
@@ -216,6 +219,16 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 			if (targetLoc != null)
 				playSpellEffects(EffectPosition.TARGET, targetLoc, data);
 		}
+	}
+
+	/**
+	 * Arrow knockback is derived from the firing weapon's Punch enchant on modern Paper.
+	 */
+	private static void applyArrowKnockback(Arrow arrow, int strength) {
+		if (strength <= 0) return;
+		ItemStack weapon = new ItemStack(Material.BOW);
+		weapon.addUnsafeEnchantment(Enchantment.PUNCH, strength);
+		arrow.setWeapon(weapon);
 	}
 
 	@EventHandler
@@ -304,7 +317,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 				float spread = VolleySpell.this.spread.get(caster, target, power, args) / 10f;
 
 				Arrow arrow = spawn.getWorld().spawnArrow(spawn, dir, speed, spread);
-				arrow.setKnockbackStrength(knockbackStrength.get(caster, target, power, args));
+				applyArrowKnockback(arrow, knockbackStrength.get(caster, target, power, args));
 				arrow.setCritical(critical);
 				arrow.setGravity(gravity);
 
