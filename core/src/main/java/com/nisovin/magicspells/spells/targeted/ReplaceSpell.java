@@ -284,10 +284,11 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 							continue;
 
 						if (locationModifiers != null) {
-							ModifierResult modifierResult = locationModifiers.apply(caster, target, spellData);
+							ModifierResult modifierResult = locationModifiers.applyLocation(spellData.location(target));
 							if (!modifierResult.check()) {
 								continue;
 							}
+							spellData = modifierResult.data();
 						}
 
 						BlockData merged = BlockUtils.mergeBlockData(data, newBlockData, mergeBlockData);
@@ -315,14 +316,15 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 								return false;
 							}
 						}
-						spellData.setLocation(finalBlock.getLocation());
-						playSpellEffects(EffectPosition.SPECIAL, finalBlock.getLocation(), spellData);
+						spellData = spellData.location(finalBlock.getLocation());
+						SpellData effectData = spellData;
+						playSpellEffects(EffectPosition.SPECIAL, finalBlock.getLocation(), effectData);
 
 						if (change != null) {
 							AlteredBlockManager.Change finalChange = change;
 							MagicSpells.scheduleDelayedTask(() -> {
 								finalChange.undo(applyPhysics);
-								playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, finalBlock.getLocation(), spellData);
+								playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, finalBlock.getLocation(), effectData);
 							}, replaceDuration);
 						}
 

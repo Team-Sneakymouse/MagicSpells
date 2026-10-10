@@ -5,34 +5,45 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class SpellTargetLocationEvent extends SpellEvent implements Cancellable {
 
-	private Location target;
-	private String[] args;
-	private float power;
-	private boolean cancelled = false;
+	private SpellData spellData;
 
-	public SpellTargetLocationEvent(Spell spell, LivingEntity caster, Location target, float power, String[] args) {
-		super(spell, caster);
-		this.target = target;
-		this.power = power;
-		this.args = args;
+	private boolean cancelled = false;
+	private boolean castCancelled = false;
+
+	public SpellTargetLocationEvent(Spell spell, SpellData spellData) {
+		super(spell, spellData.caster());
+		this.spellData = spellData;
 	}
 
+	public SpellTargetLocationEvent(Spell spell, SpellData spellData, Location target) {
+		this(spell, spellData.location(target));
+	}
+
+	@Deprecated
+	public SpellTargetLocationEvent(Spell spell, LivingEntity caster, Location target, float power, String[] args) {
+		this(spell, new SpellData(caster, null, target, power, args));
+	}
+
+	@Deprecated
 	public SpellTargetLocationEvent(Spell spell, LivingEntity caster, Location target, float power) {
-		super(spell, caster);
-		this.target = target;
-		this.power = power;
-		this.args = null;
+		this(spell, new SpellData(caster, target, power, null));
+	}
+
+	@Override
+	public LivingEntity getCaster() {
+		return spellData.caster();
 	}
 
 	/**
 	 * Gets the location that is being targeted by the spell.
-	 * @return the targeted living entity
+	 * @return the targeted location
 	 */
 	public Location getTargetLocation() {
-		return target;
+		return spellData.location();
 	}
 
 	/**
@@ -40,7 +51,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @param target the new target
 	 */
 	public void setTargetLocation(Location target) {
-		this.target = target;
+		spellData = spellData.location(target);
 	}
 
 	/**
@@ -48,7 +59,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @return the power level
 	 */
 	public float getPower() {
-		return power;
+		return spellData.power();
 	}
 
 	/**
@@ -56,7 +67,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @param power the power level
 	 */
 	public void setPower(float power) {
-		this.power = power;
+		spellData = spellData.power(power);
 	}
 
 	/**
@@ -64,7 +75,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @return the spell arguments
 	 */
 	public String[] getSpellArgs() {
-		return args;
+		return spellData.args();
 	}
 
 	/**
@@ -72,7 +83,15 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @param power the power level multiplier
 	 */
 	public void increasePower(float power) {
-		this.power *= power;
+		spellData = spellData.power(spellData.power() * power);
+	}
+
+	public SpellData getSpellData() {
+		return spellData;
+	}
+
+	public void setSpellData(SpellData spellData) {
+		this.spellData = spellData;
 	}
 
 	@Override
@@ -83,6 +102,14 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	@Override
 	public void setCancelled(boolean cancelled) {
 		this.cancelled = cancelled;
+	}
+
+	public boolean isCastCancelled() {
+		return castCancelled;
+	}
+
+	public void setCastCancelled(boolean castCancelled) {
+		this.castCancelled = castCancelled;
 	}
 
 }

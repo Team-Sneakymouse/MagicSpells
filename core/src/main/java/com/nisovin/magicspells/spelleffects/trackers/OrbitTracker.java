@@ -76,7 +76,7 @@ public class OrbitTracker extends EffectTracker implements Runnable {
 		location = getLocation();
 
 		if (entity instanceof LivingEntity livingEntity && effect.getModifiers() != null) {
-			result = effect.getModifiers().apply(livingEntity, data);
+			result = effect.getModifiers().apply(data.caster(livingEntity));
 			data = result.data();
 
 			if (!result.check()) return;

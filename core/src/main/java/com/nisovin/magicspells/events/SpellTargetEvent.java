@@ -4,64 +4,73 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
+import com.nisovin.magicspells.util.SpellData;
 
 /**
  * This event is fired whenever a TargetedSpell is trying to target an entity.
  * Cancelling this event will prevent the spell from targeting the entity.
- *
  */
 public class SpellTargetEvent extends SpellEvent implements Cancellable {
 
-	private LivingEntity target;
-	private String[] args;
-	private float power;
+	private SpellData spellData;
+
 	private boolean cancelled = false;
 	private boolean castCancelled = false;
 
-	public SpellTargetEvent(Spell spell, LivingEntity caster, LivingEntity target, float power, String[] args) {
-		super(spell, caster);
-		this.target = target;
-		this.power = power;
-		this.args = args;
+	public SpellTargetEvent(Spell spell, SpellData spellData) {
+		super(spell, spellData.caster());
+		this.spellData = spellData;
 	}
 
-	public SpellTargetEvent(Spell spell, LivingEntity caster, LivingEntity target, float power) {
-		super(spell, caster);
-		this.target = target;
-		this.power = power;
-		this.args = null;
+	public SpellTargetEvent(Spell spell, SpellData spellData, LivingEntity target) {
+		this(spell, spellData.target(target));
 	}
-	
+
+	@Deprecated
+	public SpellTargetEvent(Spell spell, LivingEntity caster, LivingEntity target, float power, String[] args) {
+		this(spell, new SpellData(caster, target, power, args));
+	}
+
+	@Deprecated
+	public SpellTargetEvent(Spell spell, LivingEntity caster, LivingEntity target, float power) {
+		this(spell, new SpellData(caster, target, power, null));
+	}
+
+	@Override
+	public LivingEntity getCaster() {
+		return spellData.caster();
+	}
+
 	/**
 	 * Gets the living entity that is being targeted by the spell.
 	 * @return the targeted living entity
 	 */
 	public LivingEntity getTarget() {
-		return target;
+		return spellData.target();
 	}
-	
+
 	/**
 	 * Sets the spell's target to the provided living entity.
 	 * @param target the new target
 	 */
 	public void setTarget(LivingEntity target) {
-		this.target = target;
+		spellData = spellData.target(target);
 	}
-	
+
 	/**
 	 * Gets the current power level of the spell. Spells start at a power level of 1.0.
 	 * @return the power level
 	 */
 	public float getPower() {
-		return power;
+		return spellData.power();
 	}
-	
+
 	/**
 	 * Sets the power level for the spell being cast.
 	 * @param power the power level
 	 */
 	public void setPower(float power) {
-		this.power = power;
+		spellData = spellData.power(power);
 	}
 
 	/**
@@ -69,7 +78,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	 * @return the spell arguments
 	 */
 	public String[] getSpellArgs() {
-		return args;
+		return spellData.args();
 	}
 
 	/**
@@ -77,7 +86,15 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	 * @param power the power level multiplier
 	 */
 	public void increasePower(float power) {
-		this.power *= power;
+		spellData = spellData.power(spellData.power() * power);
+	}
+
+	public SpellData getSpellData() {
+		return spellData;
+	}
+
+	public void setSpellData(SpellData spellData) {
+		this.spellData = spellData;
 	}
 
 	@Override
@@ -87,7 +104,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 
 	@Override
 	public void setCancelled(boolean cancelled) {
-		this.cancelled = cancelled;		
+		this.cancelled = cancelled;
 	}
 
 	public boolean isCastCancelled() {

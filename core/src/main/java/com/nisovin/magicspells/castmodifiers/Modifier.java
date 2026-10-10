@@ -171,51 +171,84 @@ public class Modifier implements IModifier {
 	}
 
 	@Override
+	public ModifierResult apply(SpellData data) {
+		ModifierResult result;
+		if (alertCondition) {
+			result = ((IModifier) condition).apply(data);
+			if (negated) result = new ModifierResult(result.data(), !result.check());
+		} else result = new ModifierResult(data, negated != condition.check(data.caster()));
+		return type.apply(data.caster(), result, customActionData);
+	}
+
+	@Override
+	public ModifierResult applyTarget(SpellData data) {
+		ModifierResult result;
+		if (alertCondition) {
+			result = ((IModifier) condition).applyTarget(data);
+			if (negated) result = new ModifierResult(result.data(), !result.check());
+		} else result = new ModifierResult(data, negated != condition.check(data.caster(), data.target()));
+		return type.apply(data.caster(), data.target(), result, customActionData);
+	}
+
+	@Override
+	public ModifierResult applyLocation(SpellData data) {
+		ModifierResult result;
+		if (alertCondition) {
+			result = ((IModifier) condition).applyLocation(data);
+			if (negated) result = new ModifierResult(result.data(), !result.check());
+		} else result = new ModifierResult(data, negated != condition.check(data.caster(), data.location()));
+		return type.apply(data.caster(), data.location(), result, customActionData);
+	}
+
+	@Override
+	@Deprecated
 	public ModifierResult apply(LivingEntity caster, SpellData data) {
-		ModifierResult result;
-		if (alertCondition) {
-			result = ((IModifier) condition).apply(caster, data);
-			if (negated) result = new ModifierResult(result.data(), !result.check());
-		} else result = new ModifierResult(data, negated != condition.check(caster));
-		return type.apply(caster, result, customActionData);
+		return apply(data.caster(caster));
 	}
 
 	@Override
+	@Deprecated
 	public ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data) {
-		ModifierResult result;
-		if (alertCondition) {
-			result = ((IModifier) condition).apply(caster, target, data);
-			if (negated) result = new ModifierResult(result.data(), !result.check());
-		} else result = new ModifierResult(data, negated != condition.check(caster, target));
-		return type.apply(caster, result, customActionData);
+		return applyTarget(data.caster(caster).target(target));
 	}
 
 	@Override
+	@Deprecated
 	public ModifierResult apply(LivingEntity caster, Location target, SpellData data) {
-		ModifierResult result;
-		if (alertCondition) {
-			result = ((IModifier) condition).apply(caster, target, data);
-			if (negated) result = new ModifierResult(result.data(), !result.check());
-		} else result = new ModifierResult(data, negated != condition.check(caster, target));
-		return type.apply(caster, result, customActionData);
+		return applyLocation(data.caster(caster).location(target));
 	}
 
 	@Override
+	public boolean check(SpellData data) {
+		return checkCondition(condition.check(data.caster()));
+	}
+
+	@Override
+	public boolean checkTarget(SpellData data) {
+		return checkCondition(condition.check(data.caster(), data.target()));
+	}
+
+	@Override
+	public boolean checkLocation(SpellData data) {
+		return checkCondition(condition.check(data.caster(), data.location()));
+	}
+
+	@Override
+	@Deprecated
 	public boolean check(LivingEntity livingEntity) {
-		boolean check = condition.check(livingEntity);
-		return checkCondition(check);
+		return check(new SpellData(livingEntity));
 	}
 
 	@Override
+	@Deprecated
 	public boolean check(LivingEntity livingEntity, LivingEntity entity) {
-		boolean check = condition.check(livingEntity, entity);
-		return checkCondition(check);
+		return checkTarget(new SpellData(livingEntity, entity));
 	}
 
 	@Override
+	@Deprecated
 	public boolean check(LivingEntity livingEntity, Location location) {
-		boolean check = condition.check(livingEntity, location);
-		return checkCondition(check);
+		return checkLocation(new SpellData(livingEntity, location));
 	}
 
 	private boolean checkCondition(boolean check) {

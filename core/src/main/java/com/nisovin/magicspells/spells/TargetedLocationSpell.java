@@ -3,12 +3,21 @@ package com.nisovin.magicspells.spells;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
+import com.nisovin.magicspells.Spell.PostCastAction;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
+
 /**
- * Targeted location casts. Implement the caster+location {@code String[] args} overload.
- * The location-only args form defaults to {@code false}; override when needed.
- * No-args wrappers are deprecated defaults that pass {@code null} args.
+ * Targeted location casts. Prefer {@link #castAtLocation(SpellData)}.
  */
 public interface TargetedLocationSpell {
+
+	default CastResult castAtLocation(SpellData data) {
+		boolean success = data.hasCaster()
+			? castAtLocation(data.caster(), data.location(), data.power(), data.args())
+			: castAtLocation(data.location(), data.power(), data.args());
+		return new CastResult(success ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
+	}
 
 	boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args);
 

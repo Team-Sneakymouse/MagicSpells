@@ -432,7 +432,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			}
 
 			if (loopModifiers != null && (!skipFirstLoopModifiers || count > 0)) {
-				ModifierResult result = loopModifiers.apply(caster, data);
+				ModifierResult result = loopModifiers.apply(data);
 				data = result.data();
 
 				if (!result.check()) {
@@ -442,7 +442,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			}
 
 			if (targetEntity != null && loopTargetModifiers != null && (!skipFirstLoopTargetModifiers || count > 0)) {
-				ModifierResult result = loopTargetModifiers.apply(caster, targetEntity, data);
+				ModifierResult result = loopTargetModifiers.applyTarget(data.target(targetEntity));
 				data = result.data();
 
 				if (!result.check()) {
@@ -453,7 +453,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 			if (targetLocation != null && loopLocationModifiers != null
 					&& (!skipFirstLoopLocationModifiers || count > 0)) {
-				ModifierResult result = loopLocationModifiers.apply(caster, targetLocation, data);
+				ModifierResult result = loopLocationModifiers.applyLocation(data.location(targetLocation));
 				data = result.data();
 
 				if (!result.check()) {

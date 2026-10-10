@@ -5,6 +5,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
 import org.bukkit.block.Block;
 
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -29,97 +30,117 @@ public class DummySpell extends TargetedSpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			if (Boolean.TRUE.equals(requireEntityTarget.get(caster, power, args))) {
-				TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-				if (target.noTarget())
-					return noTarget(caster, args, target);
+	public CastResult cast(SpellData data) {
+		if (Boolean.TRUE.equals(requireEntityTarget.get(data))) {
+			TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), data.args());
+			if (target.noTarget())
+				return new CastResult(noTarget(data.caster(), data.args(), target), data);
 
-				playSpellEffects(caster, target.target(), target.power(), args);
-				sendMessages(caster, target.target(), args);
+			data = data.target(target.target()).power(target.power());
+			playSpellEffects(data.caster(), data.target(), data);
+			sendMessages(data.caster(), data.target(), data.args());
+			return new CastResult(PostCastAction.NO_MESSAGES, data);
+		}
 
-				return PostCastAction.NO_MESSAGES;
-			} else {
-				Location loc = getCurrentCastLocation();
-				if (loc == null && caster != null) {
-					try {
-						Block block = getTargetedBlock(caster, power, args);
-						if (block != null && !BlockUtils.isAir(block.getType()))
-							loc = block.getLocation().add(0.5, 0, 0.5);
-					} catch (IllegalStateException ignored) {
-					}
-				}
-
-				if (loc == null)
-					return noTarget(caster, args);
-
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, loc, power, args);
-				EventUtil.call(event);
-				if (event.isCancelled())
-					loc = null;
-				else {
-					loc = event.getTargetLocation();
-					power = event.getPower();
-				}
-
-				if (loc == null)
-					return noTarget(caster, args);
-
-				// Include trail / reverse-line (start→end), same as castAtLocation(caster, loc).
-				playSpellEffects(caster, loc, power, args);
-				sendMessages(caster, loc, args);
-
-				return PostCastAction.NO_MESSAGES;
+		Location loc = data.location();
+		if (loc == null && data.caster() != null) {
+			try {
+				Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+				if (block != null && !BlockUtils.isAir(block.getType()))
+					loc = block.getLocation().add(0.5, 0, 0.5);
+			} catch (IllegalStateException ignored) {
 			}
 		}
 
-		return PostCastAction.HANDLE_NORMALLY;
+		if (loc == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(loc));
+		EventUtil.call(event);
+		if (event.isCancelled())
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		data = event.getSpellData();
+		playSpellEffects(data.caster(), data.location(), data);
+		sendMessages(data.caster(), data.location(), data.args());
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			playSpellEffects(data.caster(), data.target(), data);
+		} else {
+			if (!validTargetList.canTarget(data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			playSpellEffects(EffectPosition.TARGET, data.target(), data);
+		}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (data.hasCaster())
+			playSpellEffects(data.caster(), data.location(), data);
+		else
+			playSpellEffects(EffectPosition.TARGET, data.location(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			playSpellEffects(data.caster(), data.location(), data.target(), data);
+		} else {
+			if (!validTargetList.canTarget(data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			playSpellEffects(data.location(), data.target(), data);
+		}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		playSpellEffects(caster, from, target, new SpellData(caster, target, from, power, args));
-		return true;
+		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		playSpellEffects(from, target, new SpellData(null, target, power, args));
-		return true;
+		return castAtEntityFromLocation(new SpellData(null, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override

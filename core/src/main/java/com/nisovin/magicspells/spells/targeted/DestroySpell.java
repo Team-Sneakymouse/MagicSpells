@@ -240,9 +240,10 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 						continue;
 
 					if (locationModifiers != null) {
-						ModifierResult modifierResult = locationModifiers.apply(caster, b.getLocation(), spellData);
+						ModifierResult modifierResult = locationModifiers.applyLocation(spellData.location(b.getLocation()));
 						if (!modifierResult.check())
 							continue;
+						spellData = modifierResult.data();
 					}
 
 					if (blockTypesToIgnore != null && blockTypesToIgnore.contains(b.getType())) {

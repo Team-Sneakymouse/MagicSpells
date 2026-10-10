@@ -256,57 +256,75 @@ public class MultiCondition extends Condition implements IModifier {
 	}
 
 	@Override
+	public ModifierResult apply(SpellData data) {
+		int pass = 0;
+		int fail = 0;
+		for (Modifier m : modifiers) {
+			ModifierResult result = m.apply(data);
+			data = result.data();
+			if (result.check()) pass++;
+			else {
+				fail++;
+				String msg = m.getStrModifierFailed();
+				if (msg != null) MagicSpells.sendMessage(msg, data.caster(), result.data().args());
+			}
+			if (!passCondition.shouldContinue(pass, fail)) return new ModifierResult(data, passCondition.hasPassed(pass, fail));
+		}
+		return new ModifierResult(data, passCondition.hasPassed(pass, fail));
+	}
+
+	@Override
+	public ModifierResult applyTarget(SpellData data) {
+		int pass = 0;
+		int fail = 0;
+		for (Modifier m : modifiers) {
+			ModifierResult result = m.applyTarget(data);
+			data = result.data();
+			if (result.check()) pass++;
+			else {
+				fail++;
+				String msg = m.getStrModifierFailed();
+				if (msg != null) MagicSpells.sendMessage(msg, data.caster(), result.data().args());
+			}
+			if (!passCondition.shouldContinue(pass, fail)) return new ModifierResult(data, passCondition.hasPassed(pass, fail));
+		}
+		return new ModifierResult(data, passCondition.hasPassed(pass, fail));
+	}
+
+	@Override
+	public ModifierResult applyLocation(SpellData data) {
+		int pass = 0;
+		int fail = 0;
+		for (Modifier m : modifiers) {
+			ModifierResult result = m.applyLocation(data);
+			data = result.data();
+			if (result.check()) pass++;
+			else {
+				fail++;
+				String msg = m.getStrModifierFailed();
+				if (msg != null) MagicSpells.sendMessage(msg, data.caster(), result.data().args());
+			}
+			if (!passCondition.shouldContinue(pass, fail)) return new ModifierResult(data, passCondition.hasPassed(pass, fail));
+		}
+		return new ModifierResult(data, passCondition.hasPassed(pass, fail));
+	}
+
+	@Override
+	@Deprecated
 	public ModifierResult apply(LivingEntity caster, SpellData data) {
-		int pass = 0;
-		int fail = 0;
-		for (Modifier m : modifiers) {
-			ModifierResult result = m.apply(caster, data);
-			data = result.data();
-			if (result.check()) pass++;
-			else {
-				fail++;
-				String msg = m.getStrModifierFailed();
-				if (msg != null) MagicSpells.sendMessage(msg, caster, result.data().args());
-			}
-			if (!passCondition.shouldContinue(pass, fail)) return new ModifierResult(data, passCondition.hasPassed(pass, fail));
-		}
-		return new ModifierResult(data, passCondition.hasPassed(pass, fail));
+		return apply(data.caster(caster));
 	}
 
 	@Override
+	@Deprecated
 	public ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data) {
-		int pass = 0;
-		int fail = 0;
-		for (Modifier m : modifiers) {
-			ModifierResult result = m.apply(caster, target, data);
-			data = result.data();
-			if (result.check()) pass++;
-			else {
-				fail++;
-				String msg = m.getStrModifierFailed();
-				if (msg != null) MagicSpells.sendMessage(msg, caster, result.data().args());
-			}
-			if (!passCondition.shouldContinue(pass, fail)) return new ModifierResult(data, passCondition.hasPassed(pass, fail));
-		}
-		return new ModifierResult(data, passCondition.hasPassed(pass, fail));
+		return applyTarget(data.caster(caster).target(target));
 	}
 
 	@Override
+	@Deprecated
 	public ModifierResult apply(LivingEntity caster, Location target, SpellData data) {
-		int pass = 0;
-		int fail = 0;
-		for (Modifier m : modifiers) {
-			ModifierResult result = m.apply(caster, target, data);
-			data = result.data();
-			if (result.check()) pass++;
-			else {
-				fail++;
-				String msg = m.getStrModifierFailed();
-				if (msg != null) MagicSpells.sendMessage(msg, caster, result.data().args());
-			}
-			if (!passCondition.shouldContinue(pass, fail)) return new ModifierResult(data, passCondition.hasPassed(pass, fail));
-		}
-		return new ModifierResult(data, passCondition.hasPassed(pass, fail));
+		return applyLocation(data.caster(caster).location(target));
 	}
 
 	public enum PassCondition {

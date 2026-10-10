@@ -80,7 +80,8 @@ public class ModifierSet {
 			}
 			if (cont) continue;
 
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), event.getSpellArgs());
+			if (modifier.getStrModifierFailed() != null)
+				MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), event.getSpellData().args());
 			break;
 		}
 	}
@@ -98,7 +99,7 @@ public class ModifierSet {
 	public void apply(SpellCastedEvent event) {
 		for (Modifier modifier : modifiers) {
 			boolean cont = modifier.apply(event);
-			
+
 			if (cont) continue;
 			break;
 		}
@@ -116,7 +117,8 @@ public class ModifierSet {
 			}
 			if (cont) continue;
 
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), MagicSpells.NULL_ARGS);
+			if (modifier.getStrModifierFailed() != null)
+				MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), event.getSpellData().args());
 			break;
 		}
 	}
@@ -136,78 +138,136 @@ public class ModifierSet {
 			boolean cont = modifier.apply(event);
 			if (cont) continue;
 
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), MagicSpells.NULL_ARGS);
+			if (modifier.getStrModifierFailed() != null)
+				MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), event.getSpellData().args());
 			break;
 		}
 	}
 
+	/**
+	 * Caster-only modifier apply; condition checks use {@code data.caster()}.
+	 */
+	public ModifierResult apply(SpellData data) {
+		for (Modifier modifier : modifiers) {
+			ModifierResult result = modifier.apply(data);
+			if (result.check()) {
+				data = result.data();
+				continue;
+			}
+
+			if (modifier.getStrModifierFailed() != null)
+				MagicSpells.sendMessage(modifier.getStrModifierFailed(), data.caster(), result.data().args());
+			return result;
+		}
+
+		return new ModifierResult(data, true);
+	}
+
+	/**
+	 * Entity-target modifier apply; condition checks use {@code data.caster()} vs {@code data.target()}.
+	 */
+	public ModifierResult applyTarget(SpellData data) {
+		for (Modifier modifier : modifiers) {
+			ModifierResult result = modifier.applyTarget(data);
+			if (result.check()) {
+				data = result.data();
+				continue;
+			}
+
+			if (modifier.getStrModifierFailed() != null)
+				MagicSpells.sendMessage(modifier.getStrModifierFailed(), data.caster(), result.data().args());
+			return result;
+		}
+
+		return new ModifierResult(data, true);
+	}
+
+	/**
+	 * Location-target modifier apply; condition checks use {@code data.caster()} vs {@code data.location()}.
+	 */
+	public ModifierResult applyLocation(SpellData data) {
+		for (Modifier modifier : modifiers) {
+			ModifierResult result = modifier.applyLocation(data);
+			if (result.check()) {
+				data = result.data();
+				continue;
+			}
+
+			if (modifier.getStrModifierFailed() != null)
+				MagicSpells.sendMessage(modifier.getStrModifierFailed(), data.caster(), result.data().args());
+			return result;
+		}
+
+		return new ModifierResult(data, true);
+	}
+
+	/**
+	 * @deprecated use {@link #apply(SpellData)}
+	 */
+	@Deprecated
 	public ModifierResult apply(LivingEntity caster, SpellData data) {
-		for (Modifier modifier : modifiers) {
-		    ModifierResult result = modifier.apply(caster, data);
-			if (result.check()) {
-				data = result.data();
-				continue;
-			}
-
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), caster, result.data().args());
-			return result;
-		}
-
-		return new ModifierResult(data, true);
+		return apply(data.caster(caster));
 	}
 
+	/**
+	 * @deprecated use {@link #applyTarget(SpellData)}
+	 */
+	@Deprecated
 	public ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data) {
-		for (Modifier modifier : modifiers) {
-			ModifierResult result = modifier.apply(caster, target, data);
-			if (result.check()) {
-				data = result.data();
-				continue;
-			}
-
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), caster, result.data().args());
-			return result;
-		}
-
-		return new ModifierResult(data, true);
+		return applyTarget(data.caster(caster).target(target));
 	}
 
+	/**
+	 * @deprecated use {@link #applyLocation(SpellData)}
+	 */
+	@Deprecated
 	public ModifierResult apply(LivingEntity caster, Location target, SpellData data) {
-		for (Modifier modifier : modifiers) {
-			ModifierResult result = modifier.apply(caster, target, data);
-			if (result.check()) {
-				data = result.data();
-				continue;
-			}
-
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), caster, result.data().args());
-			return result;
-		}
-
-		return new ModifierResult(data, true);
+		return applyLocation(data.caster(caster).location(target));
 	}
 
+	public boolean check(SpellData data) {
+		for (Modifier modifier : modifiers) {
+			if (!modifier.check(data)) return false;
+		}
+		return true;
+	}
+
+	public boolean checkTarget(SpellData data) {
+		for (Modifier modifier : modifiers) {
+			if (!modifier.checkTarget(data)) return false;
+		}
+		return true;
+	}
+
+	public boolean checkLocation(SpellData data) {
+		for (Modifier modifier : modifiers) {
+			if (!modifier.checkLocation(data)) return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @deprecated use {@link #check(SpellData)}
+	 */
+	@Deprecated
 	public boolean check(LivingEntity livingEntity) {
-		for (Modifier modifier : modifiers) {
-			boolean pass = modifier.check(livingEntity);
-			if (!pass) return false;
-		}
-		return true;
+		return check(new SpellData(livingEntity));
 	}
 
+	/**
+	 * @deprecated use {@link #checkTarget(SpellData)}
+	 */
+	@Deprecated
 	public boolean check(LivingEntity livingEntity, LivingEntity entity) {
-		for (Modifier modifier : modifiers) {
-			boolean pass = modifier.check(livingEntity, entity);
-			if (!pass) return false;
-		}
-		return true;
+		return checkTarget(new SpellData(livingEntity, entity));
 	}
 
+	/**
+	 * @deprecated use {@link #checkLocation(SpellData)}
+	 */
+	@Deprecated
 	public boolean check(LivingEntity livingEntity, Location location) {
-		for (Modifier modifier : modifiers) {
-			boolean pass = modifier.check(livingEntity, location);
-			if (!pass) return false;
-		}
-		return true;
+		return checkLocation(new SpellData(livingEntity, location));
 	}
 
 }

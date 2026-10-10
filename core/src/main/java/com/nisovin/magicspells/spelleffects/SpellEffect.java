@@ -161,13 +161,13 @@ public abstract class SpellEffect {
 
 		ModifierResult result = null;
 		if (casterModifiers != null && data.caster() != null) {
-			result = casterModifiers.apply(data.caster(), data);
+			result = casterModifiers.apply(data);
 			if (!result.check()) return result;
 		}
 
 		if (targetModifiers != null && data.caster() != null && data.target() != null) {
 			if (result != null) data = result.data();
-			return targetModifiers.apply(data.caster(), data.target(), data);
+			return targetModifiers.applyTarget(data);
 		}
 
 		return result == null ? new ModifierResult(data, true) : result;
@@ -178,20 +178,20 @@ public abstract class SpellEffect {
 
 		ModifierResult result = null;
 		if (casterModifiers != null) {
-			result = casterModifiers.apply(data.caster(), data);
+			result = casterModifiers.apply(data);
 			if (!result.check()) return result;
 		}
 
 		if (targetModifiers != null && data.caster() != null && data.target() != null) {
 			if (result != null) data = result.data();
 
-			result = targetModifiers.apply(data.caster(), data.target(), data);
+			result = targetModifiers.applyTarget(data);
 			if (!result.check()) return result;
 		}
 
 		if (locationModifiers != null && data.caster() != null) {
 			if (result != null) data = result.data();
-			return locationModifiers.apply(data.caster(), location, data);
+			return locationModifiers.applyLocation(data.location(location));
 		}
 
 		return result == null ? new ModifierResult(data, true) : result;
@@ -248,7 +248,7 @@ public abstract class SpellEffect {
 		data = result.data();
 
 		if (modifiers != null && entity instanceof LivingEntity le) {
-			result = modifiers.apply(le, data);
+			result = modifiers.apply(data.caster(le));
 			if (!result.check()) return null;
 			data = result.data();
 		}

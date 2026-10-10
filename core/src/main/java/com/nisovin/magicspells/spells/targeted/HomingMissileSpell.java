@@ -364,7 +364,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 			}
 
 			if (homingModifiers != null) {
-				ModifierResult result = homingModifiers.apply(caster, data);
+				ModifierResult result = homingModifiers.apply(data);
 				data = result.data();
 				power = data.power();
 
@@ -485,7 +485,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 						continue;
 
 					effectLoc = spellEffect.getSpellEffect().applyOffsets(currentLocation.clone(), data);
-					data.setLocation(effectLoc);
+					data = data.location(effectLoc);
 					effect.setLocation(effectLoc);
 
 					if (effect instanceof ModifiedEffect) {

@@ -21,7 +21,11 @@ public interface ConfigData<T> {
 	default T get(SpellData data) {
 		if (data == null)
 			return get(null, null, null, 1f, null);
-		return get(data.caster(), data.target(), data.location(), data.power(), data.args());
+		// When location was not set on SpellData, fall back to the loose overload that
+		// derives location from target/caster (same as get(caster, target, power, args)).
+		if (data.hasLocation())
+			return get(data.caster(), data.target(), data.location(), data.power(), data.args());
+		return get(data.caster(), data.target(), data.power(), data.args());
 	}
 
 	default boolean isConstant() {

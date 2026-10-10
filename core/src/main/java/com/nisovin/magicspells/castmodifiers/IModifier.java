@@ -21,12 +21,82 @@ public interface IModifier {
 	boolean apply(MagicSpellsGenericPlayerEvent event);
 	boolean apply(SpellCastedEvent event);
 
+	/**
+	 * Apply modifiers with a caster-only condition check, using context from {@code data}.
+	 */
+	default ModifierResult apply(SpellData data) {
+		return apply(data.caster(), data);
+	}
+
+	/**
+	 * Apply modifiers with an entity-target condition check ({@code data.caster()} vs {@code data.target()}).
+	 */
+	default ModifierResult applyTarget(SpellData data) {
+		return apply(data.caster(), data.target(), data);
+	}
+
+	/**
+	 * Apply modifiers with a location-target condition check ({@code data.caster()} vs {@code data.location()}).
+	 */
+	default ModifierResult applyLocation(SpellData data) {
+		return apply(data.caster(), data.location(), data);
+	}
+
+	/**
+	 * @deprecated use {@link #apply(SpellData)}
+	 */
+	@Deprecated
 	ModifierResult apply(LivingEntity caster, SpellData data);
+
+	/**
+	 * @deprecated use {@link #applyTarget(SpellData)} after putting the target on {@code data}
+	 */
+	@Deprecated
 	ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data);
+
+	/**
+	 * @deprecated use {@link #applyLocation(SpellData)} after putting the location on {@code data}
+	 */
+	@Deprecated
 	ModifierResult apply(LivingEntity caster, Location target, SpellData data);
 
+	/**
+	 * Caster-only required/denied check using {@code data.caster()}.
+	 */
+	default boolean check(SpellData data) {
+		return check(data.caster());
+	}
+
+	/**
+	 * Entity-target required/denied check.
+	 */
+	default boolean checkTarget(SpellData data) {
+		return check(data.caster(), data.target());
+	}
+
+	/**
+	 * Location-target required/denied check.
+	 */
+	default boolean checkLocation(SpellData data) {
+		return check(data.caster(), data.location());
+	}
+
+	/**
+	 * @deprecated use {@link #check(SpellData)}
+	 */
+	@Deprecated
 	boolean check(LivingEntity livingEntity);
+
+	/**
+	 * @deprecated use {@link #checkTarget(SpellData)}
+	 */
+	@Deprecated
 	boolean check(LivingEntity livingEntity, LivingEntity entity);
+
+	/**
+	 * @deprecated use {@link #checkLocation(SpellData)}
+	 */
+	@Deprecated
 	boolean check(LivingEntity livingEntity, Location location);
 
 }

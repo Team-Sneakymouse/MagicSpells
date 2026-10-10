@@ -383,7 +383,7 @@ public class HomingProjectileSpell extends TargetedSpell
 			}
 
 			if (homingModifiers != null) {
-				ModifierResult result = homingModifiers.apply(caster, data);
+				ModifierResult result = homingModifiers.apply(data);
 				data = result.data();
 				power = data.power();
 				args = data.args();

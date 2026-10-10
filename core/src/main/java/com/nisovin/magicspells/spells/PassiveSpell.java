@@ -352,8 +352,8 @@ public class PassiveSpell extends Spell {
 
 			disabled = true;
 			try {
-				SpellCastEvent castEvent = new SpellCastEvent(this, caster, SpellCastState.NORMAL, power, null, cooldown,
-						reagents.clone(), 0);
+				SpellCastEvent castEvent = new SpellCastEvent(this, SpellCastState.NORMAL,
+						new SpellData(caster, target, location, power, null), cooldown, reagents.clone(), 0);
 				EventUtil.call(castEvent);
 
 				if (castEvent.isCancelled() || castEvent.getSpellCastState() != SpellCastState.NORMAL) {

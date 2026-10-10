@@ -2,12 +2,23 @@ package com.nisovin.magicspells.spells;
 
 import org.bukkit.entity.LivingEntity;
 
+import com.nisovin.magicspells.Spell.PostCastAction;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
+
 /**
- * Targeted entity casts. Implement the caster+target {@code String[] args} overload.
- * The target-only args form defaults to {@code false}; override when needed.
- * No-args wrappers are deprecated defaults that pass {@code null} args.
+ * Targeted entity casts. Prefer {@link #castAtEntity(SpellData)}.
+ * Existing boolean overloads remain for soft migration; the SpellData default
+ * bridges to them until spell bodies override {@code castAtEntity(SpellData)}.
  */
 public interface TargetedEntitySpell {
+
+	default CastResult castAtEntity(SpellData data) {
+		boolean success = data.hasCaster()
+			? castAtEntity(data.caster(), data.target(), data.power(), data.args())
+			: castAtEntity(data.target(), data.power(), data.args());
+		return new CastResult(success ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
+	}
 
 	boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args);
 
