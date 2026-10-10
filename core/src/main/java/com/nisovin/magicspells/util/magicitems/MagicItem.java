@@ -9,6 +9,7 @@ public class MagicItem {
 
 	private ItemStack itemStack;
 	private MagicItemData magicItemData;
+	private long definitionVersion;
 
 	public MagicItem(ItemStack itemStack, MagicItemData magicItemData) {
 		this.itemStack = itemStack;
@@ -21,6 +22,14 @@ public class MagicItem {
 
 	public MagicItemData getMagicItemData() {
 		return magicItemData;
+	}
+
+	public long getDefinitionVersion() {
+		return definitionVersion;
+	}
+
+	public void setDefinitionVersion(long definitionVersion) {
+		this.definitionVersion = definitionVersion;
 	}
 
 	public ItemStack createFor(Player player) {
@@ -50,7 +59,9 @@ public class MagicItem {
 
 	@Override
 	public MagicItem clone() {
-		return new MagicItem(itemStack.clone(), magicItemData.clone());
+		MagicItem copy = new MagicItem(itemStack.clone(), magicItemData.clone());
+		copy.definitionVersion = definitionVersion;
+		return copy;
 	}
 
 }

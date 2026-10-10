@@ -68,8 +68,9 @@ public class MagicItemUpdater {
 
     private static final Map<String, MagicItem> magicItems = getMagicItems();
     private static final Map<String, MagicItemData> magicItemsCache = new HashMap<>();
-    private static final NamespacedKey NAME_KEY = new NamespacedKey(MagicSpells.getInstance(), "magicitem");
-    private static final NamespacedKey SOULBOUND_OWNER_KEY = new NamespacedKey(MagicSpells.getInstance(), "soulbound_owner");
+    private static final NamespacedKey NAME_KEY = MagicItemBehaviorKeys.magicItem();
+    private static final NamespacedKey VERSION_KEY = MagicItemBehaviorKeys.magicItemVersion();
+    private static final NamespacedKey SOULBOUND_OWNER_KEY = MagicItemBehaviorKeys.soulboundOwner();
 
     // Active updating of items on login/inventory open
     public static class PersistentDataUpdater implements Listener {
@@ -324,6 +325,15 @@ public class MagicItemUpdater {
         if (magicitemName == null || !magicItems.containsKey(magicitemName))
             return itemStack;
 
+        MagicItem magicItem = magicItems.get(magicitemName);
+        if (magicItem == null)
+            return itemStack;
+
+        long definitionVersion = magicItem.getDefinitionVersion();
+        Long stampedVersion = container.get(VERSION_KEY, PersistentDataType.LONG);
+        if (stampedVersion != null && stampedVersion == definitionVersion)
+            return itemStack;
+
         // Ignore transient soulbound ownership when determining whether a magic item needs updating.
         ItemStack compareStack = itemStack;
         if (container.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
@@ -336,14 +346,14 @@ public class MagicItemUpdater {
         }
 
         MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(compareStack);
-        MagicItemData magicItemData = MagicItems.getMagicItemDataByInternalName(magicitemName);
+        MagicItemData magicItemData = magicItem.getMagicItemData();
 
         if (magicItemData == null || stackData == null)
             return itemStack;
         if (MagicItems.matches(magicItemData, compareStack, false))
-            return itemStack;
+            return MagicItemDefinitionVersions.ensureStamped(itemStack, definitionVersion);
 
-        return updateItem(itemStack, magicItems.get(magicitemName));
+        return updateItem(itemStack, magicItem);
     }
 
     public static ItemStack updateItem(ItemStack itemStack, MagicItem magicItem) {
@@ -477,6 +487,7 @@ public class MagicItemUpdater {
             MagicItems.applyMagicItemAttribute(updatedItem, meta, null, attr, true);
         }
 
+        meta.getPersistentDataContainer().set(VERSION_KEY, PersistentDataType.LONG, magicItem.getDefinitionVersion());
         updatedItem.setItemMeta(meta);
 
         if (countItemUpdates)

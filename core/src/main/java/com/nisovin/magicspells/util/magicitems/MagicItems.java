@@ -227,11 +227,13 @@ public class MagicItems {
 		if (str == null) return null;
 		if (magicItems.containsKey(str)) return magicItems.get(str);
 
-		MagicItem magicItem;
 		MagicItemData itemData = MagicItemDataParser.parseMagicItemData(str);
 		if (itemData == null) return null;
 
-		magicItem = getMagicItemFromData(itemData);
+		MagicItem magicItem = getMagicItemFromData(itemData);
+		if (magicItem != null)
+			MagicItemDefinitionVersions.applyToMagicItem(magicItem,
+					MagicItemDefinitionVersions.fingerprintString(str));
 		return magicItem;
 	}
 
@@ -588,6 +590,8 @@ public class MagicItems {
 			// It MUST have a type option
 			if (!section.contains("type")) return null;
 
+			long definitionVersion = MagicItemDefinitionVersions.fingerprintSection(section);
+
 			// See if this is managed by an alternative reader
 			ItemStack item = AlternativeReaderManager.deserialize(section);
 			if (item != null) {
@@ -637,6 +641,7 @@ public class MagicItems {
 				if (section.isBoolean("strict-enchant-level"))
 					magicItem.getMagicItemData().setStrictEnchantLevel(section.getBoolean("strict-enchant-level"));
 
+				MagicItemDefinitionVersions.applyToMagicItem(magicItem, definitionVersion);
 				return magicItem;
 			}
 
@@ -652,7 +657,11 @@ public class MagicItems {
 			item = new ItemStack(type);
 			itemData.setAttribute(TYPE, type);
 
-			if (type.isAir()) return new MagicItem(item, itemData);
+			if (type.isAir()) {
+				MagicItem airItem = new MagicItem(item, itemData);
+				MagicItemDefinitionVersions.applyToMagicItem(airItem, definitionVersion);
+				return airItem;
+			}
 
 			if (section.isInt("amount")) {
 				int amount = section.getInt("amount");
@@ -664,7 +673,11 @@ public class MagicItems {
 			}
 
 			ItemMeta meta = item.getItemMeta();
-			if (meta == null) return new MagicItem(item, itemData);
+			if (meta == null) {
+				MagicItem noMetaItem = new MagicItem(item, itemData);
+				MagicItemDefinitionVersions.applyToMagicItem(noMetaItem, definitionVersion);
+				return noMetaItem;
+			}
 
 			// Name
 			NameHandler.process(section, meta, itemData);
@@ -877,7 +890,9 @@ public class MagicItems {
 			if (section.isBoolean("strict-enchant-level"))
 				itemData.setStrictEnchantLevel(section.getBoolean("strict-enchant-level"));
 
-			return new MagicItem(item, itemData);
+			MagicItem magicItem = new MagicItem(item, itemData);
+			MagicItemDefinitionVersions.applyToMagicItem(magicItem, definitionVersion);
+			return magicItem;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
