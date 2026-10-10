@@ -250,7 +250,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		if (spellsOnPlace != null && !spellsOnPlace.isEmpty()) {
 			Location loc = block.getLocation().add(0.5, 0.5, 0.5);
 			for (Subspell spell : spellsOnPlace) {
-				spell.subcast(caster, loc, power, args);
+				spell.subcast(new SpellData(caster, loc, power, args));
 			}
 		}
 	}
@@ -460,11 +460,11 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 				spellCaster = _caster;
 			if (activationType.equals(ActivationType.TICK)) {
 				for (Subspell spell : spells) {
-					activated = spell.subcast(spellCaster, location, power, args) || activated;
+					activated = spell.subcast(new SpellData(spellCaster, location, power, args)) || activated;
 				}
 			} else {
 				for (Subspell spell : spellsOnRightClick) {
-					activated = spell.subcast(spellCaster, location, power, args) || activated;
+					activated = spell.subcast(new SpellData(spellCaster, location, power, args)) || activated;
 				}
 			}
 			playSpellEffects(EffectPosition.DELAYED, location, data);
@@ -493,7 +493,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			change.undo(false);
 			playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, block.getLocation(), data);
 			if (spellOnBreak != null)
-				spellOnBreak.subcast(caster, location, power, args);
+				spellOnBreak.subcast(new SpellData(caster, location, power, args));
 		}
 
 	}

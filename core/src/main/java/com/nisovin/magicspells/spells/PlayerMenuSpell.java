@@ -186,8 +186,8 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 
 	private void processClickSpell(Subspell subspell, Player caster, Player target, float power, String[] args) {
 		if (subspell == null) return;
-		if (castSpellsOnTarget) subspell.subcast(caster, target, power, args);
-		else subspell.subcast(caster, power, args);
+		if (castSpellsOnTarget) subspell.subcast(new SpellData(caster, target, power, args));
+		else subspell.subcast(new SpellData(caster, power, args));
 	}
 
 	private void open(Player opener, MenuData data) {
@@ -274,7 +274,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		OfflinePlayer target = skullMeta.getOwningPlayer();
 		if (target == null || !target.isOnline()) {
 			meta.displayName(translate(opener, null, skullNameOffline, args));
-			if (spellOffline != null) spellOffline.subcast(opener, power, args);
+			if (spellOffline != null) spellOffline.subcast(new SpellData(opener, power, args));
 
 			if (stayOpen) item.setItemMeta(meta);
 			else {
@@ -294,7 +294,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 
 		if (radius > 0 && targetPlayer.getLocation().distance(opener.getLocation()) > radius) {
 			meta.displayName(translate(opener, targetPlayer, skullNameRadius, args));
-			if (spellRange != null) spellRange.subcast(opener, power, args);
+			if (spellRange != null) spellRange.subcast(new SpellData(opener, power, args));
 
 			if (stayOpen) item.setItemMeta(meta);
 			else {

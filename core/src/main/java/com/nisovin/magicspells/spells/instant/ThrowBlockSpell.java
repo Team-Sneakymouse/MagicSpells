@@ -281,7 +281,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 						}
 					}
 					if (!info.spellActivated && spellOnLand != null) {
-						boolean success = spellOnLand.subcast(info.caster, block.getLocation(), info.power, info.args);
+						boolean success = spellOnLand.subcast(new SpellData(info.caster, block.getLocation(), info.power, info.args));
 						info.spellActivated = true;
 						if (success && removeBlockOnLandSuccess)
 							info.undo();
@@ -291,7 +291,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			}
 			if (ensureSpellCast && block.isDead()) {
 				if (!info.spellActivated && spellOnLand != null) {
-					boolean success = spellOnLand.subcast(info.caster, block.getLocation(), info.power, info.args);
+					boolean success = spellOnLand.subcast(new SpellData(info.caster, block.getLocation(), info.power, info.args));
 					info.spellActivated = true;
 					if (success && removeBlockOnLandSuccess)
 						info.undo();
@@ -350,7 +350,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			event.setDamage(damage);
 
 			if (spellOnLand != null && !info.spellActivated) {
-				boolean success = spellOnLand.subcast(info.caster, target.getLocation(), power, info.args);
+				boolean success = spellOnLand.subcast(new SpellData(info.caster, target.getLocation(), power, info.args));
 				info.spellActivated = true;
 				if (success && removeBlockOnLandSuccess) {
 					info.undo();
@@ -384,7 +384,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 				if (spellOnLand != null && info != null && !info.spellActivated) {
 					Location subcastLoc = info.targetBlock != null ? info.targetBlock.getLocation().add(0.5, 0.5, 0.5)
 							: event.getBlock().getLocation().add(0.5, 0.5, 0.5);
-					boolean success = spellOnLand.subcast(info.caster, subcastLoc, info.power, info.args);
+					boolean success = spellOnLand.subcast(new SpellData(info.caster, subcastLoc, info.power, info.args));
 					info.spellActivated = true;
 					if (success && removeBlockOnLandSuccess)
 						info.undo();
@@ -409,7 +409,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 				event.getEntity().remove();
 			}
 			if (spellOnLand != null && !info.spellActivated) {
-				boolean success = spellOnLand.subcast(info.caster, entity.getLocation(), info.power, info.args);
+				boolean success = spellOnLand.subcast(new SpellData(info.caster, entity.getLocation(), info.power, info.args));
 				info.spellActivated = true;
 				if (success && removeBlockOnLandSuccess)
 					info.undo();

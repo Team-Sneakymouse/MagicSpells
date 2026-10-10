@@ -696,11 +696,11 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		boolean success;
 
 		if (entityTarget != null)
-			success = spell.subcast(player, entityTarget, power, args);
+			success = spell.subcast(new SpellData(player, entityTarget, power, args));
 		else if (locationTarget != null)
-			success = spell.subcast(player, locationTarget, power, args);
+			success = spell.subcast(new SpellData(player, locationTarget, power, args));
 		else if (bypass)
-			success = spell.subcast(player, power, args);
+			success = spell.subcast(new SpellData(player, power, args));
 		else {
 			SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
 			success = result.state.equals(SpellCastState.NORMAL)
@@ -751,11 +751,11 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 							boolean success;
 							boolean bypass = Boolean.TRUE.equals(bypassNormalCast.get(player, data != null ? data.targetEntity() : null, power, args));
 							if (data != null && data.targetEntity() != null) {
-								success = spell.subcast(player, data.targetEntity(), power, args);
+								success = spell.subcast(new SpellData(player, data.targetEntity(), power, args));
 							} else if (data != null && data.targetLocation() != null) {
-								success = spell.subcast(player, data.targetLocation(), power, args);
+								success = spell.subcast(new SpellData(player, data.targetLocation(), power, args));
 							} else if (bypass) {
-								success = spell.subcast(player, power, args);
+								success = spell.subcast(new SpellData(player, power, args));
 							} else {
 								SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
 								success = result.state.equals(SpellCastState.NORMAL)
@@ -808,11 +808,11 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 							boolean success;
 							boolean bypass = Boolean.TRUE.equals(bypassNormalCast.get(player, data != null ? data.targetEntity() : null, power, args));
 							if (data != null && data.targetEntity() != null) {
-								success = spell.subcast(player, data.targetEntity(), power, args);
+								success = spell.subcast(new SpellData(player, data.targetEntity(), power, args));
 							} else if (data != null && data.targetLocation() != null) {
-								success = spell.subcast(player, data.targetLocation(), power, args);
+								success = spell.subcast(new SpellData(player, data.targetLocation(), power, args));
 							} else if (bypass) {
-								success = spell.subcast(player, power, args);
+								success = spell.subcast(new SpellData(player, power, args));
 							} else {
 								SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
 								success = result.state.equals(SpellCastState.NORMAL)

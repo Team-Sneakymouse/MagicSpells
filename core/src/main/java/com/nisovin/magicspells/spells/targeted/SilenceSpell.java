@@ -18,6 +18,7 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.SpellFilter;
 import com.nisovin.magicspells.spells.PassiveSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -159,7 +160,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 			if (filter.check(spell)) return;
 			event.setCancelled(true);
 			Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> {
-				if (preventCastSpell != null) preventCastSpell.subcast(event.getCaster(), 1, null);
+				if (preventCastSpell != null) preventCastSpell.subcast(new SpellData(event.getCaster(), 1f, null));
 				if (spell.isHelperSpell() && !notifyHelperSpells) return;
 				if (spell instanceof PassiveSpell && !notifyPassiveSpells) return;
 				sendMessage(strSilenced, event.getCaster(), event.getSpellArgs());
@@ -174,7 +175,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		public void onChat(AsyncChatEvent event) {
 			if (!silenced.containsKey(event.getPlayer().getUniqueId())) return;
 			event.setCancelled(true);
-			if (preventChatSpell != null) preventChatSpell.subcast(event.getPlayer(), 1, null);
+			if (preventChatSpell != null) preventChatSpell.subcast(new SpellData(event.getPlayer(), 1f, null));
 			sendMessage(strSilenced, event.getPlayer(), MagicSpells.NULL_ARGS);
 		}
 
@@ -186,7 +187,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		public void onCommand(PlayerCommandPreprocessEvent event) {
 			if (!silenced.containsKey(event.getPlayer().getUniqueId())) return;
 			event.setCancelled(true);
-			if (preventCommandSpell != null) preventCommandSpell.subcast(event.getPlayer(), 1, null);
+			if (preventCommandSpell != null) preventCommandSpell.subcast(new SpellData(event.getPlayer(), 1f, null));
 			sendMessage(strSilenced, event.getPlayer(), MagicSpells.NULL_ARGS);
 		}
 

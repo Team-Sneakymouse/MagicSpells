@@ -9,6 +9,7 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 
@@ -66,7 +67,7 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 				loc = Util.applyOffsets(baseTargetLocation.clone(), relativeOffset, absoluteOffset);
 			}
 
-			if (spellToCast != null) spellToCast.subcast(caster, loc, power, args);
+			if (spellToCast != null) spellToCast.subcast(new SpellData(caster, loc, power, args));
 			playSpellEffects(caster, loc, power, args);
 
 			if (!info.empty()) {
@@ -82,9 +83,9 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
 		if (spellToCast != null) {
 			if (forcePitch) {
-				spellToCast.subcast(caster, Util.applyOffsets(target.clone(), relativeOffset, absoluteOffset, forcedPitch), power, args);
+				spellToCast.subcast(new SpellData(caster, Util.applyOffsets(target.clone(), relativeOffset, absoluteOffset, forcedPitch), power, args));
 			} else {
-				spellToCast.subcast(caster, Util.applyOffsets(target.clone(), relativeOffset, absoluteOffset), power, args);
+				spellToCast.subcast(new SpellData(caster, Util.applyOffsets(target.clone(), relativeOffset, absoluteOffset), power, args));
 			}
 		}
 		playSpellEffects(caster, target, power, args);

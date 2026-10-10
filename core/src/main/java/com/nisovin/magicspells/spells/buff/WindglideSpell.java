@@ -134,7 +134,7 @@ public class WindglideSpell extends BuffSpell {
 
 		if (blockCollisionDmg) e.setCancelled(true);
 		if (cancelOnCollision) turnOff(entity);
-		if (collisionSpell != null) collisionSpell.subcast(entity, entity.getLocation(), data.power(), data.args());
+		if (collisionSpell != null) collisionSpell.subcast(data.location(entity.getLocation()));
 	}
 
 	public Subspell getGlideSpell() {
@@ -210,7 +210,7 @@ public class WindglideSpell extends BuffSpell {
 				v = eLoc.getDirection().normalize().multiply(velocity).add(new Vector(0, height, 0));
 				entity.setVelocity(v);
 
-				if (glideSpell != null) glideSpell.subcast(caster, eLoc, data.power(), data.args());
+				if (glideSpell != null) glideSpell.subcast(data.location(eLoc));
 				playSpellEffects(EffectPosition.SPECIAL, eLoc, data);
 				addUseAndChargeCost(caster);
 			}

@@ -9,6 +9,7 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.util.ValidTargetChecker;
 
@@ -237,7 +238,7 @@ public abstract class TargetedSpell extends InstantSpell {
 		fizzle(livingEntity);
 		sendMessage(message, livingEntity, args);
 		if (spellOnFail != null)
-			spellOnFail.subcast(livingEntity, info == null ? 1f : info.power(), args);
+			spellOnFail.subcast(new SpellData(livingEntity, info == null ? 1f : info.power(), args));
 		return alwaysActivate ? PostCastAction.NO_MESSAGES : PostCastAction.ALREADY_HANDLED;
 	}
 

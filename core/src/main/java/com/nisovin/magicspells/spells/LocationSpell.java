@@ -6,6 +6,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicLocation;
 
 public class LocationSpell extends InstantSpell {
@@ -54,7 +55,7 @@ public class LocationSpell extends InstantSpell {
 			Location loc = location.getLocation();
 			if (loc == null) return PostCastAction.ALREADY_HANDLED;
 
-			if (spellToCast != null) spellToCast.subcast(caster, loc, power, args);
+			if (spellToCast != null) spellToCast.subcast(new SpellData(caster, loc, power, args));
 			playSpellEffects(caster, loc, power, args);
 		}
 		return PostCastAction.HANDLE_NORMALLY;

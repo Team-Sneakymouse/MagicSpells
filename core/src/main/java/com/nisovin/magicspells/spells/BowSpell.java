@@ -275,7 +275,7 @@ public class BowSpell extends Spell {
 			}
 
 			if (spellOnShoot != null)
-				spellOnShoot.subcast(caster, castEvent.getPower(), null);
+				spellOnShoot.subcast(new SpellData(caster, castEvent.getPower(), null));
 		} else if (cancelShotOnFail)
 			event.setCancelled(true);
 
@@ -320,12 +320,13 @@ public class BowSpell extends Spell {
 						if (groundSpell == null)
 							continue;
 
-						SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(data.bowSpell, caster,
-								proj.getLocation(), data.spellData.power());
+						SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(data.bowSpell,
+								data.spellData.location(proj.getLocation()));
 						if (!targetEvent.callEvent())
 							continue;
 
-						groundSpell.subcast(caster, targetEvent.getTargetLocation(), targetEvent.getPower(), null);
+						groundSpell.subcast(data.spellData.location(targetEvent.getTargetLocation())
+								.power(targetEvent.getPower()));
 
 						if (data.bowSpell.removeArrow)
 							remove = true;
@@ -357,8 +358,8 @@ public class BowSpell extends Spell {
 							Subspell entitySpell = data.bowSpell.spellOnHitEntity;
 							Subspell entityLocationSpell = data.bowSpell.spellOnEntityLocation;
 
-							SpellTargetEvent targetEvent = new SpellTargetEvent(data.bowSpell, caster, target,
-									data.spellData.power());
+							SpellTargetEvent targetEvent = new SpellTargetEvent(data.bowSpell,
+									data.spellData.target(target));
 							if (!targetEvent.callEvent())
 								continue;
 
@@ -366,9 +367,9 @@ public class BowSpell extends Spell {
 							float subPower = targetEvent.getPower();
 
 							if (entitySpell != null)
-								entitySpell.subcast(caster, caster.getLocation(), subTarget, subPower, null);
+								entitySpell.subcast(new SpellData(caster, subTarget, caster.getLocation(), subPower, null));
 							if (entityLocationSpell != null)
-								entityLocationSpell.subcast(caster, arrow.getLocation(), subPower, null);
+								entityLocationSpell.subcast(new SpellData(caster, arrow.getLocation(), subPower, null));
 
 							if (data.bowSpell.removeArrow)
 								remove = true;

@@ -127,7 +127,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 				float subPower = power;
 				if (caster != null) {
-					SpellTargetEvent event = new SpellTargetEvent(this, caster, livingEntity, subPower, args);
+					SpellTargetEvent event = new SpellTargetEvent(this, new SpellData(caster, livingEntity, subPower, args));
 					if (!event.callEvent())
 						continue;
 
@@ -174,9 +174,9 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 	private void castSpellAt(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
 		if (from != null)
-			spellToCast.subcast(caster, from, target, power, args);
+			spellToCast.subcast(new SpellData(caster, target, from, power, args));
 		else
-			spellToCast.subcast(caster, target, power, args);
+			spellToCast.subcast(new SpellData(caster, target, power, args));
 	}
 
 	private class ChainBouncer implements Runnable {

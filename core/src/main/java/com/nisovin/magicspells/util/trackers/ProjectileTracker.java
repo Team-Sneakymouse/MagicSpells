@@ -178,14 +178,14 @@ public class ProjectileTracker implements Runnable, Tracker {
 		}
 
 		if (projectileModifiers != null) {
-			ModifierResult result = projectileModifiers.apply(caster, spellData);
+			ModifierResult result = projectileModifiers.apply(spellData);
 			spellData = result.data();
 			power = spellData.power();
 			args = spellData.args();
 
 			if (!result.check()) {
 				if (modifierSpell != null)
-					modifierSpell.subcast(caster, currentLocation, power, args);
+					modifierSpell.subcast(spellData.location(currentLocation));
 				if (stopOnModifierFail)
 					stop();
 				return;
@@ -194,7 +194,7 @@ public class ProjectileTracker implements Runnable, Tracker {
 
 		if (maxDuration > 0 && startTime + maxDuration < System.currentTimeMillis()) {
 			if (durationSpell != null)
-				durationSpell.subcast(caster, currentLocation, power, args);
+				durationSpell.subcast(spellData.location(currentLocation));
 			stop();
 			return;
 		}
@@ -211,7 +211,7 @@ public class ProjectileTracker implements Runnable, Tracker {
 		}
 
 		if (counter % tickSpellInterval == 0 && tickSpell != null)
-			tickSpell.subcast(caster, currentLocation, power, args);
+			tickSpell.subcast(spellData.location(currentLocation));
 
 		if (spell != null) {
 			if (specialEffectInterval > 0 && counter % specialEffectInterval == 0)
@@ -307,14 +307,15 @@ public class ProjectileTracker implements Runnable, Tracker {
 			if (!targetList.canTarget(caster, entity))
 				continue;
 
-			SpellTargetEvent event = new SpellTargetEvent(spell, caster, entity, power, args);
+			SpellTargetEvent event = new SpellTargetEvent(spell, spellData.target(entity));
 			if (!event.callEvent())
 				continue;
 
+			SpellData hitData = spellData.target(event.getTarget()).power(event.getPower());
 			if (hitSpell != null)
-				hitSpell.subcast(caster, entity, event.getPower(), args);
+				hitSpell.subcast(hitData);
 			if (entityLocationSpell != null)
-				entityLocationSpell.subcast(caster, currentLocation, event.getPower(), args);
+				entityLocationSpell.subcast(hitData.location(currentLocation));
 
 			stop();
 			return;

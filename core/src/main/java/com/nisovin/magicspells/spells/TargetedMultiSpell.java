@@ -11,6 +11,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.RegexUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -187,10 +188,10 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 	}
 
 	private boolean castTargetedSpells(Subspell spell, LivingEntity caster, Location center, LivingEntity targetEnt, Location targetLoc, float power, String[] args, boolean passTargeting) {
-		if (targetEnt != null && center != null) return spell.subcast(caster, center, targetEnt, power, args, passTargeting);
-		if (targetEnt != null) return spell.subcast(caster, targetEnt, power, args, passTargeting);
-		if (targetLoc != null) return spell.subcast(caster, targetLoc, power, args);
-		return spell.subcast(caster, power, args);
+		if (targetEnt != null && center != null) return spell.subcast(new SpellData(caster, targetEnt, center, power, args), passTargeting);
+		if (targetEnt != null) return spell.subcast(new SpellData(caster, targetEnt, power, args), passTargeting);
+		if (targetLoc != null) return spell.subcast(new SpellData(caster, targetLoc, power, args));
+		return spell.subcast(new SpellData(caster, power, args));
 	}
 
 	@Override

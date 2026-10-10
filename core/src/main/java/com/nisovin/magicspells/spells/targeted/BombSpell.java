@@ -137,7 +137,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 						change.undo(false);
 						playSpellEffects(EffectPosition.DELAYED, l, data);
 						if (targetSpell != null)
-							targetSpell.subcast(livingEntity, l, power, args);
+							targetSpell.subcast(new SpellData(livingEntity, l, power, args));
 					}
 				} else if (!material.equals(block.getType()))
 					stop(true);

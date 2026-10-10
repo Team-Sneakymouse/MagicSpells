@@ -370,7 +370,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 
 				if (!result.check()) {
 					if (modifierSpell != null)
-						modifierSpell.subcast(caster, currentLocation, power, args);
+						modifierSpell.subcast(data.location(currentLocation));
 					if (stopOnModifierFail)
 						stop();
 					return;
@@ -379,7 +379,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 
 			if (maxDuration > 0 && startTime + maxDuration < System.currentTimeMillis()) {
 				if (hitAirAfterDuration && durationSpell != null)
-					durationSpell.subcast(caster, currentLocation, power, args);
+					durationSpell.subcast(data.location(currentLocation));
 				stop();
 				return;
 			}
@@ -460,13 +460,13 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 
 			if (stopOnHitGround && !BlockUtils.isPathable(currentLocation.getBlock())) {
 				if (hitGround && groundSpell != null)
-					groundSpell.subcast(caster, currentLocation, power, args);
+					groundSpell.subcast(data.location(currentLocation));
 				stop();
 				return;
 			}
 
 			if (hitAirDuring && airSpellInterval > 0 && counter % airSpellInterval == 0 && airSpell != null)
-				airSpell.subcast(caster, currentLocation, power, args);
+				airSpell.subcast(data.location(currentLocation));
 
 			if (intermediateSpecialEffects > 0)
 				playIntermediateEffectLocations(oldLocation, oldVelocity);
@@ -513,9 +513,9 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 				if (!preImpact.getRedirected()) {
 					// Apparently didn't get redirected, carry out the plans
 					if (hitSpell != null)
-						hitSpell.subcast(caster, target, power, args);
+						hitSpell.subcast(data);
 					if (entityLocationSpell != null)
-						entityLocationSpell.subcast(caster, currentLocation, power, args);
+						entityLocationSpell.subcast(data.location(currentLocation));
 
 					playSpellEffects(EffectPosition.TARGET, target, data);
 					if (stopOnHitTarget)

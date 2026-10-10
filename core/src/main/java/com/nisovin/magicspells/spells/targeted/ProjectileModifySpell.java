@@ -348,7 +348,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 			}
 
 			if (projectileSpell != null)
-				projectileSpell.subcast(caster, currentLoc, power, args);
+				projectileSpell.subcast(new SpellData(caster, currentLoc, power, args));
 
 			if (stop.get(data)) {
 				playSpellEffects(EffectPosition.TARGET, currentLoc, data);

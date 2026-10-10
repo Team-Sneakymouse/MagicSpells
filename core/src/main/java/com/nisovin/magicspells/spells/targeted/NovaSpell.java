@@ -215,7 +215,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 					for (Player p : nearby)
 						p.sendBlockChange(b.getLocation(), b.getBlockData());
 					if (spellOnWaveRemove != null)
-						spellOnWaveRemove.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
+						spellOnWaveRemove.subcast(new SpellData(caster, b.getLocation().add(0.5, 0, 0.5), power, args));
 				}
 				blocks.clear();
 			}
@@ -258,7 +258,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 						p.sendBlockChange(b.getLocation(), blockData);
 					blocks.add(b);
 					if (locationSpell != null)
-						locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
+						locationSpell.subcast(new SpellData(caster, b.getLocation().add(0.5, 0, 0.5), power, args));
 				}
 			}
 
@@ -269,7 +269,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 				for (Player p : nearby)
 					p.sendBlockChange(b.getLocation(), b.getBlockData());
 				if (spellOnEnd != null)
-					spellOnEnd.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
+					spellOnEnd.subcast(new SpellData(caster, b.getLocation().add(0.5, 0, 0.5), power, args));
 			}
 			blocks.clear();
 			MagicSpells.cancelTask(taskId);
@@ -328,7 +328,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 					for (Player p : nearby)
 						p.sendBlockChange(b.getLocation(), b.getBlockData());
 					if (spellOnWaveRemove != null)
-						spellOnWaveRemove.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
+						spellOnWaveRemove.subcast(new SpellData(caster, b.getLocation().add(0.5, 0, 0.5), power, args));
 				}
 				blocks.clear();
 			}
@@ -368,7 +368,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 					p.sendBlockChange(b.getLocation(), blockData);
 				blocks.add(b);
 				if (locationSpell != null)
-					locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
+					locationSpell.subcast(new SpellData(caster, b.getLocation().add(0.5, 0, 0.5), power, args));
 			}
 
 			// Generate the circle
@@ -402,7 +402,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 					p.sendBlockChange(b.getLocation(), blockData);
 				blocks.add(b);
 				if (locationSpell != null)
-					locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
+					locationSpell.subcast(new SpellData(caster, b.getLocation().add(0.5, 0, 0.5), power, args));
 			}
 
 		}
@@ -412,7 +412,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 				for (Player p : nearby)
 					p.sendBlockChange(b.getLocation(), b.getBlockData());
 				if (spellOnEnd != null)
-					spellOnEnd.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
+					spellOnEnd.subcast(new SpellData(caster, b.getLocation().add(0.5, 0, 0.5), power, args));
 			}
 			blocks.clear();
 			MagicSpells.cancelTask(taskId);

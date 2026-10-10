@@ -173,7 +173,7 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 		}
 
 		if (count % spellInterval == 0 && spellOnTick != null) {
-			spellOnTick.subcast(caster, currentLocation.clone(), power, args);
+			spellOnTick.subcast(data.location(currentLocation));
 		}
 
 		for (Entity e : entity.getNearbyEntities(count > entityHitDelay ? hitRadius : 0.1,
@@ -183,17 +183,18 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 			if (!targetList.canTarget(caster, e))
 				continue;
 
-			SpellTargetEvent event = new SpellTargetEvent(spell, caster, target, power, args);
+			SpellTargetEvent event = new SpellTargetEvent(spell, data.target(target));
 			if (!event.callEvent())
 				continue;
 
 			target = event.getTarget();
 			float subPower = event.getPower();
 
+			SpellData hitData = data.target(target).power(subPower);
 			if (spell != null)
-				spell.playEffects(EffectPosition.TARGET, target, new SpellData(caster, target, subPower, args));
+				spell.playEffects(EffectPosition.TARGET, target, hitData);
 			if (spellOnHitEntity != null)
-				spellOnHitEntity.subcast(caster, target, subPower, args);
+				spellOnHitEntity.subcast(hitData);
 			if (stopOnHitEntity)
 				stop();
 			return;
@@ -213,7 +214,7 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 
 		if (hitGround) {
 			if (spellOnHitGround != null && !groundSpellCasted) {
-				spellOnHitGround.subcast(caster, entity.getLocation(), power, args);
+				spellOnHitGround.subcast(data.location(entity.getLocation()));
 				groundSpellCasted = true;
 			}
 			if (stopOnHitGround) {
@@ -223,7 +224,7 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 			if (!landed)
 				MagicSpells.scheduleDelayedTask(() -> {
 					if (spellOnDelay != null)
-						spellOnDelay.subcast(caster, entity.getLocation(), power, args);
+						spellOnDelay.subcast(data.location(entity.getLocation()));
 					stop();
 				}, spellDelay);
 			landed = true;

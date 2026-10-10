@@ -251,8 +251,8 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 						locationTarget = block.getLocation();
 						locationTarget.add(0.5, yOffset + 0.5, 0.5);
 
-						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, locationTarget,
-								power, args);
+						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this,
+								new SpellData(caster, locationTarget, power, args));
 						if (!event.callEvent())
 							return noTarget(caster, args);
 
@@ -498,11 +498,11 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			boolean passTargeting = Boolean.TRUE.equals(LoopSpell.this.passTargeting.get(data));
 
 			if (targetEntity != null)
-				success = spell.subcast(caster, targetEntity, data.power(), data.args(), passTargeting);
+				success = spell.subcast(data, passTargeting);
 			else if (targetLocation != null)
-				success = spell.subcast(caster, targetLocation, data.power(), data.args());
+				success = spell.subcast(data);
 			else
-				success = spell.subcast(caster, data.power(), data.args());
+				success = spell.subcast(data);
 
 			boolean stopOnSuccess = Boolean.TRUE.equals(LoopSpell.this.stopOnSuccess.get(data));
 			boolean stopOnFail = Boolean.TRUE.equals(LoopSpell.this.stopOnFail.get(data));
@@ -563,11 +563,11 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			if (spellOnEnd != null) {
 				boolean passTargeting = Boolean.TRUE.equals(LoopSpell.this.passTargeting.get(data));
 				if (targetEntity != null)
-					spellOnEnd.subcast(caster, targetEntity, data.power(), data.args(), passTargeting);
+					spellOnEnd.subcast(data, passTargeting);
 				else if (targetLocation != null)
-					spellOnEnd.subcast(caster, targetLocation, data.power(), data.args());
+					spellOnEnd.subcast(data);
 				else if (caster != null)
-					spellOnEnd.subcast(caster, data.power(), data.args());
+					spellOnEnd.subcast(data);
 			}
 		}
 

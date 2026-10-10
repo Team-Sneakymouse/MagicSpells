@@ -286,7 +286,7 @@ public class BeamSpell extends InstantSpell
 			if (!isTransparent(loc.getBlock())) {
 				playSpellEffects(EffectPosition.DISABLED, loc, data);
 				if (groundSpell != null)
-					groundSpell.subcast(caster, loc, power, args);
+					groundSpell.subcast(data.location(loc));
 				if (stopOnHitGround)
 					break;
 			}
@@ -294,7 +294,7 @@ public class BeamSpell extends InstantSpell
 			playSpellEffects(EffectPosition.SPECIAL, loc, data);
 
 			if (travelSpell != null)
-				travelSpell.subcast(caster, loc, power, args);
+				travelSpell.subcast(data.location(loc));
 
 			// check entities in the beam range
 			for (LivingEntity e : loc.getNearbyLivingEntities(hitRadius, verticalHitRadius)) {
@@ -303,16 +303,16 @@ public class BeamSpell extends InstantSpell
 				if (validTargetList != null && !validTargetList.canTarget(e))
 					continue;
 
-				SpellTargetEvent event = new SpellTargetEvent(this, caster, e, power, args);
+				SpellTargetEvent event = new SpellTargetEvent(this, data.target(e));
 				if (!event.callEvent())
 					continue;
 
 				LivingEntity entity = event.getTarget();
 
 				if (hitSpell != null)
-					hitSpell.subcast(caster, entity, event.getPower(), args);
+					hitSpell.subcast(event.getSpellData());
 				if (entityLocationSpell != null)
-					entityLocationSpell.subcast(caster, loc, power, args);
+					entityLocationSpell.subcast(data.location(loc));
 
 				playSpellEffects(EffectPosition.TARGET, entity, data);
 				playSpellEffectsTrail(caster.getLocation(), entity.getLocation(), data);
@@ -327,7 +327,7 @@ public class BeamSpell extends InstantSpell
 		if (!zoneManager.willFizzle(loc, this) && d >= maxDistance) {
 			playSpellEffects(EffectPosition.DELAYED, loc, data);
 			if (endSpell != null)
-				endSpell.subcast(caster, loc, power, args);
+				endSpell.subcast(data.location(loc));
 		}
 	}
 

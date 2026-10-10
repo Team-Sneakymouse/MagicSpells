@@ -149,7 +149,8 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 			Block block = getTargetedBlock(caster, power, args);
 			if (block != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, block.getLocation(), power, args);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this,
+						new SpellData(caster, block.getLocation(), power, args));
 				EventUtil.call(event);
 				if (event.isCancelled()) block = null;
 				else {
@@ -310,7 +311,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			Location loc = getLocation();
 
 			if (!isTransparent(loc.getBlock())) {
-				if (groundSpell != null) groundSpell.subcast(caster, loc, power, args);
+				if (groundSpell != null) groundSpell.subcast(data.location(loc));
 				if (stopOnHitGround) {
 					stop(true);
 					return;
@@ -349,7 +350,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				}
 			}
 
-			if (orbitSpell != null) orbitSpell.subcast(caster, loc, power, args);
+			if (orbitSpell != null) orbitSpell.subcast(data.location(loc));
 
 			box.setCenter(loc);
 
@@ -360,16 +361,16 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				if (!box.contains(e)) continue;
 				if (entityTargetList != null && !entityTargetList.canTarget(e)) continue;
 
-				SpellTargetEvent event = new SpellTargetEvent(OrbitSpell.this, caster, e, power, args);
+				SpellTargetEvent event = new SpellTargetEvent(OrbitSpell.this, data.target(e));
 				EventUtil.call(event);
 				if (event.isCancelled()) continue;
 
 				immune.add(event.getTarget());
-				if (entitySpell != null) entitySpell.subcast(event.getCaster(), event.getTarget(), event.getPower(), args);
+				SpellData hitData = new SpellData(caster, event.getTarget(), event.getPower(), args);
+				if (entitySpell != null) entitySpell.subcast(hitData);
 
-				SpellData data = new SpellData(caster, event.getTarget(), event.getPower(), args);
-				playSpellEffects(EffectPosition.TARGET, event.getTarget(), data);
-				playSpellEffectsTrail(targetLoc, event.getTarget().getLocation(), data);
+				playSpellEffects(EffectPosition.TARGET, event.getTarget(), hitData);
+				playSpellEffectsTrail(targetLoc, event.getTarget().getLocation(), hitData);
 
 				if (stopOnHitEntity) {
 					stop(true);

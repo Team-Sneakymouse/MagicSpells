@@ -611,7 +611,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		MagicSpells.scheduleDelayedTask(() -> HandlerList.unregisterAll(monitor), duration > 0 ? duration : 12000);
 
 		if (spellOnSpawn != null) {
-			spellOnSpawn.subcast(caster, entity, power, args);
+			spellOnSpawn.subcast(new SpellData(caster, entity, power, args));
 		}
 
 		if (caster != null)
@@ -644,7 +644,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				}
 
 				if (spellOnDeath != null) {
-					spellOnDeath.subcast(entity, entity, power, args);
+					spellOnDeath.subcast(new SpellData(entity, entity, power, args));
 				}
 
 				entity.remove();
@@ -857,7 +857,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 
 			if (spellOnDeath != null) {
-				spellOnDeath.subcast(entity, entity, 1F, new String[0]);
+				spellOnDeath.subcast(new SpellData(entity, entity, 1F, new String[0]));
 			}
 			totalEntities--;
 		}
@@ -906,7 +906,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			if (attackSpell != null && event.getEntity() instanceof LivingEntity damaged) {
 				inAttackSpell = true;
 				try {
-					attackSpell.subcast(monster, monster.getLocation(), damaged, power, args);
+					attackSpell.subcast(new SpellData(monster, damaged, monster.getLocation(), power, args));
 				} finally {
 					inAttackSpell = false;
 				}

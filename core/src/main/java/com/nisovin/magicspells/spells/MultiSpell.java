@@ -14,6 +14,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.RegexUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -86,7 +87,7 @@ public final class MultiSpell extends InstantSpell {
 						delay += action.getDelay();
 					} else if (action.isSpell()) {
 						Subspell spell = action.getSpell();
-						if (delay == 0) spell.subcast(caster, power, args);
+						if (delay == 0) spell.subcast(new SpellData(caster, power, args));
 						else MagicSpells.scheduleDelayedTask(new DelayedSpell(spell, caster, power, args), delay);
 					}
 				}
@@ -104,18 +105,18 @@ public final class MultiSpell extends InstantSpell {
 						s = (int) Math.round(s + actions.get(i++).chance());
 					}
 					Action action = actions.get(Math.max(0, i - 1)).action();
-					if (action.isSpell()) action.getSpell().subcast(caster, power, args);
+					if (action.isSpell()) action.getSpell().subcast(new SpellData(caster, power, args));
 				} else if (individualChances) {
 					for (ActionChance actionChance : actions) {
 						double chance = Math.random();
 						if ((actionChance.chance() / 100.0D > chance) && actionChance.action().isSpell()) {
 							Action action = actionChance.action();
-							action.getSpell().subcast(caster, power, args);
+							action.getSpell().subcast(new SpellData(caster, power, args));
 						}
 					}
 				} else {
 					Action action = actions.get(random.nextInt(actions.size())).action();
-					action.getSpell().subcast(caster, power, args);
+					action.getSpell().subcast(new SpellData(caster, power, args));
 				}
 			}
 			playSpellEffects(EffectPosition.CASTER, caster, power, args);
@@ -245,7 +246,7 @@ public final class MultiSpell extends InstantSpell {
 		public void run() {
 			Entity entity = Bukkit.getEntity(casterUUID);
 			if (entity == null || !entity.isValid() || !(entity instanceof LivingEntity livingEntity)) return;
-			spell.subcast(livingEntity, power, args);
+			spell.subcast(new SpellData(livingEntity, power, args));
 		}
 		
 	}

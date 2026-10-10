@@ -413,7 +413,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 			totemLocation = armorStand.getLocation();
 
 			if (spellOnSpawn != null)
-				spellOnSpawn.subcast(caster, armorStand, power, args);
+				spellOnSpawn.subcast(new SpellData(caster, armorStand, power, args));
 		}
 
 		private boolean pulse() {
@@ -438,7 +438,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 		private boolean activate() {
 			boolean activated = false;
 			for (Subspell spell : spells) {
-				activated = spell.subcast(caster, totemLocation, power, args) || activated;
+				activated = spell.subcast(new SpellData(caster, totemLocation, power, args)) || activated;
 			}
 
 			playSpellEffects(EffectPosition.SPECIAL, totemLocation, data);
@@ -458,7 +458,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 			armorStand.remove();
 			playSpellEffects(EffectPosition.DISABLED, totemLocation, data);
 			if (spellOnBreak != null)
-				spellOnBreak.subcast(caster, totemLocation, power, args);
+				spellOnBreak.subcast(new SpellData(caster, totemLocation, power, args));
 		}
 
 	}

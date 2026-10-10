@@ -112,7 +112,7 @@ public class LeapSpell extends InstantSpell {
 		if (!jumping.remove(livingEntity.getUniqueId()))
 			return;
 		if (landSpell != null)
-			landSpell.subcast(livingEntity, 1f, null);
+			landSpell.subcast(new SpellData(livingEntity, 1f, null));
 		playSpellEffects(EffectPosition.TARGET, livingEntity.getLocation(),
 				new SpellData(livingEntity, livingEntity.getLocation()));
 		if (cancelDamage)

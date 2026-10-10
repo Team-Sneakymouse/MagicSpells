@@ -310,7 +310,7 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 				continue;
 
 			if (tracker.getHitSpell() != null)
-				tracker.getHitSpell().subcast(tracker.getCaster(), entity, tracker.getPower(), tracker.getArgs());
+				tracker.getHitSpell().subcast(tracker.getSpellData().target(entity));
 
 			playSpellEffects(EffectPosition.TARGET, entity, tracker.getSpellData());
 			event.setCancelled(true);
@@ -376,8 +376,7 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 				continue;
 
 			if (tracker.getCaster() != null && tracker.getGroundSpell() != null) {
-				tracker.getGroundSpell().subcast(tracker.getCaster(), projectile.getLocation(), tracker.getPower(),
-						tracker.getArgs());
+				tracker.getGroundSpell().subcast(tracker.getSpellData().location(projectile.getLocation()));
 			}
 			tracker.stop(false);
 			iterator.remove();

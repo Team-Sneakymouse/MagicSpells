@@ -368,7 +368,7 @@ public class PassiveSpell extends Spell {
 				power = castEvent.getPower();
 
 				if (target != null) {
-					SpellTargetEvent targetEvent = new SpellTargetEvent(this, caster, target, power);
+					SpellTargetEvent targetEvent = new SpellTargetEvent(this, new SpellData(caster, target, power));
 					if (!targetEvent.callEvent()) {
 						MagicSpells.debug(3, "    Target cancelled (TE)");
 
@@ -380,7 +380,8 @@ public class PassiveSpell extends Spell {
 				}
 
 				if (location != null) {
-					SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(this, caster, location, power);
+					SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(this,
+							new SpellData(caster, location, power));
 					if (!targetEvent.callEvent()) {
 						MagicSpells.debug(3, "    Target cancelled (TL)");
 
@@ -401,7 +402,7 @@ public class PassiveSpell extends Spell {
 					if (withoutTarget) {
 						MagicSpells.debug(3, "    Casting without target");
 
-						spell.subcast(caster, power, null);
+						spell.subcast(data.noTargeting());
 						if (!spellEffectsDone) {
 							playSpellEffects(EffectPosition.CASTER, caster, power, null);
 							spellEffectsDone = true;
@@ -413,7 +414,7 @@ public class PassiveSpell extends Spell {
 					if (target != null && !isActuallyNonTargeted(spell.getSpell())) {
 						MagicSpells.debug(3, "    Casting with target entity");
 
-						spell.subcast(caster, target, power, null);
+						spell.subcast(data.noLocation());
 						if (!spellEffectsDone) {
 							playSpellEffects(caster, target, data);
 							spellEffectsDone = true;
@@ -425,7 +426,7 @@ public class PassiveSpell extends Spell {
 					if (location != null) {
 						MagicSpells.debug(3, "    Casting with target location");
 
-						spell.subcast(caster, location, power, null);
+						spell.subcast(data.noTarget());
 						if (!spellEffectsDone) {
 							playSpellEffects(caster, location, data);
 							spellEffectsDone = true;
@@ -436,7 +437,7 @@ public class PassiveSpell extends Spell {
 
 					MagicSpells.debug(3, "    Casting normally");
 
-					spell.subcast(caster, power, null);
+					spell.subcast(data.noTargeting());
 					if (!spellEffectsDone) {
 						playSpellEffects(EffectPosition.CASTER, caster, data);
 						spellEffectsDone = true;

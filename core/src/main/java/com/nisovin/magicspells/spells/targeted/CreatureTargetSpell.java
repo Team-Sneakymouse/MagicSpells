@@ -6,6 +6,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 
 public class CreatureTargetSpell extends InstantSpell {
@@ -46,7 +47,7 @@ public class CreatureTargetSpell extends InstantSpell {
 
 		playSpellEffects(caster, target, power, args);
 
-		if (targetSpell != null) targetSpell.subcast(caster, caster.getLocation(), target, power, args);
+		if (targetSpell != null) targetSpell.subcast(new SpellData(caster, target, caster.getLocation(), power, args));
 	}
 
 }

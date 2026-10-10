@@ -14,6 +14,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
@@ -181,9 +182,9 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 
 		private void cast(LivingEntity caster) {
 			lastCast = System.currentTimeMillis();
-			if (targetEntity != null) spellToCast.subcast(caster, targetEntity, power, args);
-			else if (targetLocation != null) spellToCast.subcast(caster, targetLocation, power, args);
-			else spellToCast.subcast(caster, power, args);
+			if (targetEntity != null) spellToCast.subcast(new SpellData(caster, targetEntity, power, args));
+			else if (targetLocation != null) spellToCast.subcast(new SpellData(caster, targetLocation, power, args));
+			else spellToCast.subcast(new SpellData(caster, power, args));
 		}
 
 	}

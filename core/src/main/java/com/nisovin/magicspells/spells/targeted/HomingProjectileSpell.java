@@ -229,7 +229,7 @@ public class HomingProjectileSpell extends TargetedSpell
 				continue;
 
 			if (hitSpell != null)
-				hitSpell.subcast(monitor.caster, entity, monitor.power, monitor.args);
+				hitSpell.subcast(monitor.data.target(entity));
 			playSpellEffects(EffectPosition.TARGET, entity, monitor.data);
 			event.setCancelled(true);
 
@@ -252,7 +252,7 @@ public class HomingProjectileSpell extends TargetedSpell
 			if (monitor.caster == null)
 				continue;
 			if (groundSpell != null)
-				groundSpell.subcast(monitor.caster, projectile.getLocation(), monitor.power, monitor.args);
+				groundSpell.subcast(monitor.data.location(projectile.getLocation()));
 			monitor.stop();
 		}
 
@@ -390,7 +390,7 @@ public class HomingProjectileSpell extends TargetedSpell
 
 				if (!result.check()) {
 					if (modifierSpell != null)
-						modifierSpell.subcast(caster, currentLocation, power, args);
+						modifierSpell.subcast(data.location(currentLocation));
 
 					if (stopOnModifierFail)
 						stop();
@@ -400,7 +400,7 @@ public class HomingProjectileSpell extends TargetedSpell
 
 			if (maxDuration > 0 && startTime + maxDuration < System.currentTimeMillis()) {
 				if (durationSpell != null)
-					durationSpell.subcast(caster, currentLocation, power, args);
+					durationSpell.subcast(data.location(currentLocation));
 				stop();
 				return;
 			}
@@ -423,7 +423,7 @@ public class HomingProjectileSpell extends TargetedSpell
 			currentLocation = projectile.getLocation();
 
 			if (counter % airSpellInterval == 0 && airSpell != null)
-				airSpell.subcast(caster, currentLocation, power, args);
+				airSpell.subcast(data.location(currentLocation));
 
 			if (intermediateSpecialEffects > 0)
 				playIntermediateEffectLocations(previousLocation, oldVelocity);
@@ -435,17 +435,17 @@ public class HomingProjectileSpell extends TargetedSpell
 
 			hitBox.setCenter(currentLocation);
 			if (hitBox.contains(targetLoc)) {
-				SpellTargetEvent targetEvent = new SpellTargetEvent(thisSpell, caster, target, power, args);
+				SpellTargetEvent targetEvent = new SpellTargetEvent(thisSpell, data);
 				if (!targetEvent.callEvent())
 					return;
 
 				LivingEntity subTarget = targetEvent.getTarget();
 				float subPower = targetEvent.getPower();
 
-				playSpellEffects(EffectPosition.TARGET, subTarget,
-						new SpellData(caster, subTarget, targetLoc, subPower, args));
+				SpellData hitData = data.target(subTarget).power(subPower).location(targetLoc);
+				playSpellEffects(EffectPosition.TARGET, subTarget, hitData);
 				if (hitSpell != null)
-					hitSpell.subcast(caster, subTarget, subPower, args);
+					hitSpell.subcast(hitData);
 				stop();
 			}
 		}

@@ -9,6 +9,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 
 public class RandomSpell extends InstantSpell {
@@ -71,7 +72,7 @@ public class RandomSpell extends InstantSpell {
 			}
 			if (!set.randomOptionSetOptions.isEmpty()) {
 				Subspell spell = set.choose();
-				return spell != null && spell.subcast(caster, power, args) ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED;
+				return spell != null && spell.subcast(new SpellData(caster, power, args)) ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED;
 			}
 			return PostCastAction.ALREADY_HANDLED;
 		}

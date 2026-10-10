@@ -166,8 +166,8 @@ public class SteedSpell extends InstantSpell {
 			});
 			entity.addPassenger(caster);
 
-			if (entity instanceof LivingEntity le) spellOnSpawn.subcast(caster, le, power, args);
-			else spellOnSpawn.subcast(caster, entity.getLocation(), power, args);
+			if (entity instanceof LivingEntity le) spellOnSpawn.subcast(new SpellData(caster, le, power, args));
+			else spellOnSpawn.subcast(new SpellData(caster, entity.getLocation(), power, args));
 
 			playSpellEffects(EffectPosition.CASTER, caster, power, args);
 			mounted.put(caster.getUniqueId(), entity.getEntityId());

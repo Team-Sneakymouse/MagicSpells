@@ -20,6 +20,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -242,7 +243,8 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 				if (!caster.isOnline()) return;
 			}
 
-			if (spellOnBreak != null) spellOnBreak.subcast(caster, block.getLocation().add(0.5, 0, 0.5), player, 1f, null, false, false);
+			if (spellOnBreak != null)
+				spellOnBreak.subcast(new SpellData(caster, player, block.getLocation().add(0.5, 0, 0.5), 1f, null), false, false);
 		}
 		
 	}

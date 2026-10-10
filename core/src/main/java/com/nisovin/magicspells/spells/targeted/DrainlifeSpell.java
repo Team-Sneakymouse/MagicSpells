@@ -286,7 +286,7 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 				stop(true);
 				playSpellEffects(EffectPosition.DELAYED, caster, data);
 				if (spellOnAnimation != null)
-					spellOnAnimation.subcast(caster, data.power(), data.args());
+					spellOnAnimation.subcast(new SpellData(caster, data.power(), data.args()));
 				if (!instant)
 					giveToCaster(caster, giveAmt);
 			}

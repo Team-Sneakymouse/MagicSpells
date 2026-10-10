@@ -7,6 +7,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 
 public class CastAtMarkSpell extends InstantSpell {
@@ -70,7 +71,7 @@ public class CastAtMarkSpell extends InstantSpell {
 				sendMessage(caster, strNoMark);
 				return PostCastAction.HANDLE_NORMALLY;
 			}
-			spellToCast.subcast(caster, effectiveMark, power, args);
+			spellToCast.subcast(new SpellData(caster, effectiveMark, power, args));
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}

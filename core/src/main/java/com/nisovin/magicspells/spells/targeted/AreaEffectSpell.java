@@ -111,7 +111,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (loc == null)
 				return noTarget(caster, args);
 
-			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, loc, power, args);
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, new SpellData(caster, loc, power, args));
 			EventUtil.call(event);
 			if (event.isCancelled())
 				loc = null;
@@ -189,7 +189,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (vDistance > vRadiusSquared)
 				return false;
 
-			event = new SpellTargetEvent(this, caster, target, power, args);
+			event = new SpellTargetEvent(this, new SpellData(caster, target, power, args));
 			EventUtil.call(event);
 			if (event.isCancelled())
 				return false;
@@ -256,7 +256,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 
 			power = basePower;
 
-			event = new SpellTargetEvent(this, caster, target, power, args);
+			event = new SpellTargetEvent(this, new SpellData(caster, target, power, args));
 			EventUtil.call(event);
 			if (event.isCancelled())
 				continue;
@@ -296,9 +296,9 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		Location source = spellSourceInCenter ? location : (caster == null ? null : caster.getLocation());
 		for (Subspell spell : spells) {
 			if (source != null)
-				spell.subcast(caster, source, target, power, args, passTargeting);
+				spell.subcast(new SpellData(caster, target, source, power, args), passTargeting);
 			else
-				spell.subcast(caster, target, power, args, passTargeting);
+				spell.subcast(new SpellData(caster, target, power, args), passTargeting);
 		}
 	}
 

@@ -303,8 +303,7 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 								manager.set(zVariable, playerCaster, target.getZ());
 						}
 
-						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target, power,
-								args);
+						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(target));
 						if (!event.callEvent())
 							continue;
 
@@ -313,7 +312,7 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 						found = true;
 
 						if (spell != null)
-							spell.subcast(caster, target, subPower, args);
+							spell.subcast(data.location(target).power(subPower));
 
 						SpellData effectData = power == subPower ? data : new SpellData(caster, origin, subPower, args);
 						playSpellEffects(EffectPosition.TARGET, target, effectData);
