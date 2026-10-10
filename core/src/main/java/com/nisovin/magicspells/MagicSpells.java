@@ -45,6 +45,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -180,6 +181,7 @@ public class MagicSpells extends JavaPlugin {
 
 	private boolean checkItemPersistentData;
 	private boolean enableUpdateItemData;
+	private boolean characterMagicItemUpdaterRegistered;
 
 	private boolean castOnAnimate;
 	private boolean enableManaSystem;
@@ -680,12 +682,10 @@ public class MagicSpells extends JavaPlugin {
 		if (config.getBoolean(path + "enable-dance-casting", true))
 			new DanceCastListener(this, config);
 
+		characterMagicItemUpdaterRegistered = false;
 		if (enableUpdateItemData) {
 			registerEvents(new PersistentDataUpdater());
 			registerEvents(new MagicItemUpdater.ChunkMagicItemListener());
-		}
-		if (enableUpdateItemData && CompatBasics.pluginEnabled("SneakyCharacterManager")) {
-			registerEvents(new MagicItemUpdater.CharacterPersistentDataUpdater());
 		}
 
 		registerEvents(new EntityListener());
@@ -695,6 +695,16 @@ public class MagicSpells extends JavaPlugin {
 		registerEvents(new MagicItemBehaviorReceiveListener());
 		registerEvents(new MagicItemExpirationListener());
 		registerEvents(new MagicItemSoulboundListener());
+
+		registerSneakyCharacterManagerHooks();
+		registerEvents(new Listener() {
+			@EventHandler
+			public void onPluginEnable(PluginEnableEvent event) {
+				if (!event.getPlugin().getName().equals("SneakyCharacterManager"))
+					return;
+				registerSneakyCharacterManagerHooks();
+			}
+		});
 
 		log("...done");
 
@@ -2037,6 +2047,29 @@ public class MagicSpells extends JavaPlugin {
 
 		matcher = PLACEHOLDER_PATTERN.matcher(message);
 		return matcher.find();
+	}
+
+	/**
+	 * Wires SneakyCharacterManager-dependent listeners once that plugin is enabled.
+	 * Softdepend normally makes this succeed during MagicSpells load; PluginEnableEvent
+	 * covers the case where MagicSpells still enables first.
+	 */
+	private void registerSneakyCharacterManagerHooks() {
+		if (!CompatBasics.pluginEnabled("SneakyCharacterManager"))
+			return;
+
+		if (enableUpdateItemData && !characterMagicItemUpdaterRegistered) {
+			try {
+				registerEvents(new MagicItemUpdater.CharacterPersistentDataUpdater());
+				characterMagicItemUpdaterRegistered = true;
+			} catch (NoClassDefFoundError | ExceptionInInitializerError e) {
+				DebugHandler.debugNoClassDefFoundError(e);
+			}
+		}
+
+		MagicItemExpirationListener expirationListener = MagicItemExpirationListener.getInstance();
+		if (expirationListener != null)
+			expirationListener.ensureCharacterHandler();
 	}
 
 	public static void registerEvents(final Listener listener) {

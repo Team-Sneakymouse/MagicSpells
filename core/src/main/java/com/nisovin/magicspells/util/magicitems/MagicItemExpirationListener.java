@@ -21,6 +21,7 @@ import org.bukkit.inventory.PlayerInventory;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.events.MagicSpellsLoadedEvent;
+import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors.ExpirationResult;
 
@@ -34,12 +35,27 @@ public class MagicItemExpirationListener implements Listener {
 
 	public MagicItemExpirationListener() {
 		instance = this;
-		if (CompatBasics.pluginEnabled("SneakyCharacterManager"))
-			characterExpirationHandler = new CharacterExpirationHandler();
+		ensureCharacterHandler();
 	}
 
 	public static MagicItemExpirationListener getInstance() {
 		return instance;
+	}
+
+	/**
+	 * Registers the character-load expiration handler once SneakyCharacterManager is enabled.
+	 * Safe to call repeatedly (e.g. from PluginEnableEvent if MagicSpells enabled first).
+	 */
+	public void ensureCharacterHandler() {
+		if (characterExpirationHandler != null)
+			return;
+		if (!CompatBasics.pluginEnabled("SneakyCharacterManager"))
+			return;
+		try {
+			characterExpirationHandler = new CharacterExpirationHandler();
+		} catch (NoClassDefFoundError | ExceptionInInitializerError e) {
+			DebugHandler.debugNoClassDefFoundError(e);
+		}
 	}
 
 	public void joinOrLoadCharacter(Player player) {
