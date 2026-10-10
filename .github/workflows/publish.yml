@@ -3,6 +3,7 @@ name: Publish Maven
 on:
   push:
     branches: [DvZ]
+  workflow_dispatch:
 
 permissions:
   contents: read
