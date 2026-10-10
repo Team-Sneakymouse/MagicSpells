@@ -1,6 +1,5 @@
 package com.nisovin.magicspells.mana;
 
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import com.nisovin.magicspells.util.Util;
 
@@ -15,8 +14,8 @@ public class ManaBar {
 
 	private ManaRank rank;
 
-	private ChatColor colorFull;
-	private ChatColor colorEmpty;
+	private String colorFull;
+	private String colorEmpty;
 
 	private int mana;
 	private int maxMana;
@@ -64,7 +63,7 @@ public class ManaBar {
 		regenAmount = amount;
 	}
 	
-	private void setDisplayData(String prefix, ChatColor colorFull, ChatColor colorEmpty) {
+	private void setDisplayData(String prefix, String colorFull, String colorEmpty) {
 		this.prefix = Util.colorize(prefix);
 		this.colorFull = colorFull;
 		this.colorEmpty = colorEmpty;
@@ -74,11 +73,11 @@ public class ManaBar {
 		return prefix;
 	}
 
-	public ChatColor getColorFull() {
+	public String getColorFull() {
 		return colorFull;
 	}
 
-	public ChatColor getColorEmpty() {
+	public String getColorEmpty() {
 		return colorEmpty;
 	}
 	

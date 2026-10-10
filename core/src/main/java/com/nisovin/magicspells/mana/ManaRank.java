@@ -1,6 +1,6 @@
 package com.nisovin.magicspells.mana;
 
-import org.bukkit.ChatColor;
+import com.nisovin.magicspells.util.ColorUtil;
 
 public class ManaRank {
 	
@@ -15,14 +15,16 @@ public class ManaRank {
 	private int regenAmount;
 	private int regenInterval;
 
-	private ChatColor colorFull;
-	private ChatColor colorEmpty;
+	/** Legacy section-sign color code for filled mana (e.g. {@code §a}). */
+	private String colorFull;
+	/** Legacy section-sign color code for empty mana (e.g. {@code §0}). */
+	private String colorEmpty;
 
 	ManaRank() {
 
 	}
 
-	ManaRank(String name, String prefix, char symbol, int barSize, int maxMana, int startingMana, int regenAmount, int regenInterval, ChatColor colorFull, ChatColor colorEmpty) {
+	ManaRank(String name, String prefix, char symbol, int barSize, int maxMana, int startingMana, int regenAmount, int regenInterval, String colorFull, String colorEmpty) {
 		this.name = name;
 		this.prefix = prefix;
 		this.symbol = symbol;
@@ -99,20 +101,20 @@ public class ManaRank {
 		this.regenInterval = regenInterval;
 	}
 
-	public ChatColor getColorFull() {
+	public String getColorFull() {
 		return colorFull;
 	}
 
-	public void setColorFull(ChatColor colorFull) {
-		this.colorFull = colorFull;
+	public void setColorFull(String colorFull) {
+		this.colorFull = colorFull != null ? colorFull : ColorUtil.GREEN;
 	}
 
-	public ChatColor getColorEmpty() {
+	public String getColorEmpty() {
 		return colorEmpty;
 	}
 
-	public void setColorEmpty(ChatColor colorEmpty) {
-		this.colorEmpty = colorEmpty;
+	public void setColorEmpty(String colorEmpty) {
+		this.colorEmpty = colorEmpty != null ? colorEmpty : ColorUtil.BLACK;
 	}
 	
 	@Override

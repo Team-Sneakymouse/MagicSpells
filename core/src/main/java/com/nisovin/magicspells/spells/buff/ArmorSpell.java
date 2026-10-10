@@ -4,7 +4,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
@@ -29,6 +28,7 @@ import org.bukkit.event.inventory.ClickType;
 import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.BuffSpell;
@@ -79,7 +79,7 @@ public class ArmorSpell extends BuffSpell {
 
 	public static Component getInvisibleLore(String s) {
 		String lore = "";
-		for (char c : s.toCharArray()) lore += ChatColor.COLOR_CHAR + "" + c;
+		for (char c : s.toCharArray()) lore += ColorUtil.COLOR_CHAR + "" + c;
 		return Util.getMiniMessage(lore);
 	}
 

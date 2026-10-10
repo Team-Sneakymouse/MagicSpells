@@ -3,9 +3,9 @@ package com.nisovin.magicspells.shop;
 import java.io.File;
 import java.util.regex.Pattern;
 
+import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.util.compat.EventUtil;
-import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.WallSign;
@@ -224,7 +224,7 @@ public class MagicSpellsShop extends JavaPlugin implements Listener {
 		// Check permission
 		Player player = event.getPlayer();
 		if (!Perm.CREATESIGNSHOP.has(player)) {
-			player.sendMessage(ChatColor.RED + "You do not have permission to do that.");
+			player.sendMessage(ColorUtil.RED + "You do not have permission to do that.");
 			event.setCancelled(true);
 			return;
 		}
@@ -233,7 +233,7 @@ public class MagicSpellsShop extends JavaPlugin implements Listener {
 		String spellName = lines[1];
 		Spell spell = MagicSpells.getSpellByInGameName(spellName);
 		if (spell == null) {
-			player.sendMessage(ChatColor.RED + "A spell by that name does not exist.");
+			player.sendMessage(ColorUtil.RED + "A spell by that name does not exist.");
 			event.setCancelled(true);
 			return;
 		}
@@ -241,12 +241,12 @@ public class MagicSpellsShop extends JavaPlugin implements Listener {
 		// Check permissions
 		Spellbook spellbook = MagicSpells.getSpellbook(player);
 		if (this.requireKnownSpell && !spellbook.hasSpell(spell)) {
-			player.sendMessage(ChatColor.RED + "You do not have permission to do that.");
+			player.sendMessage(ColorUtil.RED + "You do not have permission to do that.");
 			event.setCancelled(true);
 			return;
 		}
 		if (this.requireTeachPerm && !spellbook.canTeach(spell)) {
-			player.sendMessage(ChatColor.RED + "You do not have permission to do that.");
+			player.sendMessage(ColorUtil.RED + "You do not have permission to do that.");
 			event.setCancelled(true);
 			return;
 		}

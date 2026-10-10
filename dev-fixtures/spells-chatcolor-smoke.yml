@@ -1,0 +1,56 @@
+# Live fixtures for MANUAL-TEST-CHATCOLOR.md
+# Copy: cp dev-fixtures/spells-chatcolor-smoke.yml core/run/plugins/MagicSpells/
+# Cast: /ms cast <spell>   |   mana bar needs enable-mana-system: true (see mana.yml)
+
+magic-items:
+  cc_amp_stick:
+    type: stick
+    name: "&aCC Amp Stick"
+    lore:
+      - "&7Legacy &aampersand &fcolors"
+  cc_hex_stick:
+    type: blaze_rod
+    name: "&#ff55ffCC Hex Stick"
+    lore:
+      - "&#55ffffHex lore line"
+      - "&eMixed &r&#aabbcclegacy+hex"
+
+cc_msg_amp:
+  spell-class: ".instant.DummySpell"
+  name: cc_msg_amp
+  always-granted: true
+  str-cast-self: "&aCC:&f ampersand &bgreen/aqua &eOK"
+
+cc_msg_hex:
+  spell-class: ".instant.DummySpell"
+  name: cc_msg_hex
+  always-granted: true
+  str-cast-self: "&#55ff55CC:&f hex &#ff5555red &#5555ffblue &eOK"
+
+cc_give_amp:
+  spell-class: ".instant.ConjureSpell"
+  name: cc_give_amp
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - cc_amp_stick 1
+  str-cast-self: "&aCC:&f gave amp stick"
+
+cc_give_hex:
+  spell-class: ".instant.ConjureSpell"
+  name: cc_give_hex
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - cc_hex_stick 1
+  str-cast-self: "&#ff55ffCC:&f gave hex stick"
+
+# Spends mana so the chat mana bar appears (show-mana-on-use).
+cc_mana_ping:
+  spell-class: ".instant.DummySpell"
+  name: cc_mana_ping
+  always-granted: true
+  cost:
+    - mana 10
+  str-cost: "10 mana"
+  str-cast-self: "&eCC:&f mana ping (watch chat bar colors)"

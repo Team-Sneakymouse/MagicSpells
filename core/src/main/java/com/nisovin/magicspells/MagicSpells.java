@@ -35,7 +35,6 @@ import co.aikar.commands.PaperCommandManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Location;
-import org.bukkit.ChatColor;
 import org.bukkit.event.Event;
 import org.bukkit.entity.Player;
 import org.bukkit.OfflinePlayer;
@@ -223,7 +222,7 @@ public class MagicSpells extends JavaPlugin {
 
 	private long lastReloadTime = 0;
 
-	private ChatColor textColor;
+	private String textColor;
 
 	// Strings
 	private String strCantCast;
@@ -307,7 +306,7 @@ public class MagicSpells extends JavaPlugin {
 		enableErrorLogging = config.getBoolean(path + "enable-error-logging", true);
 		errorLogLimit = config.getInt(path + "error-log-limit", -1);
 		enableProfiling = config.getBoolean(path + "enable-profiling", false);
-		textColor = ChatColor.getByChar(config.getString(path + "text-color", ChatColor.DARK_AQUA.getChar() + ""));
+		textColor = ColorUtil.sectionCodeFromConfig(config.getString(path + "text-color", "3"), '3');
 		broadcastRange = config.getInt(path + "broadcast-range", 20);
 		effectlibInstanceLimit = config.getInt(path + "effectlib-instance-limit", 20000);
 
@@ -1120,7 +1119,7 @@ public class MagicSpells extends JavaPlugin {
 		return spellbook;
 	}
 
-	public static ChatColor getTextColor() {
+	public static String getTextColor() {
 		return plugin.textColor;
 	}
 

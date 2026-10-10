@@ -8,7 +8,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.nisovin.magicspells.util.ColorUtil;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -151,27 +151,27 @@ public final class MagicItemBehaviors {
 
 	public static String getExpiresText(long expiresAt) {
 		if (expiresAt < System.currentTimeMillis())
-			return ChatColor.GRAY + "Expired";
+			return ColorUtil.GRAY + "Expired";
 		double hours = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_HOUR);
 		if (hours / 24 >= 15)
-			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + ((long) hours / TimeUtil.HOURS_PER_WEEK)
-					+ ChatColor.GRAY + " weeks";
+			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + ((long) hours / TimeUtil.HOURS_PER_WEEK)
+					+ ColorUtil.GRAY + " weeks";
 		if (hours / 24 >= 3)
-			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + ((long) hours / TimeUtil.HOURS_PER_DAY)
-					+ ChatColor.GRAY + " days";
+			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + ((long) hours / TimeUtil.HOURS_PER_DAY)
+					+ ColorUtil.GRAY + " days";
 		if (hours >= 2)
-			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) hours + ChatColor.GRAY + " hours";
+			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + (long) hours + ColorUtil.GRAY + " hours";
 		if (hours >= 1)
-			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " hour";
+			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + '1' + ColorUtil.GRAY + " hour";
 		double minutes = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_MINUTE);
 		if (minutes >= 2)
-			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) minutes + ChatColor.GRAY + " minutes";
+			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + (long) minutes + ColorUtil.GRAY + " minutes";
 		if (minutes >= 1)
-			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " minute";
+			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + '1' + ColorUtil.GRAY + " minute";
 		double seconds = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_SECOND);
 		if (seconds >= 2)
-			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) seconds + ChatColor.GRAY + " seconds";
-		return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " second";
+			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + (long) seconds + ColorUtil.GRAY + " seconds";
+		return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + '1' + ColorUtil.GRAY + " second";
 	}
 
 	public enum ExpirationResult {

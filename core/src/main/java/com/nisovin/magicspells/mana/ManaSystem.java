@@ -2,12 +2,12 @@ package com.nisovin.magicspells.mana;
 
 import java.util.*;
 
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 
@@ -16,8 +16,8 @@ public class ManaSystem extends ManaHandler {
 	private String defaultBarPrefix;
 	private char defaultSymbol;
 	private int defaultBarSize;
-	private ChatColor defaultBarColorFull;
-	private ChatColor defaultBarColorEmpty;
+	private String defaultBarColorFull;
+	private String defaultBarColorEmpty;
 
 	private int defaultMaxMana;
 	private int defaultStartingMana;
@@ -44,8 +44,8 @@ public class ManaSystem extends ManaHandler {
 		defaultBarPrefix = config.getString(path + "default-prefix", "Mana:");
 		defaultSymbol = config.getString(path + "default-symbol", "=").charAt(0);
 		defaultBarSize = config.getInt(path + "default-size", 35);
-		defaultBarColorFull = ChatColor.getByChar(config.getString(path + "default-color-full", ChatColor.GREEN.getChar() + ""));
-		defaultBarColorEmpty = ChatColor.getByChar(config.getString(path + "default-color-empty", ChatColor.BLACK.getChar() + ""));
+		defaultBarColorFull = ColorUtil.sectionCodeFromConfig(config.getString(path + "default-color-full", "a"), 'a');
+		defaultBarColorEmpty = ColorUtil.sectionCodeFromConfig(config.getString(path + "default-color-empty", "0"), '0');
 
 		defaultMaxMana = config.getInt(path + "default-max-mana", 100);
 		defaultStartingMana = config.getInt(path + "default-starting-mana", defaultMaxMana);
@@ -80,8 +80,12 @@ public class ManaSystem extends ManaHandler {
 				r.setStartingMana(config.getInt(keyPath + "starting-mana", defaultStartingMana));
 				r.setRegenAmount(config.getInt(keyPath + "regen-amount", defaultRegenAmount));
 				r.setRegenInterval(config.getInt(keyPath + "regen-interval", defaultRegenAmount));
-				r.setColorFull(ChatColor.getByChar(config.getString(keyPath + "color-full", defaultBarColorFull.getChar() + "")));
-				r.setColorEmpty(ChatColor.getByChar(config.getString(keyPath + "color-empty", defaultBarColorEmpty.getChar() + "")));
+				r.setColorFull(ColorUtil.sectionCodeFromConfig(
+						config.getString(keyPath + "color-full", String.valueOf(defaultBarColorFull.charAt(1))),
+						defaultBarColorFull.charAt(1)));
+				r.setColorEmpty(ColorUtil.sectionCodeFromConfig(
+						config.getString(keyPath + "color-empty", String.valueOf(defaultBarColorEmpty.charAt(1))),
+						defaultBarColorEmpty.charAt(1)));
 
 				regenerators.add(new Regenerator(r, r.getRegenInterval()));
 

@@ -3,13 +3,13 @@ package com.nisovin.magicspells.spells.buff;
 import java.util.*;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.CastData;
+import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -78,29 +78,29 @@ public class SeeHealthSpell extends BuffSpell {
 		}
 	}
 
-	private ChatColor getRandomColor() {
-		return ChatColor.getByChar(COLORS.charAt(random.nextInt(COLORS.length())));
+	private String getRandomColor() {
+		return ColorUtil.sectionCode(COLORS.charAt(random.nextInt(COLORS.length())));
 	}
 
 	private void showHealthBar(Player player, LivingEntity entity, CastData data) {
 		double pct = entity.getHealth() / Util.getMaxHealth(entity);
 
-		ChatColor color = ChatColor.GREEN;
-		if (pct <= 0.2) color = ChatColor.DARK_RED;
-		else if (pct <= 0.4) color = ChatColor.RED;
-		else if (pct <= 0.6) color = ChatColor.GOLD;
-		else if (pct <= 0.8) color = ChatColor.YELLOW;
+		String color = ColorUtil.GREEN;
+		if (pct <= 0.2) color = ColorUtil.DARK_RED;
+		else if (pct <= 0.4) color = ColorUtil.RED;
+		else if (pct <= 0.6) color = ColorUtil.GOLD;
+		else if (pct <= 0.8) color = ColorUtil.YELLOW;
 
 		int barSize = this.barSize.get(player, entity, data.power(), data.args());
 
 		StringBuilder sb = new StringBuilder(barSize);
-		sb.append(getRandomColor().toString());
+		sb.append(getRandomColor());
 		int remain = (int) Math.round(barSize * pct);
 		sb.append(color);
 		sb.append(symbol.repeat(remain));
 
 		if (remain < barSize) {
-			sb.append(ChatColor.DARK_GRAY);
+			sb.append(ColorUtil.DARK_GRAY);
 			sb.append(symbol.repeat(barSize - remain));
 		}
 

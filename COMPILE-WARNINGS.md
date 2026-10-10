@@ -38,6 +38,7 @@ For ordinary (non-removal) deprecations and unchecked casts, enable lint (curren
 | **`EntityDamageByEntityEvent` legacy ctor** | `DamageSource` builder | |
 | **`EntityEffect.HURT`** | `playHurtAnimation` | |
 | **`InventoryView.Property`** | `@SuppressWarnings` on stub | Dummy inventory only |
+| **`ChatColor`** | `ColorUtil` section-sign + MiniMessage; `getTextColor()` is now a `String` (`§` code) | Config chars unchanged; `GlowSpell` still uses ChatColor for XGlow |
 
 **Current `[removal]` count on `:core:compileJava`:** **0** (as of this migration pass).
 
@@ -55,8 +56,7 @@ These do not appear in the default for-removal-only output:
 | Cluster | Notes |
 |---------|--------|
 | **Deprecated `Targeted*Spell` no-args overloads** | **Suppressed on overrides** (`@SuppressWarnings("deprecation")`). Debt: later invert interfaces so args methods are primary and no-args become defaults/`removed`. Live smoke: `MANUAL-TEST-TARGETED-CAST.md`. |
-| **`ChatColor`** | Many call sites. Migrate to Adventure; spot-check legacy codes. **Next real migration.** |
-| **Unchecked casts** | `CastItem`, `MagicItemData`, `MagicItems` — generics cleanup or suppress. |
+| **Unchecked casts** | `CastItem`, `MagicItemData`, `MagicItems` — generics cleanup or suppress. **Next real cleanup.** |
 | **Misc** | `World.getPVP`, `BookMeta` string pages, `FixedMetadataValue`, `JavaPlugin.getDescription`, WorldEdit `ClipboardFormats.findByFile`, etc. |
 
 ---
@@ -66,6 +66,7 @@ These do not appear in the default for-removal-only output:
 - `PotionIdentityTest`
 - `AttributeSpecParserTest`
 - `SoundKeyNamesTest`
+- `ColorUtilTest`
 - Existing `SpellSnippetValidatorTest` unchanged
 
 Regenerate spell option index for snippet tests: `python3 scripts/wiki/export-test-spell-index.py`

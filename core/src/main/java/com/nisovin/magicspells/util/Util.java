@@ -657,7 +657,7 @@ public class Util {
 		Component component = LegacyComponentSerializer.builder()
 				.hexColors()
 				.useUnusualXRepeatedCharacterHexFormat()
-				.character(ChatColor.COLOR_CHAR)
+				.character(ColorUtil.COLOR_CHAR)
 				.build()
 				.deserialize(colorize(input));
 		return component.decoration(TextDecoration.ITALIC, component.hasDecoration(TextDecoration.ITALIC));
@@ -682,10 +682,10 @@ public class Util {
 		matcher = COLOR_PATTERN.matcher(builder.toString());
 		builder.setLength(0);
 		while (matcher.find()) {
-			ChatColor color = ChatColor.getByChar(matcher.group(1).toLowerCase());
-			if (color == null) continue;
+			String tag = ColorUtil.miniMessageTagFor(matcher.group(1).charAt(0));
+			if (tag == null) continue;
 
-			matcher.appendReplacement(builder, color == ChatColor.UNDERLINE ? "<underlined>" : "<" + color.asBungee().getName() + ">");
+			matcher.appendReplacement(builder, "<" + tag + ">");
 		}
 		matcher.appendTail(builder);
 
@@ -752,26 +752,11 @@ public class Util {
 	}
 
 	public static String colorize(String string) {
-		if (string.isEmpty()) return "";
-
-		Matcher matcher = ColorUtil.HEX_PATTERN.matcher(ChatColor.translateAlternateColorCodes('&', string));
-		StringBuilder builder = new StringBuilder();
-		while (matcher.find()) {
-			String code = matcher.group(1);
-
-			StringBuilder magic = new StringBuilder();
-			magic.append(ChatColor.COLOR_CHAR).append('x');
-			for (int i = 1; i < code.length(); i++) magic.append(ChatColor.COLOR_CHAR).append(code.charAt(i));
-
-			matcher.appendReplacement(builder, magic.toString());
-		}
-
-		return matcher.appendTail(builder).toString();
+		return ColorUtil.colorize(string);
 	}
 
 	public static String decolorize(String string) {
-		if (string.isEmpty()) return "";
-		return ChatColor.stripColor(colorize(string));
+		return ColorUtil.decolorize(string);
 	}
 
 	public static String doVarReplacementAndColorize(Player player, String string) {
