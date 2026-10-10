@@ -63,6 +63,7 @@ public class InventoryUtil {
 		return serialized;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static Inventory deserializeInventory(Map<Object, Object> serialized) {
 		String strInventoryType = (String) serialized.get(SERIALIZATION_KEY_TYPE);
 		int inventorySize = (Integer) serialized.get(SERIALIZATION_KEY_SIZE);
@@ -78,6 +79,7 @@ public class InventoryUtil {
 		return ret;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private static ItemStack[] deserializeContentsMap(Map<Object, Object> contents, int size) {
 		ItemStack[] ret = new ItemStack[size];
 		

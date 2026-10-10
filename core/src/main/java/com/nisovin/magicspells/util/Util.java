@@ -3,7 +3,7 @@ package com.nisovin.magicspells.util;
 import java.io.File;
 import java.io.InputStream;
 
-import java.net.URL;
+import java.net.URI;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -501,7 +501,7 @@ public class Util {
 	}
 
 	public static boolean downloadFile(String url, File file) {
-		try (InputStream input = new URL(url).openStream()) {
+		try (InputStream input = URI.create(url).toURL().openStream()) {
 			AtomicFiles.copy(file.toPath(), input);
 			return true;
 		} catch (Exception e) {

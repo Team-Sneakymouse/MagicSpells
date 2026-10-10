@@ -1,130 +1,145 @@
-# Fresh Xlint smoke set (wipe other spells-*.yml in run if you want a clean slate).
-# Copy: cp MagicSpells/dev-fixtures/spells-xlint-smoke.yml MagicSpells/core/run/plugins/MagicSpells/
-# Then /ms reload. Cast: /c <spell>
-# Checklist: MANUAL-TEST-XLINT.md
+# Final Xlint leftovers smoke set. Wipe other spells-*.yml in run if you want a clean slate.
+# cp MagicSpells/dev-fixtures/spells-xlint-smoke.yml MagicSpells/core/run/plugins/MagicSpells/
+# /ms reload — Checklist: MANUAL-TEST-XLINT.md
 
 magic-items:
-  xlint_attr_sword:
-    type: diamond_sword
-    name: "&bXLIN Attr Sword"
-    attributes:
-      - "generic.attack_damage 8 add_number mainhand"
-  xlint_stew:
+  xlint_menu_weapons-sword:
+    type: iron_sword
+    name: "&bXLIN Menu Sword"
+  xlint_menu_weapons-axe:
+    type: iron_axe
+    name: "&bXLIN Menu Axe"
+  xlint_stew_json:
     type: suspicious_stew
-    name: "&eXLIN Stew"
-    potion-effects:
-      - "night_vision 100"
+    name: "&eXLIN Lenient Stew"
+
+variables:
+  xlint_score:
+    type: player
+    permanent: false
+    default: 0
+    scoreboard-title: "XLIN Score"
+    scoreboard-position: sidebar
+
+recipes:
+  xlint_stone_slab:
+    type: stonecutting
+    result: stone_slab
+    ingredient: stone
+    namespace-key: xlint_stone_slab
+    group: ignored-for-stonecutting
+  xlint_smith_diamond:
+    type: smithing
+    result: diamond_sword
+    base: iron_sword
+    addition: diamond
+    namespace-key: xlint_smith_diamond
 
 xlint_noop:
   spell-class: ".instant.DummySpell"
   helper-spell: true
 
-# --- AttributeModifier slot group (magic item) ---
+# --- CraftSpell (MenuType.CRAFTING) ---
 
-xlint_give_attr:
+xlint_craft:
+  spell-class: ".instant.CraftSpell"
+  name: xlint_craft
+  always-granted: true
+  str-cast-self: "XLIN: crafting table opened"
+
+# --- MagicItemMenuSpell (Adventure lore) ---
+
+xlint_menu:
+  spell-class: ".MagicItemMenuSpell"
+  name: xlint_menu
+  always-granted: true
+  target-self: true
+  can-target: self
+  str-cast-self: "XLIN: magic item menu opened"
+  str-no-target: "XLIN: menu no target (unexpected with target-self)"
+
+# --- ItemSpray custom model data component ---
+
+xlint_spray:
+  spell-class: ".instant.DummySpell"
+  name: xlint_spray
+  always-granted: true
+  str-cast-self: "XLIN: item spray"
+  effects:
+    effect1:
+      position: caster
+      effect: itemspray
+      type: diamond
+      amount: 8
+      force: 0.4
+      duration: 20
+      custom-model-data: 7
+      fake: true
+
+# --- Enchantment registry lookup ---
+
+xlint_enchant:
+  spell-class: ".instant.EnchantSpell"
+  name: xlint_enchant
+  always-granted: true
+  enchantments:
+    - sharpness 3
+  safe-enchants: true
+  str-cast-self: "XLIN: sharpness applied (hold an enchantable weapon)"
+
+# --- tippedarrow → Arrow class ---
+
+xlint_arrow:
+  spell-class: ".instant.ProjectileSpell"
+  name: xlint_arrow
+  always-granted: true
+  projectile-type: tippedarrow
+  projectile-velocity: 20
+  str-cast-self: "XLIN: tippedarrow projectile"
+
+# --- Magic item string parse (Strictness.LENIENT) ---
+
+xlint_give_json:
   spell-class: ".instant.ConjureSpell"
-  name: xlint_give_attr
+  name: xlint_give_json
   always-granted: true
   add-to-inventory: true
   items:
-    - xlint_attr_sword 1
-  str-cast-self: "XLIN: gave attr sword (mainhand attack_damage)"
+    - "diamond_sword{name:\"&bXLIN Lenient\"}"
+  str-cast-self: "XLIN: conjured sword via JSON string form"
 
-# --- Suspicious stew (SuspiciousEffectEntry) ---
+# --- Variable scoreboard (Criteria.DUMMY) ---
 
-xlint_give_stew:
-  spell-class: ".instant.ConjureSpell"
-  name: xlint_give_stew
+xlint_set_score:
+  spell-class: ".instant.DummySpell"
+  name: xlint_set_score
   always-granted: true
-  add-to-inventory: true
-  items:
-    - xlint_stew 1
-  str-cast-self: "XLIN: gave suspicious stew (eat for night vision)"
+  variable-mods-cast:
+    - xlint_score = 42
+  str-cast-self: "XLIN: set xlint_score=42 (check sidebar)"
 
-# --- Tree (generateTree + Random) ---
+# --- PasteSpell (WorldEdit newEditSessionBuilder) ---
 
-xlint_tree:
-  spell-class: ".targeted.TreeSpell"
-  name: xlint_tree
-  always-granted: true
-  range: 20
-  tree-type: birch
-  animation-speed: 40
-  str-cast-self: "XLIN: birch tree growing"
-  str-no-target: "XLIN: look at a solid block"
-
-# --- Falling block spawn ---
-
-xlint_fall_sand:
-  spell-class: ".targeted.MaterializeSpell"
-  name: xlint_fall_sand
+xlint_paste:
+  spell-class: ".targeted.PasteSpell"
+  name: xlint_paste
   always-granted: true
   range: 20
-  block-type: sand
-  falling: true
-  fall-height: 3
-  temporary: false
-  str-cast-self: "XLIN: sand falling block spawned"
+  schematic: froststone.schem
+  paste-air: false
+  undo-delay: 100
+  str-cast-self: "XLIN: pasted froststone (undo ~5s)"
   str-no-target: "XLIN: look at a block"
 
-# --- Cat / frog registry variants ---
+# --- Recipes smoke helpers (give ingredients) ---
 
-xlint_spawn_cat:
-  spell-class: ".targeted.SpawnEntitySpell"
-  name: xlint_spawn_cat
+xlint_give_recipe_mats:
+  spell-class: ".instant.ConjureSpell"
+  name: xlint_give_recipe_mats
   always-granted: true
-  range: 20
-  duration: 100
-  entity:
-    entity: cat
-    type: black
-  str-cast-self: "XLIN: spawned black cat"
-  str-no-target: "XLIN: look at ground"
-
-xlint_spawn_frog:
-  spell-class: ".targeted.SpawnEntitySpell"
-  name: xlint_spawn_frog
-  always-granted: true
-  range: 20
-  duration: 100
-  entity:
-    entity: frog
-    type: warm
-  str-cast-self: "XLIN: spawned warm frog"
-  str-no-target: "XLIN: look at ground"
-
-# --- Swim passives ---
-
-xlint_startswim:
-  spell-class: ".PassiveSpell"
-  name: xlint_startswim
-  always-granted: true
-  cast-without-target: true
-  triggers:
-    - startswim
-  spells:
-    - xlint_noop
-  str-cast-self: "XLIN: startswim"
-
-xlint_stopswim:
-  spell-class: ".PassiveSpell"
-  name: xlint_stopswim
-  always-granted: true
-  cast-without-target: true
-  triggers:
-    - stopswim
-  spells:
-    - xlint_noop
-  str-cast-self: "XLIN: stopswim"
-
-# --- Summon from sign (FRONT side line 0) ---
-
-xlint_summon:
-  spell-class: ".targeted.SummonSpell"
-  name: xlint_summon
-  always-granted: true
-  range: 10
-  max-accept-delay: 200
-  str-usage: "XLIN: look at a sign with a player name on line 1, or /c xlint_summon <player>"
-  str-cast-self: "XLIN: summon request sent"
-  str-no-target: "XLIN: need a sign or player arg"
+  add-to-inventory: true
+  items:
+    - stone 8
+    - iron_sword 1
+    - diamond 1
+  str-cast-self: "XLIN: gave stone + iron sword + diamond for recipe checks"

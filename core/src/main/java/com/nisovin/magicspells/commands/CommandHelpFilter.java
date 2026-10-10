@@ -20,9 +20,8 @@ public class CommandHelpFilter {
 
 	public static void mapPerms() {
 		for (RootCommand rootCommand : MagicSpells.getCommandManager().getRegisteredRootCommands()) {
-			//noinspection rawtypes
-			for (RegisteredCommand command : rootCommand.getSubCommands().values()) {
-				HelpPermission annotation = (HelpPermission) command.getAnnotation(HelpPermission.class);
+			for (RegisteredCommand<?> command : rootCommand.getSubCommands().values()) {
+				HelpPermission annotation = command.getAnnotation(HelpPermission.class);
 				if (annotation == null) continue;
 				magicPerms.put(command.getCommand(), annotation.permission().getNode());
 			}

@@ -1,4 +1,4 @@
-# Manual tests — Xlint cluster cleanup (attr / swim / fall / tree / stew / registry)
+# Manual tests — final Xlint leftovers
 
 Wipe other `spells-*.yml` in the run config if you want a clean slate, then load this fixture.
 
@@ -6,42 +6,40 @@ Wipe other `spells-*.yml` in the run config if you want a clean slate, then load
 
 ```bash
 ./gradlew runServer
-# with server stopped or after wipe:
 cp dev-fixtures/spells-xlint-smoke.yml core/run/plugins/MagicSpells/
 # /ms reload if already up
 ```
 
-Passive spells use `spell-class: ".PassiveSpell"` (package `spells`, **not** `.passive.PassiveSpell`).
-Confirm load with `/ms list` — all `xlint_*` names below must appear with **no** “missing class” errors.
+Confirm load with `/ms list` — all `xlint_*` names below must appear; console should log **2 recipes loaded** (or more if general.yml also has recipes) with no recipe errors.
 
 ---
 
 ## Checklist
 
-| Check | How | Expect |
-|-------|-----|--------|
-| Attr sword | `/c xlint_give_attr`, hold sword, check attack damage | +8 attack damage on mainhand; no console error |
-| Suspicious stew | `/c xlint_give_stew`, eat | Night vision ~5s; no console error |
-| Tree | Look at dirt/grass, `/c xlint_tree` | Birch grows with animation; `XLIN: birch tree growing` |
-| Falling sand | Look at a block, `/c xlint_fall_sand` | Sand falling block from above target; `XLIN: sand falling…` |
-| Cat variant | Look at ground, `/c xlint_spawn_cat` | Black cat; despawns after ~5s |
-| Frog variant | Look at ground, `/c xlint_spawn_frog` | Warm frog; despawns after ~5s |
-| Start swim | Enter water and start swimming (sprint in water) | `XLIN: startswim` |
-| Stop swim | Stop swimming / leave swim state | `XLIN: stopswim` |
-| Summon sign | Place a sign, write a **online** player name on **line 1 (front)**, look at it, `/c xlint_summon` | Summon request to that player; or `/c xlint_summon <player>` |
+| Spell | How | Pay attention to |
+|-------|-----|------------------|
+| `xlint_craft` | `/c xlint_craft` | Crafting UI opens with no crafting table nearby; no console error |
+| `xlint_menu` | `/c xlint_menu` | Chest menu opens (title `xlint_menu`); click **xlint** → **menu** → **weapons** tiles to drill in; Back works |
+| `xlint_spray` | `/c xlint_spray` | Diamond item spray at feet; no CMD / meta errors |
+| `xlint_enchant` | Hold iron/diamond sword, `/c xlint_enchant` | Sharpness III applied; no enchantment lookup error |
+| `xlint_arrow` | `/c xlint_arrow` | Arrow fires (legacy `tippedarrow` key); no class error |
+| `xlint_give_json` | `/c xlint_give_json` | Named diamond sword in inventory; lenient JSON parse OK |
+| `xlint_set_score` | `/c xlint_set_score` | Sidebar shows **XLIN Score** at 42 |
+| `xlint_paste` | Look at ground, `/c xlint_paste` | froststone pastes; **undo ~5s after paste** (FAWE: +1 tick before undo is armed); no WE errors |
+| `xlint_give_recipe_mats` | `/c xlint_give_recipe_mats` then use stonecutter / smithing table | Stone→stone_slab on stonecutter; iron sword + diamond → diamond sword on smithing (empty template OK) |
 
 ---
 
 ## Sign-off
 
 ```text
-[ ] xlint_give_attr
-[ ] xlint_give_stew
-[ ] xlint_tree
-[ ] xlint_fall_sand
-[ ] xlint_spawn_cat
-[ ] xlint_spawn_frog
-[ ] xlint_startswim
-[ ] xlint_stopswim
-[ ] xlint_summon
+[ ] xlint_craft
+[ ] xlint_menu
+[ ] xlint_spray
+[ ] xlint_enchant
+[ ] xlint_arrow
+[ ] xlint_give_json
+[ ] xlint_set_score
+[ ] xlint_paste
+[ ] xlint_give_recipe_mats (+ stonecutter / smithing)
 ```

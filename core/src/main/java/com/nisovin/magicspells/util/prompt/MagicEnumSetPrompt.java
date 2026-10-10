@@ -58,13 +58,15 @@ public class MagicEnumSetPrompt extends FixedSetPrompt {
 		return responder.acceptValidatedInput(context, input);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static MagicEnumSetPrompt fromConfigSection(ConfigurationSection section) {
 		// Get the options
 		String enumClassName = section.getString("enum-class");
 		Class<? extends Enum<?>> enumClass;
 		try {
-			enumClass = (Class<? extends Enum<?>>) Class.forName(enumClassName);
-			if (!enumClass.isEnum()) throw new ClassCastException(enumClass.getName() + " is not an enum!");
+			Class<?> raw = Class.forName(enumClassName);
+			if (!raw.isEnum()) throw new ClassCastException(raw.getName() + " is not an enum!");
+			enumClass = (Class<? extends Enum<?>>) raw;
 		} catch (ClassNotFoundException e) {
 			MagicSpells.error("Error trying to produce MagicEnumSetPrompt");
 			e.printStackTrace();

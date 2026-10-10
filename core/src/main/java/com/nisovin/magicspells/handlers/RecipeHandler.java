@@ -154,9 +154,24 @@ public class RecipeHandler implements Listener {
     private static Recipe createSmithingRecipe(ConfigurationSection config, NamespacedKey namespaceKey, ItemStack result) {
         Material base = getMaterial(config.getString("base"), "Recipe '" + config.getName() + "' has an invalid 'base' defined.");
         if (base == null) return null;
-        Material addition = getMaterial(config.getString("base"), "Recipe '" + config.getName() + "' has an invalid 'addition' defined.");
+        Material addition = getMaterial(config.getString("addition"), "Recipe '" + config.getName() + "' has an invalid 'addition' defined.");
         if (addition == null) return null;
-        return new SmithingRecipe(namespaceKey, result, new RecipeChoice.MaterialChoice(base), new RecipeChoice.MaterialChoice(addition));
+
+        RecipeChoice templateChoice = RecipeChoice.empty();
+        String templateName = config.getString("template");
+        if (templateName != null && !templateName.isEmpty()) {
+            Material template = getMaterial(templateName, "Recipe '" + config.getName() + "' has an invalid 'template' defined.");
+            if (template == null) return null;
+            templateChoice = new RecipeChoice.MaterialChoice(template);
+        }
+
+        return new SmithingTransformRecipe(
+                namespaceKey,
+                result,
+                templateChoice,
+                new RecipeChoice.MaterialChoice(base),
+                new RecipeChoice.MaterialChoice(addition)
+        );
     }
 
     public static void clearRecipes() {

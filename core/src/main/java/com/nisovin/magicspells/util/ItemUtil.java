@@ -85,9 +85,8 @@ public class ItemUtil {
 	}
 
 	public static Recipe createStonecutterRecipe(NamespacedKey namespaceKey, String group, ItemStack result, Material ingredient) {
-		StonecuttingRecipe recipe = new StonecuttingRecipe(namespaceKey, result, ingredient);
-		recipe.setGroup(group);
-		return recipe;
+		// Paper deprecated StonecuttingRecipe#setGroup as unused; keep the group param for call-site stability.
+		return new StonecuttingRecipe(namespaceKey, result, ingredient);
 	}
 
 }

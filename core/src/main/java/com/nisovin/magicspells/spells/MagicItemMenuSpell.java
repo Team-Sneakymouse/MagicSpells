@@ -62,12 +62,15 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
+		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+			if (targetSelf) {
+				openDelay(player, player, power, args);
+				return PostCastAction.HANDLE_NORMALLY;
+			}
+
 			TargetInfo<Player> targetInfo = getTargetedPlayer(caster, power, args);
 			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
-			Player target = targetInfo.target();
-
-			openDelay(caster, target, power, args);
+			openDelay(caster, targetInfo.target(), power, args);
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
@@ -147,7 +150,7 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 						ItemMeta meta = item.getItemMeta();
 
 						meta.displayName(Component.text(split[0]).color(NamedTextColor.GOLD));
-						meta.setLore(new ArrayList<>(Arrays.asList((category.equals("") ? "" : category + "-") + split[0])));
+						meta.lore(List.of(Component.text((category.equals("") ? "" : category + "-") + split[0])));
 						meta.addItemFlags(ItemFlag.values());
 						item.setItemMeta(meta);
 
@@ -184,7 +187,9 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 		}
 
 		opener.openInventory(inv);
-		Util.setInventoryTitle(opener, category);
+		// Root opens with Component title from createInventory. An empty NMS title packet
+		// (category "") clobbers that open and can leave the client with no usable menu.
+		if (!category.isEmpty()) Util.setInventoryTitle(opener, category);
 
 		if (spellData.caster() != null) playSpellEffects(spellData.caster(), spellData.target(), spellData);
 		else playSpellEffects(EffectPosition.TARGET, spellData.target(), spellData);
@@ -232,7 +237,13 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 			} else if (event.getRawSlot() == 53) {
 				newItemMenuData = new ItemMenuData(spellData, category, 0, page + 1);
 			} else {
-				newItemMenuData = new ItemMenuData(spellData, itemMeta.getLore().get(0), 0, 0);
+				List<Component> lore = itemMeta.lore();
+				if (lore == null || lore.isEmpty()) return;
+				// Plain text — category paths must not pick up MiniMessage serialization noise.
+				String path = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+						.serialize(lore.get(0));
+				if (path.isEmpty()) return;
+				newItemMenuData = new ItemMenuData(spellData, path, 0, 0);
 			}
 			itemMenuData.put(player.getUniqueId(), newItemMenuData);
 			open(player, newItemMenuData);

@@ -1,13 +1,16 @@
 package com.nisovin.magicspells.util.projectile;
 
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Projectile;
-import org.bukkit.entity.TippedArrow;
 
+/**
+ * Legacy {@code tippedarrow} projectile key. Tipped status is potion data on {@link Arrow}.
+ */
 public class ProjectileManagerTippedArrow extends ProjectileManager {
 	
 	@Override
 	public Class<? extends Projectile> getProjectileClass() {
-		return TippedArrow.class;
+		return Arrow.class;
 	}
 	
 }

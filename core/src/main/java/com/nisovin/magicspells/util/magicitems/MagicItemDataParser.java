@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import com.google.gson.Gson;
+import com.google.gson.Strictness;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
@@ -96,7 +97,7 @@ public class MagicItemDataParser {
 		}
 
 		JsonReader jsonReader = new JsonReader(new StringReader(args[1]));
-		jsonReader.setLenient(true);
+		jsonReader.setStrictness(Strictness.LENIENT);
 
 		try {
 			while (jsonReader.peek() != JsonToken.END_DOCUMENT) {

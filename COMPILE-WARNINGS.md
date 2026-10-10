@@ -60,8 +60,19 @@ How to refresh:
 | **Suspicious stew effects** | `SuspiciousEffectEntry` | SuspiciousStewHandler |
 | **Sign `getLine` / legacy side** | `Side.FRONT` Adventure lines | SummonSpell / SignTextCondition |
 | **Cat / frog type enums** | `RegistryKey.CAT_VARIANT` / `FROG_VARIANT` | EntityData |
+| **Unchecked / raw types** | Typed loops + local `@SuppressWarnings` | CommandHelpFilter, EntityData, InventoryUtil, MagicEnumSetPrompt |
+| **ItemMeta lore / CMD** | Adventure `lore()`; `CustomModelDataValues` | MagicItemMenuSpell, ItemSprayEffect |
+| **Recipes** | `SmithingTransformRecipe` + stop stonecutting `setGroup` | Also fixed smithing `addition` reading `base` by mistake |
+| **CraftSpell workbench** | `MenuType.CRAFTING.builder()` | |
+| **Scoreboard objective** | `Criteria.DUMMY` | VariableManager |
+| **Enchantment.getByKey** | `RegistryKey.ENCHANTMENT` via RegistryAccess | EnchantmentHandler |
+| **WorldEdit edit session** | `newEditSessionBuilder()` | PasteSpell |
+| **JsonReader.setLenient** | `setStrictness(LENIENT)` | MagicItemDataParser |
+| **TippedArrow** | `Arrow.class` | ProjectileManagerTippedArrow |
+| **URL(String)** | `URI.create(url).toURL()` | Util.downloadFile |
 
-**Current `[removal]` count on `:core:compileJava`:** **0**.
+**Current `[removal]` count on `:core:compileJava`:** **0**.  
+**Current `-Xlint` warning count on `:core:compileJava`:** **0**.
 
 ## Manual / live verification
 
@@ -79,14 +90,7 @@ Tracked fixtures under `dev-fixtures/` (copy into `core/run/plugins/MagicSpells/
 
 ## Remaining `-Xlint` clusters (next passes)
 
-**Current total: 17**. Refresh with the command above.
-
-| Cluster | Count (approx) | Notes |
-|---------|----------------|-------|
-| **Unchecked casts / raw types** | ~5 | Transformer, RegisteredCommand, etc. |
-| **ItemMeta lore / custom model data** | 2 | Adventure / DataComponentPath leftovers |
-| **Recipes** | 2 | SmithingRecipe ctor, StonecuttingRecipe.setGroup |
-| **Odds** | ~8 | TippedArrow, URL, JsonReader.setLenient, Scoreboard objective, openWorkbench, Enchantment.getByKey, WorldEdit getEditSessionFactory |
+**Current total: 0**. Refresh with the command above. Intentional `@SuppressWarnings` remain for Conversations, GlowSpell, Citizens NPC metadata, bStats Metrics, swim cancel no-op, InventoryView stub, and DamageModifier compat ctor/maps.
 
 ---
 

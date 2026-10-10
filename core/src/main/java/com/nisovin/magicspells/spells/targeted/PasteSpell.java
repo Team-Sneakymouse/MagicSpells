@@ -319,45 +319,62 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			originals = captureRegion(target);
 		}
 
-		try (EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(BukkitAdapter.adapt(target.getWorld()), -1)) {
+		try (EditSession editSession = WorldEdit.getInstance().newEditSessionBuilder()
+				.world(BukkitAdapter.adapt(target.getWorld()))
+				.maxBlocks(-1)
+				.build()) {
 			Operation operation = new ClipboardHolder(clipboard)
 					.createPaste(editSession)
 					.to(BlockVector3.at(target.getX(), target.getY(), target.getZ()))
 					.ignoreAirBlocks(!pasteAir)
 					.build();
 			Operations.complete(operation);
-
-			if (temporary && originals != null) {
-				InstantPaste paste = new InstantPaste();
-				AlteredBlockManager manager = MagicSpells.getAlteredBlockManager();
-				for (Map.Entry<Block, BlockData> entry : originals.entrySet()) {
-					Block block = entry.getKey();
-					BlockData fromData = entry.getValue();
-					if (block.getBlockData().matches(fromData)) continue;
-					paste.changes.add(manager.register(internalName, block, fromData, null));
-				}
-
-				if (removePaste) sessions.add(paste);
-				if (caster != null) {
-					spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), paste);
-				}
-
-				if (undoDelay > 0) {
-					MagicSpells.scheduleDelayedTask(() -> {
-						paste.undo();
-						sessions.remove(paste);
-						if (caster != null) {
-							spellRecords.get(this.spellName).removePlayerSession(caster.getUniqueId().toString(), paste);
-						}
-					}, undoDelay);
-				}
-			}
+			// EditSession must close/flush before we read Bukkit block data for undo.
 		} catch (WorldEditException e) {
 			e.printStackTrace();
 			return false;
 		}
 
+		if (temporary && originals != null) {
+			// FAWE may finish applying a tick later; defer capture so undo sees real changes.
+			// Capture locals — originals/undoDelay are not effectively final.
+			Map<Block, BlockData> capturedOriginals = originals;
+			int capturedUndoDelay = undoDelay;
+			LivingEntity capturedCaster = caster;
+			MagicSpells.scheduleDelayedTask(
+					() -> registerInstantUndo(capturedCaster, capturedOriginals, capturedUndoDelay),
+					1);
+		}
+
 		return true;
+	}
+
+	private void registerInstantUndo(LivingEntity caster, Map<Block, BlockData> originals, int undoDelay) {
+		InstantPaste paste = new InstantPaste();
+		AlteredBlockManager manager = MagicSpells.getAlteredBlockManager();
+		for (Map.Entry<Block, BlockData> entry : originals.entrySet()) {
+			Block block = entry.getKey();
+			BlockData fromData = entry.getValue();
+			if (block.getBlockData().matches(fromData)) continue;
+			paste.changes.add(manager.register(internalName, block, fromData, null));
+		}
+
+		if (paste.changes.isEmpty()) return;
+
+		if (removePaste) sessions.add(paste);
+		if (caster != null) {
+			spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), paste);
+		}
+
+		if (undoDelay > 0) {
+			MagicSpells.scheduleDelayedTask(() -> {
+				paste.undo();
+				sessions.remove(paste);
+				if (caster != null) {
+					spellRecords.get(this.spellName).removePlayerSession(caster.getUniqueId().toString(), paste);
+				}
+			}, undoDelay);
+		}
 	}
 
 	private Map<Block, BlockData> captureRegion(Location target) {

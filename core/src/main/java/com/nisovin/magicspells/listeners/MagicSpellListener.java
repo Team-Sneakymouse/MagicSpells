@@ -34,8 +34,14 @@ public class MagicSpellListener implements Listener {
 		Spell spell = event.getSpell();
 		if (target == null) return;
 
-		if (Perm.NO_TARGET.has(target)) event.setCancelled(true);
-		if (target instanceof Player && ((Player) target).getGameMode() == GameMode.SPECTATOR) event.setCancelled(true);
+		LivingEntity caster = event.getCaster();
+		boolean selfTarget = caster != null && target.equals(caster);
+
+		// notarget means "others cannot target me", not "I cannot target myself" (menus, self-buffs).
+		if (!selfTarget && Perm.NO_TARGET.has(target)) event.setCancelled(true);
+		if (!selfTarget && target instanceof Player player && player.getGameMode() == GameMode.SPECTATOR) {
+			event.setCancelled(true);
+		}
 		if (spell != null && noMagicZoneManager != null && noMagicZoneManager.willFizzle(target, spell)) event.setCancelled(true);
 		if (isMSEntity(target)) event.setCancelled(true);
 		if (target instanceof ArmorStand && target.isInvisible() && ((ArmorStand) target).isMarker()) event.setCancelled(true);

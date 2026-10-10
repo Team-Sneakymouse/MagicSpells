@@ -20,6 +20,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
+import com.nisovin.magicspells.util.magicitems.CustomModelDataValues;
 
 public class ItemSprayEffect extends SpellEffect {
 
@@ -61,14 +62,13 @@ public class ItemSprayEffect extends SpellEffect {
 		ItemStack item = new ItemStack(material);
 
 		if (customModelData != null) {
-
 			Integer customModelData = this.customModelData.get(data);
-
-			ItemMeta meta = item.getItemMeta();
-			meta.setCustomModelData(customModelData);
-			
-			item.setItemMeta(meta);
-		};
+			if (customModelData != null) {
+				ItemMeta meta = item.getItemMeta();
+				CustomModelDataValues.ofLegacyInt(customModelData).applyTo(meta);
+				item.setItemMeta(meta);
+			}
+		}
 
 		Random rand = ThreadLocalRandom.current();
 		Location loc = location.clone().add(0, 1, 0);

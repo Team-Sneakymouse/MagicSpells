@@ -404,10 +404,8 @@ public class EntityData {
 					// Paper throws IllegalStateException for monsters in Peaceful; catch below.
 					yield startLoc.getWorld().spawn(startLoc, entityClass, e -> {
 						Collection<Transformer<?, ?>> transformers = options.get(entityType);
-						// noinspection rawtypes
-						for (Transformer transformer : transformers)
-							// noinspection unchecked
-							transformer.apply(e, data);
+						for (Transformer<?, ?> transformer : transformers)
+							applyTransformer(transformer, e, data);
 
 						if (consumer != null)
 							consumer.accept(e);
@@ -674,6 +672,11 @@ public class EntityData {
 	@ApiStatus.Internal
 	public ConfigData<Villager.Profession> getProfession() {
 		return profession;
+	}
+
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private static void applyTransformer(Transformer<?, ?> transformer, Entity entity, SpellData data) {
+		((Transformer) transformer).apply(entity, data);
 	}
 
 	public record Transformer<T, C>(ConfigData<C> supplier, BiConsumer<T, C> setter, boolean optional) {
