@@ -101,7 +101,7 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 	
 	private boolean explode(LivingEntity caster, Location target, float power, String[] args) {
@@ -138,10 +138,6 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	@EventHandler(priority=EventPriority.HIGH, ignoreCancelled = true)
 	public void onEntityDamage(EntityDamageEvent event) {

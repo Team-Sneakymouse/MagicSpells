@@ -131,7 +131,7 @@ public final class MultiSpell extends InstantSpell {
 	public Spell.PostCastAction castSpell(LivingEntity caster, Spell.SpellCastState state, float power, String[] args) {
 		if (state != Spell.SpellCastState.NORMAL)
 			return Spell.PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 	@Override

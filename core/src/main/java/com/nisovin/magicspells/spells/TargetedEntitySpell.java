@@ -7,23 +7,21 @@ import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 
 /**
- * Targeted entity casts. Prefer {@link #castAtEntity(SpellData)}.
- * Existing boolean overloads remain for soft migration; the SpellData default
- * bridges to them until spell bodies override {@code castAtEntity(SpellData)}.
+ * Targeted entity casts. {@link #castAtEntity(SpellData)} is canonical;
+ * boolean overloads are thin deprecated wrappers.
  */
 public interface TargetedEntitySpell {
 
-	default CastResult castAtEntity(SpellData data) {
-		boolean success = data.hasCaster()
-			? castAtEntity(data.caster(), data.target(), data.power(), data.args())
-			: castAtEntity(data.target(), data.power(), data.args());
-		return new CastResult(success ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
+	CastResult castAtEntity(SpellData data);
+
+	@Deprecated
+	default boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args);
-
+	@Deprecated
 	default boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return false;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Deprecated

@@ -51,7 +51,7 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
@@ -69,15 +69,7 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 		}
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	private void modifyCooldowns(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		float sec = seconds.get(caster, target, power, args);

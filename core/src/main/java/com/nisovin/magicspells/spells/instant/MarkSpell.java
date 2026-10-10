@@ -79,16 +79,23 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
-	@Override
+		@Override
+	public CastResult castAtLocation(SpellData data) {
+		marks.put(getKey(data.caster()), new MagicLocation(data.location()));
+		if (data.caster() != null) playSpellEffects(data.caster(), data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	
+	}
+@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		marks.put(getKey(caster), new MagicLocation(target));
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
+
+
 
 	
 	@EventHandler(priority=EventPriority.MONITOR)

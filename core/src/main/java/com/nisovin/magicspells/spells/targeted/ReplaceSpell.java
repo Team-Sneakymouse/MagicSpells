@@ -182,19 +182,23 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
-	@Override
+		@Override
+	public CastResult castAtLocation(SpellData data) {
+		boolean __ok = replace(data.caster(), data.location(), data.power(), data.args());
+		return new CastResult(__ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
+	
+	}
+@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return replace(caster, target, power, args);
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return replace(null, target, power, args);
-	}
+
+
 
 	private boolean replace(LivingEntity caster, Location target, float power, String[] args) {
 		boolean replaced = false;

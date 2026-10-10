@@ -159,7 +159,7 @@ public class BeamSpell extends InstantSpell
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 	@Override
@@ -170,10 +170,6 @@ public class BeamSpell extends InstantSpell
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	@Override
 	public CastResult castAtLocation(SpellData data) {
@@ -181,11 +177,6 @@ public class BeamSpell extends InstantSpell
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
-				!= PostCastAction.ALREADY_HANDLED;
-	}
 
 	@Override
 	public CastResult castAtEntityFromLocation(SpellData data) {
@@ -195,12 +186,6 @@ public class BeamSpell extends InstantSpell
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
-			String[] args) {
-		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
-				!= PostCastAction.ALREADY_HANDLED;
-	}
 
 	private void shootBeam(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
 		SpellData data = new SpellData(caster, target, from, power, args);

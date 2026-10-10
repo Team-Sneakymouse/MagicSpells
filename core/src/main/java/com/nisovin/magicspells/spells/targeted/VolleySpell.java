@@ -104,34 +104,35 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public CastResult castAtLocation(SpellData data) {
 		if (noTarget)
-			return false;
-		volley(caster, null, caster.getLocation(), target, power, args);
-		return true;
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		volley(data.caster(), null, data.caster().getLocation(), data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
-			String[] args) {
-		if (noTarget || !validTargetList.canTarget(caster, target))
-			return false;
-		volley(caster, target, from, target.getLocation(), power, args);
-		return true;
-	}
+
 
 	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (noTarget || !validTargetList.canTarget(target))
-			return false;
-		volley(null, target, from, target.getLocation(), power, args);
-		return true;
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		if (noTarget)
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		} else if (!validTargetList.canTarget(data.target())) {
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		}
+		volley(data.caster(), data.target(), data.location(), data.target().getLocation(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+
 
 	private void volley(LivingEntity caster, LivingEntity target, Location from, Location targetLoc, float power,
 			String[] args) {

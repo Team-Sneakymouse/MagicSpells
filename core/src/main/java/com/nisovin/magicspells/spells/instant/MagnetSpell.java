@@ -60,7 +60,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 	@Override
@@ -70,11 +70,6 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
-				!= PostCastAction.ALREADY_HANDLED;
-	}
 
 	private List<Item> getNearbyItems(LivingEntity caster, Location center, float power, String[] args) {
 		int maxTargets = this.maxTargets.get(caster, null, power, args);

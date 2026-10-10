@@ -60,7 +60,7 @@ public class SlotSelectSpell extends TargetedSpell implements TargetedEntitySpel
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 	@Override
@@ -77,15 +77,7 @@ public class SlotSelectSpell extends TargetedSpell implements TargetedEntitySpel
 		return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	private boolean slotChange(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (!(target instanceof Player player)) return false;

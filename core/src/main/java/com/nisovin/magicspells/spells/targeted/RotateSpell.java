@@ -55,7 +55,7 @@ public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, T
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
@@ -75,22 +75,21 @@ public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, T
 		}
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
-	@Override
+		@Override
+	public CastResult castAtLocation(SpellData data) {
+		spin(data.caster(), data.location());
+		playSpellEffects(data.caster(), data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	
+	}
+@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		spin(caster, target);
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
+
+
 
 	private void spinTarget(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		Location loc = target.getLocation();

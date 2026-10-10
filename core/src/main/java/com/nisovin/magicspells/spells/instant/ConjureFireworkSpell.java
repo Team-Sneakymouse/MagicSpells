@@ -153,37 +153,33 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		SpellData data = new SpellData(caster, target, power, args);
-		playSpellEffects(EffectPosition.CASTER, caster, data);
+	public CastResult castAtLocation(SpellData data) {
+		SpellData effectData = new SpellData(data.caster(), data.location(), data.power(), data.args());
+		playSpellEffects(EffectPosition.CASTER, data.caster(), effectData);
 
 		ItemStack item = firework.clone();
-		item.setAmount(count.get(caster, null, power, args));
+		item.setAmount(count.get(data.caster(), null, data.power(), data.args()));
 
 		ItemMeta meta = item.getItemMeta();
 		if (meta instanceof FireworkMeta fMeta)
-			fMeta.setPower(flight.get(caster, null, power, args));
+			fMeta.setPower(flight.get(data.caster(), null, data.power(), data.args()));
 
-		Item dropped = target.getWorld().dropItem(target, item);
+		Item dropped = data.location().getWorld().dropItem(data.location(), item);
 		dropped.setItemStack(item);
 		dropped.setGravity(gravity);
 
-		int delay = Math.max(pickupDelay.get(caster, null, power, args), 0);
+		int delay = Math.max(pickupDelay.get(data.caster(), null, data.power(), data.args()), 0);
 		dropped.setPickupDelay(delay);
 
-		playSpellEffects(EffectPosition.SPECIAL, dropped, data);
-		return true;
+		playSpellEffects(EffectPosition.SPECIAL, dropped, effectData);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
 
-	}
 
 }

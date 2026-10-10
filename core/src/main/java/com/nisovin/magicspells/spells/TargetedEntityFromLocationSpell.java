@@ -8,21 +8,24 @@ import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 
 /**
- * Targeted entity-from-location casts. Prefer {@link #castAtEntityFromLocation(SpellData)}.
+ * Targeted entity-from-location casts. {@link #castAtEntityFromLocation(SpellData)} is canonical;
+ * boolean overloads are thin deprecated wrappers.
  */
 public interface TargetedEntityFromLocationSpell {
 
-	default CastResult castAtEntityFromLocation(SpellData data) {
-		boolean success = data.hasCaster()
-			? castAtEntityFromLocation(data.caster(), data.location(), data.target(), data.power(), data.args())
-			: castAtEntityFromLocation(data.location(), data.target(), data.power(), data.args());
-		return new CastResult(success ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
+	CastResult castAtEntityFromLocation(SpellData data);
+
+	@Deprecated
+	default boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			String[] args) {
+		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
-	boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args);
-
+	@Deprecated
 	default boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		return false;
+		return castAtEntityFromLocation(new SpellData(null, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Deprecated

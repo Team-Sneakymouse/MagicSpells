@@ -57,14 +57,21 @@ public class UpdateCloneSpell extends TargetedSpell implements TargetedLocationS
     public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
         if (state != SpellCastState.NORMAL)
             return PostCastAction.HANDLE_NORMALLY;
-        return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+        return cast(new SpellData(caster, power, args)).action();
     }
 
-    @Override
-    public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-        updateDisplays(caster, target, power);
-        return true;
-    }
+    	@Override
+	public CastResult castAtLocation(SpellData data) {
+		updateDisplays(data.caster(), data.location(), data.power());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+    
+	}
+@Override
+	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+
 
     private void updateDisplays(LivingEntity caster, Location location, float power){
         Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.getInstance(), () ->{

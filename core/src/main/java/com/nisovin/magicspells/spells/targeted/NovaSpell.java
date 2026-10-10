@@ -122,7 +122,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState spellCastState, float power, String[] strings) {
 		if (spellCastState != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, strings)).action();
+		return cast(new SpellData(caster, power, strings)).action();
 	}
 
 	@Override
@@ -133,10 +133,6 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	@Override
 	public CastResult castAtLocation(SpellData data) {

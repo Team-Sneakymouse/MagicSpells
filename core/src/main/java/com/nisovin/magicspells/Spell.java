@@ -200,28 +200,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected float minCooldown = -1F;
 	protected float maxCooldown = -1F;
 
-	private static final ThreadLocal<Location> currentCastLocation = new ThreadLocal<>();
-
-	/**
-	 * Gets the location associated with the current spell cast on this thread.
-	 * This is primarily used to provide location context to spells that don't
-	 * receive it through their method signatures (e.g. castSpell).
-	 *
-	 * @return the current cast location, or null if none is set
-	 */
-	public static Location getCurrentCastLocation() {
-		return currentCastLocation.get();
-	}
-
-	/**
-	 * Sets the location associated with the current spell cast on this thread.
-	 *
-	 * @param location the location to set
-	 */
-	protected static void setCurrentCastLocation(Location location) {
-		currentCastLocation.set(location);
-	}
-
 	public Spell(MagicConfig config, String spellName) {
 		this.config = config;
 		this.internalName = spellName;
@@ -1096,13 +1074,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * Override this (and targeted castAt* APIs) to receive SpellData end-to-end.
 	 */
 	public CastResult cast(SpellData data) {
-		setCurrentCastLocation(data.location());
-		try {
-			PostCastAction action = castSpell(data.caster(), SpellCastState.NORMAL, data.power(), data.args());
-			return new CastResult(action, data);
-		} finally {
-			setCurrentCastLocation(null);
-		}
+		PostCastAction action = castSpell(data.caster(), SpellCastState.NORMAL, data.power(), data.args());
+		return new CastResult(action, data);
 	}
 
 	// FIXME save the results of the redundant calculations or be cleaner about it

@@ -219,7 +219,7 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 	@Override
@@ -230,11 +230,6 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity livingEntity, Location target, float power, String[] args) {
-		return castAtLocation(new SpellData(livingEntity, null, target, power, args)).action()
-				!= PostCastAction.ALREADY_HANDLED;
-	}
 
 	private void setupTracker(ProjectileTracker tracker, LivingEntity caster, float power, String[] args) {
 		SpellData data = new SpellData(caster, power, args);

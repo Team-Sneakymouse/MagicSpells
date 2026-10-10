@@ -105,22 +105,30 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player player)) return false;
+		@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (!(data.caster() instanceof Player player)) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 
-		int slot = this.slot.get(caster, null, power, args);
+		int slot = this.slot.get(data.caster(), null, data.power(), data.args());
 		ItemStack item = player.getInventory().getItem(slot);
-		if (item == null || !isAllowed(item.getType())) return false;
+		if (item == null || !isAllowed(item.getType())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 
-		Block block = target.getBlock();
+		Block block = data.location().getBlock();
 
-		return build(player, block, block, item, slot, power, args);
+		boolean __ok = build(player, block, block, item, slot, data.power(), data.args());
+		return new CastResult(__ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
+	
 	}
+@Override
+	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+
 
 	private boolean isAllowed(Material mat) {
 		return mat.isBlock() && allowedTypes != null && allowedTypes.contains(mat);

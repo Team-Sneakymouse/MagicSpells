@@ -179,21 +179,24 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
-	@Override
+		@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (!canTargetLocation) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		AreaEffectCloud cloud = spawnCloud(data.caster(), null, data.location(), data.power(), data.args());
+		cloud.setSource(data.caster());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	
+	}
+@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!canTargetLocation) return false;
-		AreaEffectCloud cloud = spawnCloud(caster, null, target, power, args);
-		cloud.setSource(caster);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
-	}
+
+
 
 	
 	@Override
@@ -210,15 +213,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		}
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	private AreaEffectCloud spawnCloud(LivingEntity caster, LivingEntity target, Location loc, float power, String[] args) {
 		Location location = loc.clone();

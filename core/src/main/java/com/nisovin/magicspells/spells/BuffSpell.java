@@ -193,7 +193,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	@Override
 	public final PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL)
-			return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+			return cast(new SpellData(caster, power, args)).action();
 
 		LivingEntity target;
 		if (targeted) {
@@ -226,15 +226,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		return new CastResult(action, data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	private PostCastAction activate(LivingEntity caster, LivingEntity target, float power, String[] args, boolean normal) {
 		if (isActive(target) && toggle) {

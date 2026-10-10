@@ -372,7 +372,7 @@ public class ParticleProjectileSpell extends InstantSpell
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 	@Override
@@ -393,11 +393,6 @@ public class ParticleProjectileSpell extends InstantSpell
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
-				!= PostCastAction.ALREADY_HANDLED;
-	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
@@ -435,18 +430,7 @@ public class ParticleProjectileSpell extends InstantSpell
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
-			String[] args) {
-		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
-				!= PostCastAction.ALREADY_HANDLED;
-	}
 
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		return castAtEntityFromLocation(new SpellData(null, target, from, power, args)).action()
-				!= PostCastAction.ALREADY_HANDLED;
-	}
 
 	@Override
 	public CastResult castAtEntity(SpellData data) {
@@ -464,10 +448,6 @@ public class ParticleProjectileSpell extends InstantSpell
 		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	public static Set<ParticleProjectileTracker> getProjectileTrackers() {
 		return trackerSet;

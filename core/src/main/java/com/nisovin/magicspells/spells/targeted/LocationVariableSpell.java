@@ -62,7 +62,7 @@ public class LocationVariableSpell extends TargetedSpell implements TargetedLoca
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
@@ -70,69 +70,76 @@ public class LocationVariableSpell extends TargetedSpell implements TargetedLoca
 		return castAtLocation(caster, target.getLocation(), power, args) ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+		@Override
+	public CastResult castAtLocation(SpellData data) {
 		Variable var = MagicSpells.getVariableManager().getVariable(variableName);
-		if (var == null) return false;
-		if (!(var instanceof LocationVariable || var instanceof LocationStringVariable)) return false;
+		if (var == null) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!(var instanceof LocationVariable || var instanceof LocationStringVariable)) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		
 		Set<BlockLocation> blocks = new HashSet<>();
 		if (shape.equals("cuboid")) {
-			int x1 = target.getBlockX();
-			int y1 = target.getBlockY();
-			int z1 = target.getBlockZ();
-			int x2 = x1 + offsetX;
-			int y2 = y1 + offsetY;
-			int z2 = z1 + offsetZ;
+		int x1 = data.location().getBlockX();
+		int y1 = data.location().getBlockY();
+		int z1 = data.location().getBlockZ();
+		int x2 = x1 + offsetX;
+		int y2 = y1 + offsetY;
+		int z2 = z1 + offsetZ;
 			
-			int minX = Math.min(x1, x2);
-			int maxX = Math.max(x1, x2);
-			int minY = Math.min(y1, y2);
-			int maxY = Math.max(y1, y2);
-			int minZ = Math.min(z1, z2);
-			int maxZ = Math.max(z1, z2);
+		int minX = Math.min(x1, x2);
+		int maxX = Math.max(x1, x2);
+		int minY = Math.min(y1, y2);
+		int maxY = Math.max(y1, y2);
+		int minZ = Math.min(z1, z2);
+		int maxZ = Math.max(z1, z2);
 			
-			for (int x = minX; x <= maxX; x++) {
-				for (int y = minY; y <= maxY; y++) {
-					for (int z = minZ; z <= maxZ; z++) {
-						blocks.add(new BlockLocation(target.getWorld().getName(), x, y, z));
-					}
-				}
-			}
+		for (int x = minX; x <= maxX; x++) {
+		for (int y = minY; y <= maxY; y++) {
+		for (int z = minZ; z <= maxZ; z++) {
+		blocks.add(new BlockLocation(data.location().getWorld().getName(), x, y, z));
+		}
+		}
+		}
 		} else if (shape.equals("cylinder")) {
-			int centerX = target.getBlockX();
-			int centerY = target.getBlockY();
-			int centerZ = target.getBlockZ();
-			int minY = centerY - heightDown;
-			int maxY = centerY + heightUp;
-			double radiusSq = radius * radius;
+		int centerX = data.location().getBlockX();
+		int centerY = data.location().getBlockY();
+		int centerZ = data.location().getBlockZ();
+		int minY = centerY - heightDown;
+		int maxY = centerY + heightUp;
+		double radiusSq = radius * radius;
 			
-			int minX = (int) Math.floor(centerX - radius);
-			int maxX = (int) Math.ceil(centerX + radius);
-			int minZ = (int) Math.floor(centerZ - radius);
-			int maxZ = (int) Math.ceil(centerZ + radius);
+		int minX = (int) Math.floor(centerX - radius);
+		int maxX = (int) Math.ceil(centerX + radius);
+		int minZ = (int) Math.floor(centerZ - radius);
+		int maxZ = (int) Math.ceil(centerZ + radius);
 			
-			for (int x = minX; x <= maxX; x++) {
-				for (int z = minZ; z <= maxZ; z++) {
-					double distSq = Math.pow(x - centerX, 2) + Math.pow(z - centerZ, 2);
-					if (distSq <= radiusSq) {
-                        for (int y = minY; y <= maxY; y++) {
-                            blocks.add(new BlockLocation(target.getWorld().getName(), x, y, z));
-                        }
-					}
-				}
-			}
+		for (int x = minX; x <= maxX; x++) {
+		for (int z = minZ; z <= maxZ; z++) {
+		double distSq = Math.pow(x - centerX, 2) + Math.pow(z - centerZ, 2);
+		if (distSq <= radiusSq) {
+		for (int y = minY; y <= maxY; y++) {
+		blocks.add(new BlockLocation(data.location().getWorld().getName(), x, y, z));
+		}
+		}
+		}
+		}
 		}
 		
-		if (blocks.isEmpty()) return false;
+		if (blocks.isEmpty()) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		
 		if (var instanceof LocationVariable lv) {
-			lv.defineRegion(blocks, Double.parseDouble(value));
+		lv.defineRegion(blocks, Double.parseDouble(value));
 		} else if (var instanceof LocationStringVariable lsv) {
-			lsv.defineRegion(blocks, value);
+		lsv.defineRegion(blocks, value);
 		}
 		
-		return true;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	
 	}
+@Override
+	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+
 
 }

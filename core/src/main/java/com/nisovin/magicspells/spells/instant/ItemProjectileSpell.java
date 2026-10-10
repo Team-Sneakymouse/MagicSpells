@@ -158,17 +158,18 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
 	@Override
-	public boolean castAtLocation(LivingEntity livingEntity, Location target, float power, String[] args) {
-		ItemProjectileTracker tracker = new ItemProjectileTracker(livingEntity, target, power, args);
-		setupTracker(tracker, livingEntity, power, args);
+	public CastResult castAtLocation(SpellData data) {
+		ItemProjectileTracker tracker = new ItemProjectileTracker(data.caster(), data.location(), data.power(), data.args());
+		setupTracker(tracker, data.caster(), data.power(), data.args());
 		tracker.start();
-		return true;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
 
 	private void setupTracker(ItemProjectileTracker tracker, LivingEntity caster, float power, String[] args) {
 		tracker.setSpell(this);

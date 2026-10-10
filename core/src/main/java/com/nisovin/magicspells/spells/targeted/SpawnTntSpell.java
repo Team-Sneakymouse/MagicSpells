@@ -83,7 +83,7 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 	@Override
@@ -95,15 +95,7 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	private void spawnTnt(LivingEntity caster, Location loc, float power, String[] args) {
 		TNTPrimed tnt = loc.getWorld().spawn(loc, TNTPrimed.class);

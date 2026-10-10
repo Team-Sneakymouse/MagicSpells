@@ -174,46 +174,43 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
-			String[] args) {
-		if (caster == null ? !validTargetList.canTarget(target) : !validTargetList.canTarget(caster, target))
-			return false;
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		if (data.caster() == null ? !validTargetList.canTarget(data.target())
+				: !validTargetList.canTarget(data.caster(), data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 
-		from = offsetLocation(from, caster, target, power, args);
-		Vector facing = target.getLocation().toVector().subtract(from.toVector()).normalize();
+		Location from = offsetLocation(data.location(), data.caster(), data.target(), data.power(), data.args());
+		Vector facing = data.target().getLocation().toVector().subtract(from.toVector()).normalize();
 		Location loc = from.clone();
 		Util.setLocationFacingFromVector(loc, facing);
 		loc.add(facing.multiply(2));
 
 		Fireball fireball = from.getWorld().spawn(loc, Fireball.class);
-		fireball.setGravity(Boolean.TRUE.equals(fireballGravity.get(caster, target, power, args)));
-		if (caster != null)
-			fireball.setShooter(caster);
-		fireballs.put(fireball, new CastData(power, args));
+		fireball.setGravity(Boolean.TRUE.equals(fireballGravity.get(data.caster(), data.target(), data.power(), data.args())));
+		if (data.caster() != null)
+			fireball.setShooter(data.caster());
+		fireballs.put(fireball, new CastData(data.power(), data.args()));
 
-		SpellData data = new SpellData(caster, target, loc, power, args);
+		SpellData effectData = new SpellData(data.caster(), data.target(), loc, data.power(), data.args());
 
-		if (caster != null)
-			playSpellEffects(EffectPosition.CASTER, caster, data);
+		if (data.caster() != null)
+			playSpellEffects(EffectPosition.CASTER, data.caster(), effectData);
 		else
-			playSpellEffects(EffectPosition.CASTER, from, data);
+			playSpellEffects(EffectPosition.CASTER, from, effectData);
 
-		playSpellEffects(EffectPosition.PROJECTILE, fireball, data);
-		playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, from, fireball.getLocation(), caster,
-				fireball, data);
+		playSpellEffects(EffectPosition.PROJECTILE, fireball, effectData);
+		playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, from, fireball.getLocation(),
+				data.caster(), fireball, effectData);
 
-		return true;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		return castAtEntityFromLocation(null, from, target, power, args);
-	}
+
 
 	private Location offsetLocation(Location loc, LivingEntity caster, LivingEntity target, float power, String[] args) {
 		Location ret = loc;

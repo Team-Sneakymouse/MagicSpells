@@ -92,30 +92,33 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Player player = caster instanceof Player p ? p : null;
+		@Override
+	public CastResult castAtLocation(SpellData data) {
+		Player player = data.caster() instanceof Player p ? p : null;
 
-		ItemStack item = createBook(player, args);
-		Item dropped = target.getWorld().dropItem(target, item);
+		ItemStack item = createBook(player, data.args());
+		Item dropped = data.location().getWorld().dropItem(data.location(), item);
 		dropped.setItemStack(item);
 		dropped.setGravity(gravity);
 
-		int delay = Math.max(pickupDelay.get(caster, null, power, args), 0);
+		int delay = Math.max(pickupDelay.get(data.caster(), null, data.power(), data.args()), 0);
 		dropped.setPickupDelay(delay);
 
-		playSpellEffects(EffectPosition.SPECIAL, dropped, power, args);
-		return true;
+		playSpellEffects(EffectPosition.SPECIAL, dropped, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	
+	}
+@Override
+	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
-	}
+
+
 
 	private static Component createComponent(String raw, Player player, String displayName, String[] args) {
 		if (player != null) {

@@ -56,7 +56,7 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
-		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
@@ -69,25 +69,20 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
-	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
-			String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		return grip(caster, target, from, power, args);
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		} else if (!validTargetList.canTarget(data.target())) {
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		}
+		boolean ok = grip(data.caster(), data.target(), data.location(), data.power(), data.args());
+		return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 	}
 
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		return grip(null, target, from, power, args);
-	}
+
 
 	private boolean grip(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
 		Location loc = from.clone();

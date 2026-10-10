@@ -97,7 +97,7 @@ public class AutoPickupSpell extends Spell {
 
     @Override
     public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-        return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+        return cast(new SpellData(caster, power, args)).action();
     }
 
     @Override
