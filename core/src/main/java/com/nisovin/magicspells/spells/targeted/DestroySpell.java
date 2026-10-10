@@ -55,7 +55,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean resolveDamagePerBlock;
 	private boolean resolveVelocityPerBlock;
 	private boolean resolveMaxHeightPerBlock;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 	private boolean affectsContainers;
 
 	private ConfigData<Shape> shape;
@@ -81,7 +81,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		resolveDamagePerBlock = getConfigBoolean("resolve-damage-per-block", false);
 		resolveVelocityPerBlock = getConfigBoolean("resolve-velocity-per-block", false);
 		resolveMaxHeightPerBlock = getConfigBoolean("resolve-max-height-per-block", false);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", false);
 		affectsContainers = getConfigBoolean("affects-containers", false);
 
 		shape = getConfigDataEnum("shape", Shape.class, Shape.CUBE);
@@ -225,7 +225,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		int vertRadius = this.vertRadius.get(caster, target, power, args);
 		int horizRadius = this.horizRadius.get(caster, target, power, args);
 
-		if (powerAffectsRadius) {
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, target, power, args))) {
 			vertRadius = Math.round(vertRadius * power);
 			horizRadius = Math.round(horizRadius * power);
 		}

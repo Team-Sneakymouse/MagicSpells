@@ -22,7 +22,7 @@ public class EmpowerSpell extends BuffSpell {
 	private ConfigData<Float> maxPower;
 	private ConfigData<Float> extraPower;
 
-	private boolean powerAffectsMultiplier;
+	private ConfigData<Boolean> powerAffectsMultiplier;
 
 	private SpellFilter filter;
 
@@ -32,7 +32,7 @@ public class EmpowerSpell extends BuffSpell {
 		maxPower = getConfigDataFloat("max-power-multiplier", 1.5F);
 		extraPower = getConfigDataFloat("power-multiplier", 1.5F);
 
-		powerAffectsMultiplier = getConfigBoolean("power-affects-multiplier", true);
+		powerAffectsMultiplier = getConfigDataBoolean("power-affects-multiplier", true);
 
 		filter = getConfigSpellFilter();
 
@@ -74,7 +74,7 @@ public class EmpowerSpell extends BuffSpell {
 		CastData data = entities.get(caster.getUniqueId());
 
 		float p = extraPower.get(caster, null, data.power(), data.args());
-		if (powerAffectsMultiplier) p *= data.power();
+		if (Boolean.TRUE.equals(powerAffectsMultiplier.get(caster, null, data.power(), data.args()))) p *= data.power();
 		p = Math.min(p, maxPower.get(caster, null, data.power(), data.args()));
 
 		addUseAndChargeCost(caster);

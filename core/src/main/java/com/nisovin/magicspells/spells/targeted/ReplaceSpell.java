@@ -43,7 +43,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 	private boolean pointBlank;
 	private boolean replaceRandom;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 	private final boolean checkPlugins;
 	private final boolean applyPhysics;
 	private final boolean checkIsSupported;
@@ -70,7 +70,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		applyPhysics = getConfigBoolean("apply-physics", false);
 		checkIsSupported = getConfigBoolean("check-is-supported", applyPhysics);
 		replaceRandom = getConfigBoolean("replace-random", true);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", false);
 		resolveDurationPerBlock = getConfigBoolean("resolve-duration-per-block", false);
 		circleShape = getConfigBoolean("circle-shape", false);
 		mergeBlockData = getConfigBoolean("merge-block-data", true);
@@ -206,7 +206,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		int d = radiusDown.get(caster, null, power, args);
 		int u = radiusUp.get(caster, null, power, args);
 		int h = radiusHoriz.get(caster, null, power, args);
-		if (powerAffectsRadius) {
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) {
 			d = Math.round(d * power);
 			u = Math.round(u * power);
 			h = Math.round(h * power);

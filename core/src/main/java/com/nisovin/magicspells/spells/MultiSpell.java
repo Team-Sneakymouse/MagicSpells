@@ -15,6 +15,7 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public final class MultiSpell extends InstantSpell {
@@ -27,9 +28,9 @@ public final class MultiSpell extends InstantSpell {
 
 	private boolean castWithItem;
 	private boolean castByCommand;
-	private boolean customSpellCastChance;
-	private boolean castRandomSpellInstead;
-	private boolean enableIndividualChances;
+	private ConfigData<Boolean> customSpellCastChance;
+	private ConfigData<Boolean> castRandomSpellInstead;
+	private ConfigData<Boolean> enableIndividualChances;
 
 	public MultiSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -39,9 +40,9 @@ public final class MultiSpell extends InstantSpell {
 
 		castWithItem = getConfigBoolean("can-cast-with-item", true);
 		castByCommand = getConfigBoolean("can-cast-by-command", true);
-		customSpellCastChance = getConfigBoolean("enable-custom-spell-cast-chance", false);
-		castRandomSpellInstead = getConfigBoolean("cast-random-spell-instead", false);
-		enableIndividualChances = getConfigBoolean("enable-individual-chances", false);
+		customSpellCastChance = getConfigDataBoolean("enable-custom-spell-cast-chance", false);
+		castRandomSpellInstead = getConfigDataBoolean("cast-random-spell-instead", false);
+		enableIndividualChances = getConfigDataBoolean("enable-individual-chances", false);
 	}
 
 	@Override
@@ -73,7 +74,11 @@ public final class MultiSpell extends InstantSpell {
 	@Override
 	public Spell.PostCastAction castSpell(LivingEntity caster, Spell.SpellCastState state, float power, String[] args) {
 		if (state == Spell.SpellCastState.NORMAL) {
-			if (!castRandomSpellInstead) {
+			boolean castRandom = Boolean.TRUE.equals(castRandomSpellInstead.get(caster, power, args));
+			boolean customChance = Boolean.TRUE.equals(customSpellCastChance.get(caster, power, args));
+			boolean individualChances = Boolean.TRUE.equals(enableIndividualChances.get(caster, power, args));
+
+			if (!castRandom) {
 				int delay = 0;
 				for (ActionChance actionChance : actions) {
 					Action action = actionChance.action();
@@ -87,7 +92,7 @@ public final class MultiSpell extends InstantSpell {
 				}
 			} else {
 				int index;
-				if (customSpellCastChance) {
+				if (customChance) {
 					int total = 0;
 					for (ActionChance actionChance : actions) {
 						total = (int) Math.round(total + actionChance.chance());
@@ -100,7 +105,7 @@ public final class MultiSpell extends InstantSpell {
 					}
 					Action action = actions.get(Math.max(0, i - 1)).action();
 					if (action.isSpell()) action.getSpell().subcast(caster, power, args);
-				} else if (enableIndividualChances) {
+				} else if (individualChances) {
 					for (ActionChance actionChance : actions) {
 						double chance = Math.random();
 						if ((actionChance.chance() / 100.0D > chance) && actionChance.action().isSpell()) {
@@ -120,7 +125,11 @@ public final class MultiSpell extends InstantSpell {
 
 	@Override
 	public boolean castFromConsole(final CommandSender sender, final String[] args) {
-		if (!castRandomSpellInstead) {
+		boolean castRandom = Boolean.TRUE.equals(castRandomSpellInstead.get(null, 1f, args));
+		boolean customChance = Boolean.TRUE.equals(customSpellCastChance.get(null, 1f, args));
+		boolean individualChances = Boolean.TRUE.equals(enableIndividualChances.get(null, 1f, args));
+
+		if (!castRandom) {
 			int delay = 0;
 			for (ActionChance actionChance : actions) {
 				Action action = actionChance.action();
@@ -134,7 +143,7 @@ public final class MultiSpell extends InstantSpell {
 			}
 		} else {
 			int index;
-			if (customSpellCastChance) {
+			if (customChance) {
 				int total = 0;
 				for (ActionChance actionChance : actions) {
 					total = (int) Math.round(total + actionChance.chance());
@@ -147,7 +156,7 @@ public final class MultiSpell extends InstantSpell {
 				}
 				Action action = actions.get(Math.max(0, i - 1)).action();
 				if (action.isSpell()) action.getSpell().getSpell().castFromConsole(sender, args);
-			} else if (enableIndividualChances) {
+			} else if (individualChances) {
 				for (ActionChance actionChance : actions) {
 					double chance = Math.random();
 					if ((actionChance.chance() / 100.0D > chance) && actionChance.action().isSpell()) {

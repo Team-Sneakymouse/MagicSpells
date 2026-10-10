@@ -59,7 +59,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 	private boolean preventBlocks;
 	private boolean callTargetEvent;
 	private boolean ensureSpellCast;
-	private boolean powerAffectsDamage;
+	private ConfigData<Boolean> powerAffectsDamage;
 	private boolean projectileHasGravity;
 	private boolean applySpellPowerToVelocity;
 	private boolean removeBlockOnLandSuccess;
@@ -104,7 +104,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		preventBlocks = getConfigBoolean("prevent-blocks", false);
 		callTargetEvent = getConfigBoolean("call-target-event", true);
 		ensureSpellCast = getConfigBoolean("ensure-spell-cast", true);
-		powerAffectsDamage = getConfigBoolean("power-affects-damage", true);
+		powerAffectsDamage = getConfigDataBoolean("power-affects-damage", true);
 		projectileHasGravity = getConfigBoolean("gravity", true);
 		applySpellPowerToVelocity = getConfigBoolean("apply-spell-power-to-velocity", false);
 		removeBlockOnLandSuccess = getConfigBoolean("remove-block-on-land-success", false);
@@ -345,7 +345,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			}
 
 			double damage = event.getDamage();
-			if (powerAffectsDamage)
+			if (Boolean.TRUE.equals(powerAffectsDamage.get(info.caster, target, power, info.args)))
 				damage *= power;
 
 			if (checkPlugins && info.caster != null) {

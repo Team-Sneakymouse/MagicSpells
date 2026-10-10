@@ -91,7 +91,7 @@ public class ParticleProjectileSpell extends InstantSpell
 	private boolean stopOnHitGround;
 	private boolean stopOnModifierFail;
 	private boolean allowCasterInteract;
-	private boolean powerAffectsVelocity;
+	private ConfigData<Boolean> powerAffectsVelocity;
 
 	private ModifierSet projModifiers;
 	private List<String> projModifiersStrings;
@@ -217,7 +217,7 @@ public class ParticleProjectileSpell extends InstantSpell
 		stopOnHitEntity = getConfigBoolean("stop-on-hit-entity", true);
 		stopOnModifierFail = getConfigBoolean("stop-on-modifier-fail", true);
 		allowCasterInteract = getConfigBoolean("allow-caster-interact", true);
-		powerAffectsVelocity = getConfigBoolean("power-affects-velocity", true);
+		powerAffectsVelocity = getConfigDataBoolean("power-affects-velocity", true);
 		if (stopOnHitEntity)
 			maxEntitiesHit = (caster, target, location, power, args) -> 1;
 
@@ -565,7 +565,7 @@ public class ParticleProjectileSpell extends InstantSpell
 		tracker.setStopOnHitGround(stopOnHitGround);
 		tracker.setStopOnModifierFail(stopOnModifierFail);
 		tracker.setAllowCasterInteract(allowCasterInteract);
-		tracker.setPowerAffectsVelocity(powerAffectsVelocity);
+		tracker.setPowerAffectsVelocity(Boolean.TRUE.equals(powerAffectsVelocity.get(caster, target, power, args)));
 
 		tracker.setTargetList(validTargetList);
 		tracker.setProjectileModifiers(projModifiers);
@@ -694,11 +694,11 @@ public class ParticleProjectileSpell extends InstantSpell
 	}
 
 	public boolean isPowerAffectedByVelocity() {
-		return powerAffectsVelocity;
+		return Boolean.TRUE.equals(powerAffectsVelocity.get(null));
 	}
 
 	public void setPowerAffectsVelocity(boolean powerAffectsVelocity) {
-		this.powerAffectsVelocity = powerAffectsVelocity;
+		this.powerAffectsVelocity = (c, t, l, p, a) -> powerAffectsVelocity;
 	}
 
 	public ModifierSet getProjectileModifiers() {

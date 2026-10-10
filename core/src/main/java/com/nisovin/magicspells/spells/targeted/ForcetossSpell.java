@@ -15,32 +15,32 @@ import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
 
 public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell {
 
-	private int damage;
+	private ConfigData<Integer> damage;
 
 	private ConfigData<Double> vForce;
 	private ConfigData<Double> hForce;
 
 	private ConfigData<Float> rotation;
 
-	private boolean checkPlugins;
-	private boolean powerAffectsForce;
+	private ConfigData<Boolean> checkPlugins;
+	private ConfigData<Boolean> powerAffectsForce;
 	private boolean addVelocityInstead;
-	private boolean avoidDamageModification;
+	private ConfigData<Boolean> avoidDamageModification;
 
 	public ForcetossSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
-		damage = getConfigInt("damage", 0);
+		damage = getConfigDataInt("damage", 0);
 
 		vForce = getConfigDataDouble("vertical-force", 10);
 		hForce = getConfigDataDouble("horizontal-force", 20);
 
 		rotation = getConfigDataFloat("rotation", 0);
 
-		checkPlugins = getConfigBoolean("check-plugins", true);
-		powerAffectsForce = getConfigBoolean("power-affects-force", true);
+		checkPlugins = getConfigDataBoolean("check-plugins", true);
+		powerAffectsForce = getConfigDataBoolean("power-affects-force", true);
 		addVelocityInstead = getConfigBoolean("add-velocity-instead", false);
-		avoidDamageModification = getConfigBoolean("avoid-damage-modification", true);
+		avoidDamageModification = getConfigDataBoolean("avoid-damage-modification", true);
 	}
 
 	@Override
@@ -80,12 +80,13 @@ public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell
 		if (caster == null) return;
 		if (!caster.getLocation().getWorld().equals(target.getLocation().getWorld())) return;
 
+		int damage = this.damage.get(caster, target, power, args);
 		if (damage > 0) {
 			double dmg = damage * power;
-			if (checkPlugins) {
+			if (Boolean.TRUE.equals(checkPlugins.get(caster, target, power, args))) {
 				MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, DamageCause.MAGIC, damage, this);
 				EventUtil.call(event);
-				if (!avoidDamageModification) dmg = event.getDamage();
+				if (!Boolean.TRUE.equals(avoidDamageModification.get(caster, target, power, args))) dmg = event.getDamage();
 			}
 			target.damage(dmg);
 		}
@@ -96,7 +97,7 @@ public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell
 
 		double hForce = this.hForce.get(caster, target, power, args) / 10;
 		double vForce = this.vForce.get(caster, target, power, args) / 10;
-		if (powerAffectsForce) {
+		if (Boolean.TRUE.equals(powerAffectsForce.get(caster, target, power, args))) {
 			hForce *= power;
 			vForce *= power;
 		}

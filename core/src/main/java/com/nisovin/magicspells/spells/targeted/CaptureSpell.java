@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import java.util.List;
 import java.util.ArrayList;
+import com.nisovin.magicspells.util.config.ConfigData;
 
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -31,7 +32,7 @@ public class CaptureSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private boolean gravity;
 	private boolean addToInventory;
-	private boolean powerAffectsQuantity;
+	private ConfigData<Boolean> powerAffectsQuantity;
 
 	public CaptureSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -41,7 +42,7 @@ public class CaptureSpell extends TargetedSpell implements TargetedEntitySpell {
 
 		gravity = getConfigBoolean("gravity", true);
 		addToInventory = getConfigBoolean("add-to-inventory", false);
-		powerAffectsQuantity = getConfigBoolean("power-affects-quantity", true);
+		powerAffectsQuantity = getConfigDataBoolean("power-affects-quantity", true);
 
 		if (lore != null) {
 			for (int i = 0; i < lore.size(); i++) {
@@ -97,7 +98,7 @@ public class CaptureSpell extends TargetedSpell implements TargetedEntitySpell {
 		ItemStack item = MobUtil.getEggItemForEntityType(target.getType());
 		if (item == null) return false;
 
-		if (powerAffectsQuantity) {
+		if (Boolean.TRUE.equals(powerAffectsQuantity.get(caster, target, power, args))) {
 			int q = Math.round(power);
 			if (q > 1) item.setAmount(q);
 		}

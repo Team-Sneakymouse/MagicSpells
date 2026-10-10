@@ -49,14 +49,14 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	private int rows;
 
 	private final String title;
-	private final int delay;
+	private ConfigData<Integer> delay;
 	private final ItemStack filler;
-	private final boolean stayOpenNonOption;
-	private final boolean bypassNormalCast;
-	private final boolean requireEntityTarget;
-	private final boolean requireLocationTarget;
-	private final boolean targetOpensMenuInstead;
-	private final boolean autoArrange;
+	private ConfigData<Boolean> stayOpenNonOption;
+	private ConfigData<Boolean> bypassNormalCast;
+	private ConfigData<Boolean> requireEntityTarget;
+	private ConfigData<Boolean> requireLocationTarget;
+	private ConfigData<Boolean> targetOpensMenuInstead;
+	private ConfigData<Boolean> autoArrange;
 
 	private final ItemStack previousPageItem;
 	private final ItemStack nextPageItem;
@@ -68,15 +68,15 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		super(config, spellName);
 
 		title = getConfigString("title", "Window Title " + spellName);
-		delay = getConfigInt("delay", 1);
+		delay = getConfigDataInt("delay", 1);
 		filler = createItem("filler");
-		stayOpenNonOption = getConfigBoolean("stay-open-non-option", true);
-		bypassNormalCast = getConfigBoolean("bypass-normal-cast", true);
-		requireEntityTarget = getConfigBoolean("require-entity-target", false);
-		requireLocationTarget = getConfigBoolean("require-location-target", false);
-		targetOpensMenuInstead = getConfigBoolean("target-opens-menu-instead", false);
+		stayOpenNonOption = getConfigDataBoolean("stay-open-non-option", true);
+		bypassNormalCast = getConfigDataBoolean("bypass-normal-cast", true);
+		requireEntityTarget = getConfigDataBoolean("require-entity-target", false);
+		requireLocationTarget = getConfigDataBoolean("require-location-target", false);
+		targetOpensMenuInstead = getConfigDataBoolean("target-opens-menu-instead", false);
 
-		autoArrange = getConfigBoolean("auto-arrange", false);
+		autoArrange = getConfigDataBoolean("auto-arrange", false);
 		previousPageItem = createItem("previous-page-item", "Previous Page");
 		nextPageItem = createItem("next-page-item", "Next Page");
 		spacerItem = createItem("spacer-item", null);
@@ -161,7 +161,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 			options.put(optionName, option);
 		}
-		rows = autoArrange ? 54 : getConfigInt("min-rows", 1);
+		rows = Boolean.TRUE.equals(autoArrange.get(null, null, null, 1f, null)) ? 54 : getConfigInt("min-rows", 1);
 		if (options.isEmpty())
 			MagicSpells.error("MenuSpell '" + spellName + "' has no menu options!");
 	}
@@ -242,8 +242,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			Location locTarget = null;
 			Player opener = player;
 
-			if (requireEntityTarget) {
-				if (targetOpensMenuInstead) {
+			boolean requireEntity = Boolean.TRUE.equals(requireEntityTarget.get(caster, power, args));
+			boolean requireLocation = Boolean.TRUE.equals(requireLocationTarget.get(caster, power, args));
+			boolean targetOpens = Boolean.TRUE.equals(targetOpensMenuInstead.get(caster, power, args));
+
+			if (requireEntity) {
+				if (targetOpens) {
 					TargetInfo<Player> info = getTargetedPlayer(player, power, args);
 					if (info.noTarget())
 						return noTarget(caster, args, info);
@@ -258,7 +262,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 					target = info.target();
 					power = info.power();
 				}
-			} else if (requireLocationTarget) {
+			} else if (requireLocation) {
 				Block block = getTargetedBlock(player, power, args);
 				if (block == null || BlockUtils.isAir(block.getType()))
 					return noTarget(caster, args);
@@ -268,8 +272,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 			open(player, opener, target, locTarget, power, args);
 
-			if (requireEntityTarget) {
-				sendMessages(caster, targetOpensMenuInstead ? opener : target, args);
+			if (requireEntity) {
+				sendMessages(caster, targetOpens ? opener : target, args);
 				return PostCastAction.NO_MESSAGES;
 			}
 		}
@@ -283,7 +287,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			return false;
 		if (!(caster instanceof Player opener))
 			return false;
-		if (targetOpensMenuInstead) {
+		if (Boolean.TRUE.equals(targetOpensMenuInstead.get(caster, target, power, args))) {
 			if (!(target instanceof Player player))
 				return false;
 			opener = player;
@@ -300,7 +304,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!targetOpensMenuInstead)
+		if (!Boolean.TRUE.equals(targetOpensMenuInstead.get(null, target, power, args)))
 			return false;
 		if (!validTargetList.canTarget(target))
 			return false;
@@ -380,17 +384,22 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	private void open(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power,
 			String[] args) {
-		if (delay < 0) {
+		LivingEntity resolveCaster = caster != null ? caster : opener;
+		int delayVal = delay.get(resolveCaster, entityTarget, power, args);
+		if (delayVal < 0) {
 			openMenu(caster, opener, entityTarget, locTarget, power, args);
 			return;
 		}
-		MagicSpells.scheduleDelayedTask(() -> openMenu(caster, opener, entityTarget, locTarget, power, args), delay);
+		MagicSpells.scheduleDelayedTask(() -> openMenu(caster, opener, entityTarget, locTarget, power, args), delayVal);
 	}
 
 	private void openMenu(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power,
 			String[] args) {
-		MenuData mData = new MenuData(requireEntityTarget ? entityTarget : null,
-				requireLocationTarget ? locTarget : null, power, args, 0);
+		LivingEntity resolveCaster = caster != null ? caster : opener;
+		boolean requireEntity = Boolean.TRUE.equals(requireEntityTarget.get(resolveCaster, entityTarget, power, args));
+		boolean requireLocation = Boolean.TRUE.equals(requireLocationTarget.get(resolveCaster, entityTarget, locTarget, power, args));
+		MenuData mData = new MenuData(requireEntity ? entityTarget : null,
+				requireLocation ? locTarget : null, power, args, 0);
 		menuData.put(opener.getUniqueId(), mData);
 
 		Map<Integer, ItemStack> itemStacks = buildInventory(opener, args, mData);
@@ -417,6 +426,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	private Map<Integer, ItemStack> buildInventory(Player opener, String[] args, MenuData mData) {
 		Map<Integer, ItemStack> itemStacks = new HashMap<>();
+		boolean arrange = Boolean.TRUE.equals(autoArrange.get(opener, mData.power(), args));
 
 		// Setup option items.
 		for (MenuOption option : options.values()) {
@@ -457,7 +467,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			item.setAmount(quantity);
 
 			// Set item for all defined slots.
-			if (autoArrange)
+			if (arrange)
 				itemStacks.put(itemStacks.keySet().size(), item);
 			else {
 				List<Integer> slots = option.slots.get(spellData);
@@ -476,13 +486,14 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	public void applyOptionsToInventory(Player opener, Inventory inv, String[] args, MenuData mData,
 			Map<Integer, ItemStack> itemStacks) {
+		boolean arrange = Boolean.TRUE.equals(autoArrange.get(opener, mData.power(), args));
 		// Fill inventory.
 		ItemStack fillerItem = (filler == null) ? null : translateItem(opener, args, filler);
 		for (int i = 0; i < inv.getSize(); i++) {
 			if (inv.getItem(i) != null)
 				continue;
 
-			if (autoArrange && i >= 50) {
+			if (arrange && i >= 50) {
 				ItemStack item = (i == 51) ? spacerItem
 						: (i == 52 && mData.page() > 0) ? previousPageItem
 								: (i == 53 && itemStacks.size() > 50 * (mData.page() + 1)) ? nextPageItem : null;
@@ -589,12 +600,15 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		UUID id = player.getUniqueId();
 		MenuData mData = menuData.get(id);
+		float menuPower = mData != null ? mData.power() : 1f;
+		String[] menuArgs = mData != null ? mData.args() : null;
+		boolean arrange = Boolean.TRUE.equals(autoArrange.get(player, menuPower, menuArgs));
 
-		if (autoArrange && event.getSlot() == 52) {
+		if (arrange && event.getSlot() == 52) {
 			if (event.getCurrentItem() != null && event.getCurrentItem().equals(previousPageItem))
 				mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(),
 						mData.page() - 1);
-		} else if (autoArrange && event.getSlot() == 53) {
+		} else if (arrange && event.getSlot() == 53) {
 			if (event.getCurrentItem() != null && event.getCurrentItem().equals(nextPageItem))
 				mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(),
 						mData.page() + 1);
@@ -642,7 +656,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				return "ignore";
 			}
 			// Empty-handed click on empty slot - respect stay-open-non-option setting
-			return stayOpenNonOption ? "ignore" : "close";
+			UUID emptyId = player.getUniqueId();
+			MenuData emptyData = menuData.get(emptyId);
+			float emptyPower = emptyData != null ? emptyData.power() : 1f;
+			String[] emptyArgs = emptyData != null ? emptyData.args() : null;
+			boolean stayOpenEmpty = Boolean.TRUE.equals(stayOpenNonOption.get(player, emptyPower, emptyArgs));
+			return stayOpenEmpty ? "ignore" : "close";
 		}
 		MenuOption option = options.get(key);
 		if (option == null)
@@ -693,13 +712,14 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		if (spell == null)
 			return option.stayOpen ? "ignore" : "close";
 
+		boolean bypass = Boolean.TRUE.equals(bypassNormalCast.get(player, entityTarget, power, args));
 		boolean success;
 
 		if (entityTarget != null)
 			success = spell.subcast(player, entityTarget, power, args);
 		else if (locationTarget != null)
 			success = spell.subcast(player, locationTarget, power, args);
-		else if (bypassNormalCast)
+		else if (bypass)
 			success = spell.subcast(player, power, args);
 		else {
 			SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
@@ -749,11 +769,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 							// Cast the spell
 							boolean success;
+							boolean bypass = Boolean.TRUE.equals(bypassNormalCast.get(player, data != null ? data.targetEntity() : null, power, args));
 							if (data != null && data.targetEntity() != null) {
 								success = spell.subcast(player, data.targetEntity(), power, args);
 							} else if (data != null && data.targetLocation() != null) {
 								success = spell.subcast(player, data.targetLocation(), power, args);
-							} else if (bypassNormalCast) {
+							} else if (bypass) {
 								success = spell.subcast(player, power, args);
 							} else {
 								SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
@@ -805,11 +826,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 						if (spell != null) {
 							// Cast the spell
 							boolean success;
+							boolean bypass = Boolean.TRUE.equals(bypassNormalCast.get(player, data != null ? data.targetEntity() : null, power, args));
 							if (data != null && data.targetEntity() != null) {
 								success = spell.subcast(player, data.targetEntity(), power, args);
 							} else if (data != null && data.targetLocation() != null) {
 								success = spell.subcast(player, data.targetLocation(), power, args);
-							} else if (bypassNormalCast) {
+							} else if (bypass) {
 								success = spell.subcast(player, power, args);
 							} else {
 								SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
@@ -858,6 +880,69 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	public void onQuit(PlayerQuitEvent event) {
 		UUID id = event.getPlayer().getUniqueId();
 		menuData.remove(id);
+	}
+
+	/** Only meaningful when {@code delay} is a constant expression. */
+	public int getDelay() {
+		return delay.get(null, null, null, 1f, null);
+	}
+
+	public void setDelay(int delay) {
+		this.delay = (c, t, l, p, a) -> delay;
+	}
+
+	/** Only meaningful when {@code stay-open-non-option} is a constant expression. */
+	public boolean isStayOpenNonOption() {
+		return Boolean.TRUE.equals(stayOpenNonOption.get(null, null, null, 1f, null));
+	}
+
+	public void setStayOpenNonOption(boolean stayOpenNonOption) {
+		this.stayOpenNonOption = (c, t, l, p, a) -> stayOpenNonOption;
+	}
+
+	/** Only meaningful when {@code bypass-normal-cast} is a constant expression. */
+	public boolean isBypassNormalCast() {
+		return Boolean.TRUE.equals(bypassNormalCast.get(null, null, null, 1f, null));
+	}
+
+	public void setBypassNormalCast(boolean bypassNormalCast) {
+		this.bypassNormalCast = (c, t, l, p, a) -> bypassNormalCast;
+	}
+
+	/** Only meaningful when {@code require-entity-target} is a constant expression. */
+	public boolean isRequireEntityTarget() {
+		return Boolean.TRUE.equals(requireEntityTarget.get(null, null, null, 1f, null));
+	}
+
+	public void setRequireEntityTarget(boolean requireEntityTarget) {
+		this.requireEntityTarget = (c, t, l, p, a) -> requireEntityTarget;
+	}
+
+	/** Only meaningful when {@code require-location-target} is a constant expression. */
+	public boolean isRequireLocationTarget() {
+		return Boolean.TRUE.equals(requireLocationTarget.get(null, null, null, 1f, null));
+	}
+
+	public void setRequireLocationTarget(boolean requireLocationTarget) {
+		this.requireLocationTarget = (c, t, l, p, a) -> requireLocationTarget;
+	}
+
+	/** Only meaningful when {@code target-opens-menu-instead} is a constant expression. */
+	public boolean isTargetOpensMenuInstead() {
+		return Boolean.TRUE.equals(targetOpensMenuInstead.get(null, null, null, 1f, null));
+	}
+
+	public void setTargetOpensMenuInstead(boolean targetOpensMenuInstead) {
+		this.targetOpensMenuInstead = (c, t, l, p, a) -> targetOpensMenuInstead;
+	}
+
+	/** Only meaningful when {@code auto-arrange} is a constant expression. */
+	public boolean isAutoArrange() {
+		return Boolean.TRUE.equals(autoArrange.get(null, null, null, 1f, null));
+	}
+
+	public void setAutoArrange(boolean autoArrange) {
+		this.autoArrange = (c, t, l, p, a) -> autoArrange;
 	}
 
 	private record MenuData(LivingEntity targetEntity, Location targetLocation, float power, String[] args, int page) {

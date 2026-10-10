@@ -43,13 +43,13 @@ public class MinionSpell extends BuffSpell {
 
 	private ValidTargetList minionTargetList;
 	private EntityType[] creatureTypes;
-	private boolean powerAffectsHealth;
+	private ConfigData<Boolean> powerAffectsHealth;
 	private boolean preventCombust;
 	private boolean gravity;
 	private boolean baby;
-	private double powerHealthFactor;
-	private double maxHealth;
-	private double health;
+	private ConfigData<Double> powerHealthFactor;
+	private ConfigData<Double> maxHealth;
+	private ConfigData<Double> health;
 	private String minionName;
 	private Vector spawnOffset;
 	private double followRange;
@@ -200,10 +200,10 @@ public class MinionSpell extends BuffSpell {
 		followRange = getConfigDouble("follow-range",  1.5) * -1;
 		followSpeed = getConfigFloat("follow-speed", 1F);
 		maxDistance = getConfigFloat("max-distance", 30F);
-		powerAffectsHealth = getConfigBoolean("power-affects-health", false);
-		powerHealthFactor = getConfigDouble("power-health-factor", 1);
-		maxHealth = getConfigDouble("max-health", 20);
-		health = getConfigDouble("health", 20);
+		powerAffectsHealth = getConfigDataBoolean("power-affects-health", false);
+		powerHealthFactor = getConfigDataDouble("power-health-factor", 1);
+		maxHealth = getConfigDataDouble("max-health", 20);
+		health = getConfigDataDouble("health", 20);
 		minionName = getConfigString("minion-name", "");
 		gravity = getConfigBoolean("gravity", true);
 		baby = getConfigBoolean("baby", false);
@@ -276,7 +276,10 @@ public class MinionSpell extends BuffSpell {
 		minion.customName(Util.getMiniMessage(minionName.replace("%c", player.getName())));
 		minion.setCustomNameVisible(true);
 
-		if (powerAffectsHealth) {
+		double maxHealth = this.maxHealth.get(player, minion, power, args);
+		double health = this.health.get(player, minion, power, args);
+		double powerHealthFactor = this.powerHealthFactor.get(player, minion, power, args);
+		if (Boolean.TRUE.equals(powerAffectsHealth.get(player, minion, power, args))) {
 			Util.setMaxHealth(minion, maxHealth * power * powerHealthFactor);
 			minion.setHealth(health * power * powerHealthFactor);
 		} else {
@@ -616,11 +619,11 @@ public class MinionSpell extends BuffSpell {
 	}
 
 	public boolean shouldPowerAffectHealth() {
-		return powerAffectsHealth;
+		return Boolean.TRUE.equals(powerAffectsHealth.get(null));
 	}
 
 	public void setPowerAffectsHealth(boolean powerAffectsHealth) {
-		this.powerAffectsHealth = powerAffectsHealth;
+		this.powerAffectsHealth = (c, t, l, p, a) -> powerAffectsHealth;
 	}
 
 	public boolean shouldPreventCombust() {
@@ -648,27 +651,27 @@ public class MinionSpell extends BuffSpell {
 	}
 
 	public double getPowerHealthFactor() {
-		return powerHealthFactor;
+		return powerHealthFactor.get(null);
 	}
 
 	public void setPowerHealthFactor(double powerHealthFactor) {
-		this.powerHealthFactor = powerHealthFactor;
+		this.powerHealthFactor = (c, t, l, p, a) -> powerHealthFactor;
 	}
 
 	public double getMaxHealth() {
-		return maxHealth;
+		return maxHealth.get(null);
 	}
 
 	public void setMaxHealth(double maxHealth) {
-		this.maxHealth = maxHealth;
+		this.maxHealth = (c, t, l, p, a) -> maxHealth;
 	}
 
 	public double getHealth() {
-		return health;
+		return health.get(null);
 	}
 
 	public void setHealth(double health) {
-		this.health = health;
+		this.health = (c, t, l, p, a) -> health;
 	}
 
 	public String getMinionName() {

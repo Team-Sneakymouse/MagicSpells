@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.HashMap;
 import java.util.Iterator;
+import com.nisovin.magicspells.util.config.ConfigData;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -71,7 +72,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	protected boolean cancelOnGiveDamage;
 	protected boolean cancelOnChangeWorld;
 	protected boolean cancelAffectsTarget;
-	protected boolean powerAffectsDuration;
+	protected ConfigData<Boolean> powerAffectsDuration;
 
 	private final boolean endSpellFromTarget;
 
@@ -115,7 +116,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		cancelOnGiveDamage = getConfigBoolean("cancel-on-give-damage", false);
 		cancelOnChangeWorld = getConfigBoolean("cancel-on-change-world", false);
 		cancelAffectsTarget = getConfigBoolean("cancel-affects-target", true);
-		powerAffectsDuration = getConfigBoolean("power-affects-duration", true);
+		powerAffectsDuration = getConfigDataBoolean("power-affects-duration", true);
 
 		endSpellFromTarget = getConfigBoolean("end-spell-from-target", true);
 
@@ -257,7 +258,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		if (duration > 0 && durationEndTime != null) {
 
 			float dur = duration;
-			if (powerAffectsDuration) dur *= power;
+			if (Boolean.TRUE.equals(powerAffectsDuration.get(caster, target, power, args))) dur *= power;
 			setDuration(target, dur);
 
 			MagicSpells.scheduleDelayedTask(() -> {

@@ -32,7 +32,7 @@ public class LeapSpell extends InstantSpell {
 	private boolean clientOnly;
 	private boolean cancelDamage;
 	private boolean addVelocityInstead;
-	private boolean powerAffectsVelocity;
+	private ConfigData<Boolean> powerAffectsVelocity;
 
 	private Subspell landSpell;
 
@@ -48,7 +48,7 @@ public class LeapSpell extends InstantSpell {
 		clientOnly = getConfigBoolean("client-only", false);
 		cancelDamage = getConfigBoolean("cancel-damage", true);
 		addVelocityInstead = getConfigBoolean("add-velocity-instead", false);
-		powerAffectsVelocity = getConfigBoolean("power-affects-velocity", true);
+		powerAffectsVelocity = getConfigDataBoolean("power-affects-velocity", true);
 
 		landSpellName = getConfigString("land-spell", "");
 	}
@@ -75,11 +75,11 @@ public class LeapSpell extends InstantSpell {
 			Vector v = caster.getLocation().getDirection();
 
 			float forwardVelocity = this.forwardVelocity.get(caster, null, power, args) / 10;
-			if (powerAffectsVelocity)
+			if (Boolean.TRUE.equals(powerAffectsVelocity.get(caster, null, power, args)))
 				forwardVelocity *= power;
 
 			float upwardVelocity = this.upwardVelocity.get(caster, null, power, args) / 10;
-			if (powerAffectsVelocity)
+			if (Boolean.TRUE.equals(powerAffectsVelocity.get(caster, null, power, args)))
 				upwardVelocity *= power;
 
 			float rotation = this.rotation.get(caster, null, power, args);

@@ -47,7 +47,7 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 	private boolean ignoreArmor;
 	private boolean checkPlugins;
 	private boolean showSpellEffect;
-	private boolean powerAffectsAmount;
+	private ConfigData<Boolean> powerAffectsAmount;
 	private boolean avoidDamageModification;
 
 	private String spellOnAnimationName;
@@ -71,7 +71,7 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 		ignoreArmor = getConfigBoolean("ignore-armor", false);
 		checkPlugins = getConfigBoolean("check-plugins", true);
 		showSpellEffect = getConfigBoolean("show-spell-effect", true);
-		powerAffectsAmount = getConfigBoolean("power-affects-amount", true);
+		powerAffectsAmount = getConfigDataBoolean("power-affects-amount", true);
 		avoidDamageModification = getConfigBoolean("avoid-damage-modification", true);
 
 		spellOnAnimationName = getConfigString("spell-on-animation", "");
@@ -145,7 +145,7 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 
 		double take = takeAmt.get(caster, target, power, args);
 		double give = giveAmt.get(caster, target, power, args);
-		if (powerAffectsAmount) {
+		if (Boolean.TRUE.equals(powerAffectsAmount.get(caster, target, power, args))) {
 			take *= power;
 			give *= power;
 		}

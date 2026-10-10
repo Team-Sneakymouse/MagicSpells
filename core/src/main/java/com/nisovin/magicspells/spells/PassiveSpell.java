@@ -44,12 +44,12 @@ public class PassiveSpell extends Spell {
 	private final ConfigData<Integer> chargesPerSubject;
 
 	private boolean disabled = false;
-	private final boolean ignoreCancelled;
-	private final boolean castWithoutTarget;
-	private final boolean sendFailureMessages;
-	private final boolean cancelDefaultAction;
-	private final boolean requireCancelledEvent;
-	private final boolean cancelDefaultActionWhenCastFails;
+	private ConfigData<Boolean> ignoreCancelled;
+	private ConfigData<Boolean> castWithoutTarget;
+	private ConfigData<Boolean> sendFailureMessages;
+	private ConfigData<Boolean> cancelDefaultAction;
+	private ConfigData<Boolean> requireCancelledEvent;
+	private ConfigData<Boolean> cancelDefaultActionWhenCastFails;
 
 	public Map<LivingEntity, Map<String, Long>> cooldownsPerSubject = new HashMap<>();
 	private final Map<LivingEntity, Map<String, Integer>> chargesPerSubjectRemaining = new HashMap<>();
@@ -77,12 +77,12 @@ public class PassiveSpell extends Spell {
 		serverCooldownPerSubject = getConfigDataFloat("server-cooldown-per-subject", 0F);
 		chargesPerSubject = getConfigDataInt("charges-per-subject", 0);
 
-		ignoreCancelled = getConfigBoolean("ignore-cancelled", true);
-		castWithoutTarget = getConfigBoolean("cast-without-target", false);
-		sendFailureMessages = getConfigBoolean("send-failure-messages", false);
-		cancelDefaultAction = getConfigBoolean("cancel-default-action", false);
-		requireCancelledEvent = getConfigBoolean("require-cancelled-event", false);
-		cancelDefaultActionWhenCastFails = getConfigBoolean("cancel-default-action-when-cast-fails", false);
+		ignoreCancelled = getConfigDataBoolean("ignore-cancelled", true);
+		castWithoutTarget = getConfigDataBoolean("cast-without-target", false);
+		sendFailureMessages = getConfigDataBoolean("send-failure-messages", false);
+		cancelDefaultAction = getConfigDataBoolean("cancel-default-action", false);
+		requireCancelledEvent = getConfigDataBoolean("require-cancelled-event", false);
+		cancelDefaultActionWhenCastFails = getConfigDataBoolean("cancel-default-action-when-cast-fails", false);
 	}
 
 	@Override
@@ -173,20 +173,74 @@ public class PassiveSpell extends Spell {
 		return triggerList;
 	}
 
+	/** Only meaningful when {@code cancel-default-action} is a constant expression. */
 	public boolean cancelDefaultAction() {
-		return cancelDefaultAction;
+		return Boolean.TRUE.equals(cancelDefaultAction.get(null, null, null, 1f, null));
 	}
 
+	public boolean cancelDefaultAction(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		return Boolean.TRUE.equals(cancelDefaultAction.get(caster, target, power, args));
+	}
+
+	public void setCancelDefaultAction(boolean cancelDefaultAction) {
+		this.cancelDefaultAction = (c, t, l, p, a) -> cancelDefaultAction;
+	}
+
+	/** Only meaningful when {@code cancel-default-action-when-cast-fails} is a constant expression. */
 	public boolean cancelDefaultActionWhenCastFails() {
-		return cancelDefaultActionWhenCastFails;
+		return Boolean.TRUE.equals(cancelDefaultActionWhenCastFails.get(null, null, null, 1f, null));
 	}
 
+	public boolean cancelDefaultActionWhenCastFails(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		return Boolean.TRUE.equals(cancelDefaultActionWhenCastFails.get(caster, target, power, args));
+	}
+
+	public void setCancelDefaultActionWhenCastFails(boolean cancelDefaultActionWhenCastFails) {
+		this.cancelDefaultActionWhenCastFails = (c, t, l, p, a) -> cancelDefaultActionWhenCastFails;
+	}
+
+	/** Only meaningful when {@code ignore-cancelled} is a constant expression. */
 	public boolean ignoreCancelled() {
-		return ignoreCancelled;
+		return Boolean.TRUE.equals(ignoreCancelled.get(null, null, null, 1f, null));
 	}
 
+	public boolean ignoreCancelled(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		return Boolean.TRUE.equals(ignoreCancelled.get(caster, target, power, args));
+	}
+
+	public void setIgnoreCancelled(boolean ignoreCancelled) {
+		this.ignoreCancelled = (c, t, l, p, a) -> ignoreCancelled;
+	}
+
+	/** Only meaningful when {@code require-cancelled-event} is a constant expression. */
 	public boolean requireCancelledEvent() {
-		return requireCancelledEvent;
+		return Boolean.TRUE.equals(requireCancelledEvent.get(null, null, null, 1f, null));
+	}
+
+	public boolean requireCancelledEvent(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		return Boolean.TRUE.equals(requireCancelledEvent.get(caster, target, power, args));
+	}
+
+	public void setRequireCancelledEvent(boolean requireCancelledEvent) {
+		this.requireCancelledEvent = (c, t, l, p, a) -> requireCancelledEvent;
+	}
+
+	/** Only meaningful when {@code cast-without-target} is a constant expression. */
+	public boolean isCastWithoutTarget() {
+		return Boolean.TRUE.equals(castWithoutTarget.get(null, null, null, 1f, null));
+	}
+
+	public void setCastWithoutTarget(boolean castWithoutTarget) {
+		this.castWithoutTarget = (c, t, l, p, a) -> castWithoutTarget;
+	}
+
+	/** Only meaningful when {@code send-failure-messages} is a constant expression. */
+	public boolean shouldSendFailureMessages() {
+		return Boolean.TRUE.equals(sendFailureMessages.get(null, null, null, 1f, null));
+	}
+
+	public void setSendFailureMessages(boolean sendFailureMessages) {
+		this.sendFailureMessages = (c, t, l, p, a) -> sendFailureMessages;
 	}
 
 	@Override
@@ -272,7 +326,9 @@ public class PassiveSpell extends Spell {
 						+ " (state: " + state + ')');
 			}
 
-			if (state != SpellCastState.NORMAL && sendFailureMessages) {
+			boolean sendFailures = Boolean.TRUE.equals(sendFailureMessages.get(caster, target, location, power, null));
+
+			if (state != SpellCastState.NORMAL && sendFailures) {
 				if (state == SpellCastState.ON_COOLDOWN) {
 					sendMessage(strOnCooldown, caster, null, "%c", Math.round(getCooldown(caster)) + "");
 					return false;
@@ -336,12 +392,13 @@ public class PassiveSpell extends Spell {
 				}
 
 				SpellData data = new SpellData(caster, target, location, power, null);
+				boolean withoutTarget = Boolean.TRUE.equals(castWithoutTarget.get(data));
 				setCooldown(caster, castEvent.getCooldown());
 				boolean spellEffectsDone = false;
 
 				for (Subspell spell : spells) {
 					MagicSpells.debug(3, "    Casting spell effect '" + spell.getSpell().getName() + '\'');
-					if (castWithoutTarget) {
+					if (withoutTarget) {
 						MagicSpells.debug(3, "    Casting without target");
 
 						spell.subcast(caster, power, null);

@@ -25,7 +25,7 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private boolean pointBlank;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 	private boolean circleShape;
 	private final boolean checkPlugins;
 
@@ -49,7 +49,7 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 		radiusHoriz = getConfigDataInt("radius-horiz", 0);
 
 		pointBlank = getConfigBoolean("point-blank", false);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", false);
 		circleShape = getConfigBoolean("circle-shape", false);
 		checkPlugins = getConfigBoolean("check-plugins", true);
 
@@ -105,7 +105,7 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 		int d = radiusDown.get(caster, null, power, args);
 		int u = radiusUp.get(caster, null, power, args);
 		int h = radiusHoriz.get(caster, null, power, args);
-		if (powerAffectsRadius) {
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) {
 			d = Math.round(d * power);
 			u = Math.round(u * power);
 			h = Math.round(h * power);

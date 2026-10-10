@@ -39,18 +39,34 @@ public abstract class PassiveListener implements Listener {
 	}
 		
 	public boolean cancelDefaultAction(boolean casted) {
+		return cancelDefaultAction(null, null, casted);
+	}
+
+	public boolean cancelDefaultAction(LivingEntity caster, boolean casted) {
+		return cancelDefaultAction(caster, null, casted);
+	}
+
+	public boolean cancelDefaultAction(LivingEntity caster, LivingEntity target, boolean casted) {
 		if (passiveSpell == null) return true;
-		if (casted && passiveSpell.cancelDefaultAction()) return true;
-		if (!casted && passiveSpell.cancelDefaultActionWhenCastFails()) return true;
+		if (casted && passiveSpell.cancelDefaultAction(caster, target, 1f, null)) return true;
+		if (!casted && passiveSpell.cancelDefaultActionWhenCastFails(caster, target, 1f, null)) return true;
 		return false;
 	}
 	
 	public boolean isCancelStateOk(boolean cancelled) {
+		return isCancelStateOk(null, null, cancelled);
+	}
+
+	public boolean isCancelStateOk(LivingEntity caster, boolean cancelled) {
+		return isCancelStateOk(caster, null, cancelled);
+	}
+
+	public boolean isCancelStateOk(LivingEntity caster, LivingEntity target, boolean cancelled) {
 		if (passiveSpell == null) return false;
 		// require-cancelled-event means we only want cancelled triggers; ignore-cancelled
 		// must not reject those or the two options can never both be satisfied.
-		if (passiveSpell.requireCancelledEvent()) return cancelled;
-		if (passiveSpell.ignoreCancelled() && cancelled) return false;
+		if (passiveSpell.requireCancelledEvent(caster, target, 1f, null)) return cancelled;
+		if (passiveSpell.ignoreCancelled(caster, target, 1f, null) && cancelled) return false;
 		return true;
 	}
 

@@ -8,6 +8,7 @@ import org.bukkit.block.Block;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -20,17 +21,17 @@ import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 public class DummySpell extends TargetedSpell
 		implements TargetedEntitySpell, TargetedLocationSpell, TargetedEntityFromLocationSpell {
 
-	private boolean requireEntityTarget;
+	private ConfigData<Boolean> requireEntityTarget;
 
 	public DummySpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		requireEntityTarget = getConfigBoolean("require-entity-target", true);
+		requireEntityTarget = getConfigDataBoolean("require-entity-target", true);
 	}
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
-			if (requireEntityTarget) {
+			if (Boolean.TRUE.equals(requireEntityTarget.get(caster, power, args))) {
 				TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
 				if (target.noTarget())
 					return noTarget(caster, args, target);
@@ -167,6 +168,15 @@ public class DummySpell extends TargetedSpell
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {
 		return true;
+	}
+
+	/** Only meaningful when {@code require-entity-target} is a constant expression. */
+	public boolean isRequireEntityTarget() {
+		return Boolean.TRUE.equals(requireEntityTarget.get(null, null, null, 1f, null));
+	}
+
+	public void setRequireEntityTarget(boolean requireEntityTarget) {
+		this.requireEntityTarget = (c, t, l, p, a) -> requireEntityTarget;
 	}
 
 }
