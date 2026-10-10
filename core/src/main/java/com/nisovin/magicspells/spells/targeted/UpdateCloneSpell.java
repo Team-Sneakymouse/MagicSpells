@@ -52,23 +52,11 @@ public class UpdateCloneSpell extends TargetedSpell implements TargetedLocationS
         return PostCastAction.HANDLE_NORMALLY;
     }
 
-
     @Override
     public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
         updateDisplays(caster, target, power);
         return true;
     }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-        return castAtLocation(caster, target, power, null);
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public boolean castAtLocation(Location target, float power) {return false;}
-
 
     private void updateDisplays(LivingEntity caster, Location location, float power){
         Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.getInstance(), () ->{

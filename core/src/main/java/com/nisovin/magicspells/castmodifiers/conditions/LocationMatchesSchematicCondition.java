@@ -14,9 +14,10 @@ import com.nisovin.magicspells.castmodifiers.Condition;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.math.BlockVector3;
+
+import com.nisovin.magicspells.util.compat.ClipboardFormatsCompat;
 
 public class LocationMatchesSchematicCondition extends Condition {
 
@@ -26,21 +27,36 @@ public class LocationMatchesSchematicCondition extends Condition {
 
 	@Override
 	public boolean initialize(String var) {
+		if (var == null || var.isBlank())
+			return false;
+
 		matchAir = var.endsWith(";true");
 
 		File folder = new File(MagicSpells.plugin.getDataFolder(), "schematics");
 		if (!folder.exists())
 			folder.mkdir();
 
-		file = new File(folder, var.replace(";true", "").replace(";false", ""));
-		if (!file.exists())
+		String name = var.replace(";true", "").replace(";false", "").trim();
+		if (name.isEmpty())
 			return false;
 
-		ClipboardFormat format = ClipboardFormats.findByFile(file);
+		file = new File(folder, name);
+		if (!file.isFile()) {
+			MagicSpells.error("locationmatchesschematic: schematic file not found: " + file.getPath());
+			return false;
+		}
+
+		ClipboardFormat format = ClipboardFormatsCompat.find(file);
+		if (format == null) {
+			MagicSpells.error("locationmatchesschematic: unknown clipboard format: " + file.getPath());
+			return false;
+		}
+
 		try (ClipboardReader reader = format.getReader(new FileInputStream(file))) {
 			clipboard = reader.read();
 		} catch (IOException e) {
-			e.printStackTrace();
+			MagicSpells.handleException(e);
+			return false;
 		}
 
 		return clipboard != null;

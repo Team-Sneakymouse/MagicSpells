@@ -38,23 +38,9 @@ public class TimeSpell extends InstantSpell implements TargetedLocationSpell {
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		setTime(caster, target.getWorld(), power, null);
-		return true;
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		setTime(null, target.getWorld(), power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		setTime(null, target.getWorld(), power, null);
 		return true;
 	}
 

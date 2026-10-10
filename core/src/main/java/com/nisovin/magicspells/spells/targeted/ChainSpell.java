@@ -76,29 +76,11 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		chain(caster, caster.getLocation(), target, power, null);
-		return true;
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target))
 			return false;
 		chain(null, null, target, power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		chain(null, null, target, power, null);
 		return true;
 	}
 
@@ -111,29 +93,11 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		chain(caster, from, target, power, null);
-		return true;
-	}
-
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target))
 			return false;
 		chain(null, from, target, power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		chain(null, from, target, power, null);
 		return true;
 	}
 

@@ -108,20 +108,6 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		levitate(caster, target, power, null);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
 	public boolean isBeingLevitated(LivingEntity entity) {
 		for (Levitator levitator : levitating.values()) {
 			if (levitator.target.equals(entity)) return true;

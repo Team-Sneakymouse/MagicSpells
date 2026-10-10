@@ -72,7 +72,8 @@ public class PotionHandler {
 
 		if (data.hasAttribute(POTION_EFFECTS)) {
 			potionMeta.clearCustomEffects();
-			((List<PotionEffect>) data.getAttribute(POTION_EFFECTS)).forEach(potionEffect -> potionMeta.addCustomEffect(potionEffect, true));
+			List<PotionEffect> effects = data.getAttribute(POTION_EFFECTS);
+			effects.forEach(potionEffect -> potionMeta.addCustomEffect(potionEffect, true));
 		}
 		if (data.hasAttribute(COLOR)) potionMeta.setColor((Color) data.getAttribute(COLOR));
 		if (data.hasAttribute(POTION_DATA)) potionMeta.setBasePotionType((PotionType) data.getAttribute(POTION_DATA));

@@ -92,20 +92,6 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 		return createFalsePlayer(caster, loc, power, args);
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		Location loc = target.clone();
-		loc.setY(target.getY() + 1);
-		return createFalsePlayer(caster, loc, power, null);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
     private boolean createFalsePlayer(LivingEntity caster, Location loc, float basePower, String[] args) {
         final int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer((Player) caster, loc, this.pose.get(caster, null, basePower, args).toUpperCase(), this.cloneEquipment.get(caster, null, basePower, args));
 

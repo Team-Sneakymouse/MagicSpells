@@ -468,12 +468,6 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		switch (location.toLowerCase()) {
@@ -494,12 +488,6 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
@@ -512,12 +500,6 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(caster, from, target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target))
@@ -527,12 +509,6 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		else
 			castAtLocation(from, power, args);
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(from, target, power, null);
 	}
 
 	private Location getRandomLocationFrom(Location location, int range) {
@@ -1121,17 +1097,17 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 			if (intervalSpell.isTargetedEntityFromLocationSpell()) {
 				if (target != null)
-					intervalSpell.castAtEntityFromLocation(caster, entity.getLocation(), target, power);
+					intervalSpell.castAtEntityFromLocation(caster, entity.getLocation(), target, power, null, true);
 			} else if (intervalSpell.isTargetedEntitySpell()) {
 				if (target != null)
-					intervalSpell.castAtEntity(caster, (LivingEntity) target, power);
+					intervalSpell.castAtEntity(caster, (LivingEntity) target, power, null, true);
 			} else if (intervalSpell.isTargetedLocationSpell()) {
 				Location location = entity.getLocation();
 				if (target != null && !(intervalSpell.getSpell() instanceof InstantSpell)) {
 					location = target.getLocation();
 				}
 
-				intervalSpell.castAtLocation(caster, location, power);
+				intervalSpell.castAtLocation(caster, location, null, power);
 			} else {
 				intervalSpell.cast(entity, power);
 			}

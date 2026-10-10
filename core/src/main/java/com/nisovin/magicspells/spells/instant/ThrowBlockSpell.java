@@ -170,12 +170,6 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		Vector v = getVector(null, target, power, args);
@@ -183,12 +177,6 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 				v, power, args);
 		playSpellEffects(EffectPosition.CASTER, target, info.data);
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
 	}
 
 	private Vector getVector(LivingEntity caster, Location loc, float power, String[] args) {

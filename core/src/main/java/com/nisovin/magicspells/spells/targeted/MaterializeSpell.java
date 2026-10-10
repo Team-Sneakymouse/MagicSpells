@@ -293,12 +293,6 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		return false;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		Block block = target.getBlock();
@@ -308,12 +302,6 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		if (block2.getType() == Material.AIR)
 			return materialize(null, block2, block, power, args);
 		return false;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
 	}
 
 	private int getRowLength(int patternPosition) {

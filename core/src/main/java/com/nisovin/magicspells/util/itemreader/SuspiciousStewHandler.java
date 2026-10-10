@@ -38,7 +38,8 @@ public class SuspiciousStewHandler {
 		if (!(meta instanceof SuspiciousStewMeta stewMeta)) return;
 		if (!data.hasAttribute(POTION_EFFECTS)) return;
 		stewMeta.clearCustomEffects();
-		((List<PotionEffect>) data.getAttribute(POTION_EFFECTS)).forEach(potionEffect -> stewMeta.addCustomEffect(potionEffect, true));
+		List<PotionEffect> effects = data.getAttribute(POTION_EFFECTS);
+			effects.forEach(potionEffect -> stewMeta.addCustomEffect(potionEffect, true));
 	}
 
 	public static void processMagicItemData(ItemMeta meta, MagicItemData data) {

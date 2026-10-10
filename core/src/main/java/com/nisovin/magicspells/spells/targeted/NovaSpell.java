@@ -122,38 +122,10 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		createNova(caster, target, target.getLocation(), power, null);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity livingEntity, float v) {
-		return false;
-	}
-
 	@Override
 	public boolean castAtLocation(LivingEntity livingEntity, Location location, float v, String[] args) {
 		createNova(livingEntity, null, location, v, args);
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		createNova(caster, null, target, power, null);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location location, float v) {
-		return false;
 	}
 
 	private void createNova(LivingEntity caster, LivingEntity target, Location loc, float power, String[] args) {

@@ -383,7 +383,7 @@ public class MagicItemDataParser {
 						case "fake-glint":
 						case "fake_glint":
 							if (data.hasAttribute(ENCHANTS)) {
-								Map<Enchantment, Integer> enchantments = (Map<Enchantment, Integer>) data.getAttribute(ENCHANTS);
+								Map<Enchantment, Integer> enchantments = data.getAttribute(ENCHANTS);
 								boolean fakeGlint = value.getAsBoolean();
 
 								if (enchantments.isEmpty() && fakeGlint) data.setAttribute(FAKE_GLINT, true);

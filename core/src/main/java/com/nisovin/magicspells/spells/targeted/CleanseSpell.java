@@ -209,26 +209,10 @@ public class CleanseSpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		cleanse(caster, target, power, null);
-		return true;
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target)) return false;
 		cleanse(null, target, power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		cleanse(null, target, power, null);
 		return true;
 	}
 

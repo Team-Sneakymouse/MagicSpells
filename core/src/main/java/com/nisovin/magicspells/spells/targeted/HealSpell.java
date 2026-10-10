@@ -71,24 +71,12 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 		return false;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (validTargetList.canTarget(target) && (!cancelIfFull || target.getHealth() < Util.getMaxHealth(target)))
 			return heal(null, target, power, args);
 
 		return false;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	@Override

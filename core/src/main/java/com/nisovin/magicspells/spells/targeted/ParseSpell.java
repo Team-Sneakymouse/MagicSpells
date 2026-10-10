@@ -104,29 +104,11 @@ public class ParseSpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		parse(target);
-		playSpellEffects(caster, target, power, null);
-		return true;
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target)) return false;
 		parse(target);
 		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		parse(target);
-		playSpellEffects(EffectPosition.TARGET, target, power, null);
 		return true;
 	}
 

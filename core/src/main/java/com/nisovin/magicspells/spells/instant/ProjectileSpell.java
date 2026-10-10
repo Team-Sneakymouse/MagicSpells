@@ -223,18 +223,6 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
 	private void setupTracker(ProjectileTracker tracker, LivingEntity caster, float power, String[] args) {
 		SpellData data = new SpellData(caster, power, args);
 

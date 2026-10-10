@@ -83,12 +83,6 @@ public class TransmuteSpell extends TargetedSpell implements TargetedLocationSpe
 		return false;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		Block block = target.getBlock();
@@ -98,12 +92,6 @@ public class TransmuteSpell extends TargetedSpell implements TargetedLocationSpe
 			return true;
 		}
 		return false;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
 	}
 
 	private boolean canTransmute(Block block) {

@@ -48,7 +48,8 @@ import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
+
+import com.nisovin.magicspells.util.compat.ClipboardFormatsCompat;
 
 public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -177,7 +178,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	private boolean dismantleFirst;
     private boolean instantUndo;
 
-
 	public PasteSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -219,7 +219,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	public void initialize() {
 		super.initialize();
 
-		ClipboardFormat format = ClipboardFormats.findByFile(file);
+		ClipboardFormat format = ClipboardFormatsCompat.find(file);
 		try (ClipboardReader reader = format.getReader(new FileInputStream(file))) {
 			clipboard = reader.read();
 		} catch (IOException e) {
@@ -300,20 +300,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, null);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(null, target, power, null);
 	}
 

@@ -63,18 +63,6 @@ public class ShadowstepSpell extends TargetedSpell implements TargetedEntitySpel
 		return shadowstep(caster, target, power, args);
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
 	private boolean shadowstep(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		Location targetLoc = target.getLocation().clone();
 		targetLoc.setPitch(0);

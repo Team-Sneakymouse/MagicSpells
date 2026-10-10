@@ -57,24 +57,12 @@ public class FlySpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
 		setFlyingState(player);
 		playSpellEffects(EffectPosition.TARGET, target, power, args);
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	@Override

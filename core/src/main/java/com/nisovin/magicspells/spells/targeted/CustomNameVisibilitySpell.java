@@ -44,24 +44,12 @@ public class CustomNameVisibilitySpell extends TargetedSpell implements Targeted
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target)) return false;
 		target.setCustomNameVisible(targetBooleanState.getBooleanState(target.isCustomNameVisible()));
 		playSpellEffects(EffectPosition.TARGET, target, power, args);
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 }

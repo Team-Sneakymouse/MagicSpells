@@ -125,12 +125,6 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 		return false;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		Block block = target.getBlock();
@@ -139,12 +133,6 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 			return true;
 		}
 		return false;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
 	}
 
 	private boolean zap(Block target, Player player, float power, String[] args) {

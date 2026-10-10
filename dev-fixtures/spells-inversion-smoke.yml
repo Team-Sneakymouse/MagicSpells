@@ -1,0 +1,104 @@
+# Live fixtures for MANUAL-TEST-INVERSION.md
+# Copy: cp dev-fixtures/spells-inversion-smoke.yml core/run/plugins/MagicSpells/
+# Requires schematics/schem.schem (already in run). Cast: /c <spell> or /ms caston …
+
+magic-items:
+  inv_book:
+    type: written_book
+    name: "&bINV Book"
+    title: "&bINV Test Book"
+    author: "&7MagicSpells"
+    lore:
+      - "&7BookMeta Adventure pages check"
+    pages:
+      - "&aPage 1:&f legacy colors work"
+      - "&#55ffffPage 2:&f hex colors work"
+
+# --- Book / magic-item path ---
+
+inv_give_book:
+  spell-class: ".instant.ConjureSpell"
+  name: inv_give_book
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - inv_book 1
+  str-cast-self: "INV: gave written book (open it)"
+
+inv_conjure_book:
+  spell-class: ".instant.ConjureBookSpell"
+  name: inv_conjure_book
+  always-granted: true
+  add-to-inventory: true
+  title: "&eConjureBook Title"
+  author: "&7INV"
+  pages:
+    - "&aConjureBookSpell page with &fcolors"
+    - "&#ff55ffHex page from ConjureBookSpell"
+  str-cast-self: "INV: conjured book via ConjureBookSpell"
+
+# --- Schematic paste + locationmatchesschematic (findByPath) ---
+
+inv_paste:
+  spell-class: ".targeted.PasteSpell"
+  name: inv_paste
+  always-granted: true
+  range: 20
+  schematic: schem.schem
+  paste-air: false
+  undo-delay: 200
+  remove-paste: true
+  paste-at-caster: false
+  str-cast-self: "INV: pasted schem.schem (look at ground; undoes ~10s)"
+  str-no-target: "INV: look at a block to paste"
+
+# Look at the paste origin (block you targeted for inv_paste). Passes only if
+# world blocks match schem.schem relative to that location.
+inv_schem_check:
+  spell-class: ".targeted.DummySpell"
+  name: inv_schem_check
+  always-granted: true
+  range: 20
+  require-entity-target: false
+  location-modifiers:
+    # Quote so YAML '#' comments cannot strip the action / fail message.
+    - "locationmatchesschematic schem.schem require$$INV: location does not match schem.schem"
+  str-modifier-failed: "INV: schematic match failed"
+  str-cast-self: "INV: schematic match OK"
+  str-no-target: "INV: look at a block (paste origin)"
+
+# --- PVP targeting (GameRules.PVP / check-world-pvp-flag) ---
+
+inv_pain:
+  spell-class: ".targeted.PainSpell"
+  name: inv_pain
+  always-granted: true
+  range: 20
+  damage: 1
+  ignore-armor: true
+  check-plugins: false
+  can-target: players,monsters,animals
+  str-cast-self: "INV: pain hit"
+  str-no-target: "INV: no valid target (PVP-off world blocks player hits)"
+
+# --- Targeted cast regression helpers (caston / multi) ---
+
+inv_dummy_entity:
+  spell-class: ".targeted.DummySpell"
+  name: inv_dummy_entity
+  always-granted: true
+  range: 20
+  require-entity-target: true
+  str-cast-self: "INV: entity target OK"
+  str-no-target: "INV: need living target"
+
+inv_multi_pain:
+  spell-class: ".TargetedMultiSpell"
+  name: inv_multi_pain
+  always-granted: true
+  range: 20
+  can-target: players,monsters,animals
+  spells:
+    - inv_pain
+  str-cast-self: "INV: multi fired inv_pain"
+  str-no-target: "INV: multi no target"

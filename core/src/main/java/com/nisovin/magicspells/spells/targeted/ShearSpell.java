@@ -80,21 +80,9 @@ public class ShearSpell extends TargetedSpell implements TargetedEntitySpell {
 		return target instanceof Sheep sheep && validTargetList.canTarget(caster, target) && shear(caster, sheep, power, args);
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return target instanceof Sheep sheep && validTargetList.canTarget(caster, target) && shear(caster, sheep, power, null);
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		return target instanceof Sheep sheep && validTargetList.canTarget(target) && shear(null, sheep, power, args);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return target instanceof Sheep sheep && validTargetList.canTarget(target) && shear(null, sheep, power, null);
 	}
 
 	private boolean parseSpell() {

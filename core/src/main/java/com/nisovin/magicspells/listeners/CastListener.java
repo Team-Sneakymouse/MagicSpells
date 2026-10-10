@@ -32,6 +32,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.BowSpell;
 import com.nisovin.magicspells.util.BlockUtils;
 
+@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class CastListener implements Listener {
 
 	private MagicSpells plugin;

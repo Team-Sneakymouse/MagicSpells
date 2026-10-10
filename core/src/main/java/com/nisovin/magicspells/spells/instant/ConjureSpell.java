@@ -546,18 +546,6 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		MagicSpells.getAttributeManager().addItemAttributes(item, resolved);
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return conjureItemsAtLocation(target, power, caster, null);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return conjureItemsAtLocation(target, power, null, null);
-	}
-
 	private boolean conjureItemsAtLocation(Location location, float power, @NotNull LivingEntity player,
 			@NotNull LivingEntity target) {
 
@@ -622,28 +610,36 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
+	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+		return conjureItemsAtLocation(target, power, caster, null);
+	}
+
+	@Override
+	public boolean castAtLocation(Location target, float power, String[] args) {
+		return conjureItemsAtLocation(target, power, null, null);
+	}
+
+	@Override
+	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(caster, target))
 			return false;
 
 		if (target instanceof Player player)
-			conjureItems(player, power, null);
+			conjureItems(player, power, args);
 		else
 			return conjureItemsAtLocation(target.getLocation(), power, caster, target);
 
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
+	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target))
 			return false;
 
 		if (target instanceof Player player)
-			conjureItems(player, power, null);
+			conjureItems(player, power, args);
 		else
 			return conjureItemsAtLocation(target.getLocation(), power, null, target);
 

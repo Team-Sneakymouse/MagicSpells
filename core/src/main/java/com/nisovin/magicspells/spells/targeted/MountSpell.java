@@ -53,20 +53,6 @@ public class MountSpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		mount(caster, target, power, null);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
 	private void mount(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (caster == null || target == null) return;
 

@@ -60,27 +60,11 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		return launch(caster, target, from, power, args);
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		return launch(caster, target, from, power, null);
-	}
-
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target))
 			return false;
 		return launch(null, target, from, power, args);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		return launch(null, target, from, power, null);
 	}
 
 	@Override
@@ -90,27 +74,11 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		return launch(caster, target, null, power, args);
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		return launch(caster, target, null, power, null);
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target))
 			return false;
 		return launch(null, target, null, power, args);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		return launch(null, target, null, power, null);
 	}
 
 	private boolean launch(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {

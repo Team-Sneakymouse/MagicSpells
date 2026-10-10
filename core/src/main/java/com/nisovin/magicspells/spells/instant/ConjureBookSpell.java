@@ -101,21 +101,9 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		return castAtLocation(null, target, power, args);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(null, target, power, null);
 	}
 
 	private static Component createComponent(String raw, Player player, String displayName, String[] args) {

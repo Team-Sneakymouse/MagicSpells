@@ -44,8 +44,13 @@ public class MagicItemData {
 	private boolean strictBlockData = true;
 	private boolean strictEnchants = true;
 
-	public Object getAttribute(MagicItemAttribute attr) {
-		return itemAttributes.get(attr);
+	/**
+	 * Typed attribute lookup. Heterogeneous {@link EnumMap} values are cast once here
+	 * so call sites stay unchecked-warning free.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> T getAttribute(MagicItemAttribute attr) {
+		return (T) itemAttributes.get(attr);
 	}
 
 	public void setAttribute(MagicItemAttribute attr, Object obj) {
@@ -104,8 +109,8 @@ public class MagicItemData {
 	}
 
 	private boolean hasEqualAttributes(MagicItemData other) {
-		Multimap<Attribute, AttributeModifier> attrSelf = (Multimap<Attribute, AttributeModifier>) itemAttributes.get(MagicItemAttribute.ATTRIBUTES);
-		Multimap<Attribute, AttributeModifier> attrOther = (Multimap<Attribute, AttributeModifier>) other.itemAttributes.get(MagicItemAttribute.ATTRIBUTES);
+		Multimap<Attribute, AttributeModifier> attrSelf = getAttribute(MagicItemAttribute.ATTRIBUTES);
+		Multimap<Attribute, AttributeModifier> attrOther = other.getAttribute(MagicItemAttribute.ATTRIBUTES);
 		if (attrSelf == null || attrOther == null) return attrSelf == attrOther;
 
 		Set<Attribute> keysSelf = attrSelf.keySet();
@@ -205,8 +210,8 @@ public class MagicItemData {
 						continue;
 					}
 
-					Map<Enchantment, Integer> enchantsSelf = (Map<Enchantment, Integer>) itemAttributes.get(attr);
-					Map<Enchantment, Integer> enchantsOther = (Map<Enchantment, Integer>) data.itemAttributes.get(attr);
+					Map<Enchantment, Integer> enchantsSelf = getAttribute(attr);
+					Map<Enchantment, Integer> enchantsOther = data.getAttribute(attr);
 
 					if (strictEnchants && enchantsSelf.size() != enchantsOther.size()) return false;
 
@@ -227,8 +232,8 @@ public class MagicItemData {
 						return false;
 				}
 				case LORE -> {
-					List<Component> loreSelf = (List<Component>) itemAttributes.get(attr);
-					List<Component> loreOther = (List<Component>) data.itemAttributes.get(attr);
+					List<Component> loreSelf = getAttribute(attr);
+					List<Component> loreOther = data.getAttribute(attr);
 					if (loreSelf == null || loreOther == null) return loreSelf == loreOther;
 					if (loreSelf.size() != loreOther.size()) return false;
 
@@ -774,7 +779,7 @@ public class MagicItemData {
 			if (previous) output.append(',');
 			else output.append('{');
 
-			Map<Enchantment, Integer> enchantments = (Map<Enchantment, Integer>) getAttribute(MagicItemAttribute.ENCHANTS);
+			Map<Enchantment, Integer> enchantments = getAttribute(MagicItemAttribute.ENCHANTS);
 			boolean previousEnchantment = false;
 			output.append("\"enchants\":{");
 			for (Enchantment enchantment : enchantments.keySet()) {
@@ -807,7 +812,7 @@ public class MagicItemData {
 			if (previous) output.append(',');
 			else output.append('{');
 
-			Multimap<Attribute, AttributeModifier> attributes = (Multimap<Attribute, AttributeModifier>) getAttribute(MagicItemAttribute.ATTRIBUTES);
+			Multimap<Attribute, AttributeModifier> attributes = getAttribute(MagicItemAttribute.ATTRIBUTES);
 			boolean previousAttribute = false;
 			output.append("\"attributes\":[");
 			for (Map.Entry<Attribute, AttributeModifier> entries : attributes.entries()) {
@@ -842,7 +847,7 @@ public class MagicItemData {
 			if (previous) output.append(',');
 			else output.append('{');
 
-			List<Component> lore = (List<Component>) getAttribute(MagicItemAttribute.LORE);
+			List<Component> lore = getAttribute(MagicItemAttribute.LORE);
 			boolean previousLore = false;
 			output.append("\"lore\":[");
 			for (Component line : lore) {
@@ -864,7 +869,7 @@ public class MagicItemData {
 			if (previous) output.append(',');
 			else output.append('{');
 
-			List<Component> pages = (List<Component>) getAttribute(MagicItemAttribute.PAGES);
+			List<Component> pages = getAttribute(MagicItemAttribute.PAGES);
 			boolean previousPages = false;
 			output.append("\"pages\":[");
 			for (Component page : pages) {
@@ -887,7 +892,7 @@ public class MagicItemData {
 			else output.append('{');
 
 			output.append("\"patterns\":[");
-			List<Pattern> patterns = (List<Pattern>) getAttribute(MagicItemAttribute.PATTERNS);
+			List<Pattern> patterns = getAttribute(MagicItemAttribute.PATTERNS);
 			boolean previousPattern = false;
 			for (Pattern pattern : patterns) {
 				if (previousPattern) output.append(',');
@@ -913,7 +918,7 @@ public class MagicItemData {
 			else output.append('{');
 
 			output.append("\"potion-effects\":[");
-			List<PotionEffect> effects = (List<PotionEffect>) getAttribute(MagicItemAttribute.POTION_EFFECTS);
+			List<PotionEffect> effects = getAttribute(MagicItemAttribute.POTION_EFFECTS);
 			boolean previousEffect = false;
 			for (PotionEffect effect : effects) {
 				if (previousEffect) output.append(',');
@@ -935,7 +940,7 @@ public class MagicItemData {
 		}
 
 		if (hasAttribute(MagicItemAttribute.FIREWORK_EFFECTS)) {
-			List<FireworkEffect> effects = (List<FireworkEffect>) getAttribute(MagicItemAttribute.FIREWORK_EFFECTS);
+			List<FireworkEffect> effects = getAttribute(MagicItemAttribute.FIREWORK_EFFECTS);
 
 			if (previous) output.append(',');
 			else output.append('{');
@@ -987,18 +992,20 @@ public class MagicItemData {
 			if (previous) output.append(',');
 			else output.append('{');
 
-			List<String> pdcList = (List<String>) getAttribute(MagicItemAttribute.PERSISTENT_DATA);
+			Map<String, String> pdcMap = getAttribute(MagicItemAttribute.PERSISTENT_DATA);
 			boolean previousLine = false;
 			output.append("\"data\":[");
-			for (String line : pdcList) {
-				if (previousLine) output.append(',');
+			if (pdcMap != null) {
+				for (Map.Entry<String, String> entry : pdcMap.entrySet()) {
+					if (previousLine) output.append(',');
 
-				output
-						.append('"')
-						.append(TxtUtil.escapeJSON(line))
-						.append('"');
+					output
+							.append('"')
+							.append(TxtUtil.escapeJSON(entry.getKey() + ' ' + entry.getValue()))
+							.append('"');
 
-				previousLine = true;
+					previousLine = true;
+				}
 			}
 			output.append(']');
 

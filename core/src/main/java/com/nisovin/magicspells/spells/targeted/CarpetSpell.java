@@ -127,22 +127,9 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		layCarpet(null, target, power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		layCarpet(null, target, power, null);
 		return true;
 	}
 

@@ -16,6 +16,7 @@ import com.google.common.collect.LinkedListMultimap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.GameRules;
 import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
@@ -1515,7 +1516,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		// Get valid targets
 		List<LivingEntity> entities;
 		if (MagicSpells.checkWorldPvpFlag() && validTargetList.canTargetPlayers() && !isBeneficial()
-				&& !caster.getWorld().getPVP()) {
+				&& !Boolean.TRUE.equals(caster.getWorld().getGameRuleValue(GameRules.PVP))) {
 			entities = validTargetList.filterTargetListCastingAsLivingEntities(caster, nearbyEntities, false);
 		} else if (forceTargetPlayers) {
 			entities = validTargetList.filterTargetListCastingAsLivingEntities(caster, nearbyEntities, true);

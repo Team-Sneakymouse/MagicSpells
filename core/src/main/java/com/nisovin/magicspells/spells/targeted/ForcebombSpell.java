@@ -76,23 +76,9 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		knockback(caster, target, power, null);
-		return true;
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		knockback(null, target, power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		knockback(null, target, power, null);
 		return true;
 	}
 

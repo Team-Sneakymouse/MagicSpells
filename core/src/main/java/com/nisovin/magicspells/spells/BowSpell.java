@@ -38,6 +38,7 @@ import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
+@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class BowSpell extends Spell {
 
 	private static final String METADATA_KEY = "MSBowSpell";

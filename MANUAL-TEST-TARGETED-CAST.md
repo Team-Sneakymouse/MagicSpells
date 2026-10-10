@@ -1,6 +1,6 @@
 # Manual tests — targeted cast paths (post-suppress)
 
-After annotating deprecated no-args `castAt*` overrides with `@SuppressWarnings("deprecation")`, spot-check that **args** paths and normal casts still work. Suppress does not change behavior; this is a regression net before we later invert the interfaces.
+After inverting `Targeted*Spell` so **args** overloads are primary (no-args are deprecated interface defaults), spot-check that args paths and normal casts still work. Re-run this checklist after the inversion if unsure.
 
 ## Fixtures
 

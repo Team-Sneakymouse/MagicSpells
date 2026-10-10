@@ -274,7 +274,7 @@ public class MagicItems {
 
 		// Enchantments
 		if (data.hasAttribute(ENCHANTS)) {
-			Map<Enchantment, Integer> enchantments = (Map<Enchantment, Integer>) data.getAttribute(ENCHANTS);
+			Map<Enchantment, Integer> enchantments = data.getAttribute(ENCHANTS);
 			for (Enchantment enchant : enchantments.keySet()) {
 				int level = enchantments.get(enchant);
 
@@ -350,7 +350,7 @@ public class MagicItems {
 
 		// Attributes
 		AttributeManager attributeManager = MagicSpells.getAttributeManager();
-		Multimap<Attribute, AttributeModifier> attributes = (Multimap<Attribute, AttributeModifier>) data.getAttribute(ATTRIBUTES);
+		Multimap<Attribute, AttributeModifier> attributes = data.getAttribute(ATTRIBUTES);
 		if (attributes != null) {
 			for (Attribute attribute : attributes.keySet()) {
 				Collection<AttributeModifier> attributeModifiers = attributes.get(attribute);
@@ -415,8 +415,8 @@ public class MagicItems {
 			case SKULL_OWNER, UUID, TEXTURE, SIGNATURE -> SkullHandler.processItemMeta(meta, partial);
 			case BLOCK_DATA -> BlockDataHandler.processItemMeta(meta, partial);
 			case PATTERNS -> BannerHandler.processItemMeta(meta, partial);
-			case ENCHANTS -> applyEnchants(meta, (Map<Enchantment, Integer>) partial.getAttribute(ENCHANTS));
-			case ATTRIBUTES -> applyBukkitAttributes(item, meta, (Multimap<Attribute, AttributeModifier>) partial.getAttribute(ATTRIBUTES));
+			case ENCHANTS -> applyEnchants(meta, partial.getAttribute(ENCHANTS));
+			case ATTRIBUTES -> applyBukkitAttributes(item, meta, partial.getAttribute(ATTRIBUTES));
 			case PERMANENT_DATA -> PersistentDataHandler.processItemMeta(meta, partial);
 			default -> {}
 		}
@@ -541,7 +541,7 @@ public class MagicItems {
 					switch (attr) {
 						case TITLE -> bookMeta.setTitle(null);
 						case AUTHOR -> bookMeta.setAuthor(null);
-						case PAGES -> bookMeta.setPages(new ArrayList<>());
+						case PAGES -> bookMeta.pages(new ArrayList<>());
 						default -> {}
 					}
 				}

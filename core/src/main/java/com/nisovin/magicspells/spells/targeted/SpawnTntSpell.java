@@ -85,23 +85,9 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		spawnTnt(caster, target.clone().add(0.5, 0.5, 0.5), power, null);
-		return true;
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		spawnTnt(null, target.clone().add(0.5, 0.5, 0.5), power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		spawnTnt(null, target.clone().add(0.5, 0.5, 0.5), power, null);
 		return true;
 	}
 

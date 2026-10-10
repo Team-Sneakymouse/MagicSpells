@@ -23,6 +23,7 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
 
+@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class LightningSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private ConfigData<Double> additionalDamage;
@@ -95,26 +96,10 @@ public class LightningSpell extends TargetedSpell implements TargetedLocationSpe
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		lightning(target);
-		playSpellEffects(caster, target, power, null);
-		return true;
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		lightning(target);
 		playSpellEffects(EffectPosition.CASTER, target, power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		lightning(target);
-		playSpellEffects(EffectPosition.CASTER, target, power, null);
 		return true;
 	}
 

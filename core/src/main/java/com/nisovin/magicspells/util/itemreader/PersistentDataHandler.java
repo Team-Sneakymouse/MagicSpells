@@ -70,14 +70,14 @@ public class PersistentDataHandler {
         }
 
         if (data.hasAttribute(PERSISTENT_DATA)) {
-            Map<String, String> pdcMap = (Map<String, String>) data.getAttribute(PERSISTENT_DATA);
+            Map<String, String> pdcMap = data.getAttribute(PERSISTENT_DATA);
             for (Map.Entry<String, String> entry : pdcMap.entrySet()) {
                 meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), REGULAR_PREFIX + entry.getKey()), PersistentDataType.STRING, entry.getValue());
             }
         }
 
         if (data.hasAttribute(PERMANENT_DATA)) {
-            Map<String, String> permanentPdcMap = (Map<String, String>) data.getAttribute(PERMANENT_DATA);
+            Map<String, String> permanentPdcMap = data.getAttribute(PERMANENT_DATA);
             for (Map.Entry<String, String> entry : permanentPdcMap.entrySet()) {
                 meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), PERMANENT_PREFIX + entry.getKey()), PersistentDataType.STRING, entry.getValue());
             }

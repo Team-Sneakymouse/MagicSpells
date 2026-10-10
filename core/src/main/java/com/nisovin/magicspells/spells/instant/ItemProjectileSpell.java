@@ -163,18 +163,6 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
 	private void setupTracker(ItemProjectileTracker tracker, LivingEntity caster, float power, String[] args) {
 		tracker.setSpell(this);
 

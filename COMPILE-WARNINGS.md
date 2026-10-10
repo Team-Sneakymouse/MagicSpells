@@ -10,7 +10,7 @@ How to refresh:
 ./gradlew :core:compileJava --rerun-tasks 2>&1 | grep 'warning:' | sed 's/.*warning: //' | sort | uniq -c | sort -rn
 ```
 
-For ordinary (non-removal) deprecations and unchecked casts, enable lint (currently commented in `core/build.gradle`):
+For ordinary (non-removal) deprecations and unchecked casts, enable lint (currently `-Xlint:none` in `core/build.gradle`):
 
 ```bash
 # temporarily: options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
@@ -39,25 +39,31 @@ For ordinary (non-removal) deprecations and unchecked casts, enable lint (curren
 | **`EntityEffect.HURT`** | `playHurtAnimation` | |
 | **`InventoryView.Property`** | `@SuppressWarnings` on stub | Dummy inventory only |
 | **`ChatColor`** | `ColorUtil` section-sign + MiniMessage; `getTextColor()` is now a `String` (`§` code) | Config chars unchanged; `GlowSpell` still uses ChatColor for XGlow |
+| **`Targeted*Spell` no-args** | Args overloads are primary; no-args are deprecated interface defaults (`null` args) | Removed per-spell `@SuppressWarnings` + no-args overrides; live smoke: `MANUAL-TEST-TARGETED-CAST.md` |
+| **Unchecked `getAttribute` casts** | Typed `MagicItemData.getAttribute` (single suppress) | Call sites assign without casts |
+| **`World.getPVP`** | `getGameRuleValue(GameRules.PVP)` | Not `GameRule.PVP` (for-removal) |
+| **`BookMeta` string pages** | Adventure `pages()` / `pages(List<Component>)` | |
+| **`JavaPlugin.getDescription`** | `getPluginMeta()` | |
+| **WorldEdit `ClipboardFormats.findByFile`** | `ClipboardFormatsCompat` — `findByPath` when present, else `findByFile` | Runtime WE may be older than compile 7.4 |
 
 **Current `[removal]` count on `:core:compileJava`:** **0** (as of this migration pass).
 
 ## Manual / live verification
 
 See **[MANUAL-TEST-WARNING-MIGRATION.md](MANUAL-TEST-WARNING-MIGRATION.md)** for the human checklist.  
-Tracked fixtures: `dev-fixtures/spells-warning-migration.yml` (copy into `core/run/plugins/MagicSpells/` for `runServer`).
+Targeted cast smoke: **[MANUAL-TEST-TARGETED-CAST.md](MANUAL-TEST-TARGETED-CAST.md)** (already signed off).  
+ChatColor smoke: **[MANUAL-TEST-CHATCOLOR.md](MANUAL-TEST-CHATCOLOR.md)** (already signed off).  
+Tracked fixtures under `dev-fixtures/` (copy into `core/run/plugins/MagicSpells/` for `runServer`).
 
 ---
 
 ## Remaining when `-Xlint:deprecation` / `unchecked` is enabled
 
-These do not appear in the default for-removal-only output:
-
 | Cluster | Notes |
 |---------|--------|
-| **Deprecated `Targeted*Spell` no-args overloads** | **Suppressed on overrides** (`@SuppressWarnings("deprecation")`). Debt: later invert interfaces so args methods are primary and no-args become defaults/`removed`. Live smoke: `MANUAL-TEST-TARGETED-CAST.md`. |
-| **Unchecked casts** | `CastItem`, `MagicItemData`, `MagicItems` — generics cleanup or suppress. **Next real cleanup.** |
-| **Misc** | `World.getPVP`, `BookMeta` string pages, `FixedMetadataValue`, `JavaPlugin.getDescription`, WorldEdit `ClipboardFormats.findByFile`, etc. |
+| **Bukkit Metadata (`FixedMetadataValue`)** | Class-level `@SuppressWarnings("deprecation")` on consumers. Debt: migrate arrow/lightning/bow markers to PDC. |
+| **`GlowSpell` ChatColor** | XGlow API still takes Bukkit `ChatColor`. |
+| **Misc leftovers** | Other `-Xlint:deprecation` / `unchecked` noise outside the clusters above (spot-check when enabling lint). |
 
 ---
 

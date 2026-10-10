@@ -98,21 +98,9 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 		return bomb(caster, target, power, args);
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return bomb(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		return bomb(null, target, power, args);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return bomb(null, target, power, null);
 	}
 
 	private boolean bomb(LivingEntity livingEntity, Location loc, float power, String[] args) {

@@ -215,12 +215,6 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target))
@@ -228,12 +222,6 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 		handlePotionEffects(null, target, power, args);
 		playSpellEffects(EffectPosition.TARGET, target, power, args);
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	public void handlePotionEffects(LivingEntity caster, LivingEntity target, float power, String[] args) {

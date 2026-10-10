@@ -67,23 +67,10 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 		return grow(caster, sheep, power, args);
 	}
 
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!(target instanceof Sheep sheep) || !validTargetList.canTarget(target)) return false;
 		return grow(null, sheep, power, args);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	private boolean grow(LivingEntity caster, Sheep target, float power, String[] args) {

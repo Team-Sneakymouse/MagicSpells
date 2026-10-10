@@ -29,21 +29,14 @@ public class EnderchestSpell extends InstantSpell implements TargetedEntitySpell
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
+	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(caster, target)) return false;
 
 		if (!(caster instanceof Player playerCaster) || !(target instanceof Player playerTarget)) return false;
 		playerCaster.openInventory(playerTarget.getEnderChest());
 
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
 	}
 
 }

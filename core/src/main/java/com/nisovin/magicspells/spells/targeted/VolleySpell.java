@@ -32,6 +32,7 @@ import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
 
+@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class VolleySpell extends TargetedSpell implements TargetedLocationSpell, TargetedEntityFromLocationSpell {
 
 	private static final String METADATA_KEY = "MagicSpellsSource";
@@ -108,18 +109,6 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
@@ -129,24 +118,12 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(caster, from, target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
 		if (noTarget || !validTargetList.canTarget(target))
 			return false;
 		volley(null, target, from, target.getLocation(), power, args);
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(from, target, power, null);
 	}
 
 	private void volley(LivingEntity caster, LivingEntity target, Location from, Location targetLoc, float power,

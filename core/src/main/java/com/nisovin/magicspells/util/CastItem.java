@@ -149,11 +149,12 @@ public class CastItem {
 					author = (String) data.getAttribute(AUTHOR);
 
 				if (!MagicSpells.ignoreCastItemEnchants() && data.hasAttribute(ENCHANTS))
-					enchants = (Map<Enchantment, Integer>) data.getAttribute(ENCHANTS);
+					enchants = data.getAttribute(ENCHANTS);
 
 				if (!MagicSpells.ignoreCastItemLore() && data.hasAttribute(LORE)) {
 					List<String> loreLocal = new ArrayList<>();
-					for (Component component : (List<Component>) data.getAttribute(LORE)) {
+					List<Component> components = data.getAttribute(LORE);
+					for (Component component : components) {
 						loreLocal.add(Util.getLegacyFromComponent(component));
 					}
 					lore = loreLocal;
@@ -164,11 +165,11 @@ public class CastItem {
 				}
 
 				if (!MagicSpells.ignoreCastItemPersistentData() && data.hasAttribute(PERSISTENT_DATA)) {
-					persistentData = (Map<String, String>) data.getAttribute(PERSISTENT_DATA);
+					persistentData = data.getAttribute(PERSISTENT_DATA);
 				}
 
 				if (!MagicSpells.ignoreCastItemPersistentData() && data.hasAttribute(PERMANENT_DATA)) {
-					permanentData = (Map<String, String>) data.getAttribute(PERMANENT_DATA);
+					permanentData = data.getAttribute(PERMANENT_DATA);
 				}
 			}
 		}

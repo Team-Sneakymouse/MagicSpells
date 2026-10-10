@@ -34,14 +34,12 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private GlowBuilder glowBuilder;
 
-	@SuppressWarnings("deprecation")
 	private ChatColor color;
 
 	private final ConfigData<Integer> duration;
 
 	private final ConfigData<Boolean> powerAffectsDuration;
 
-	@SuppressWarnings("deprecation")
 	public GlowSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -93,20 +91,8 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return false;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
 		return false;
 	}
 

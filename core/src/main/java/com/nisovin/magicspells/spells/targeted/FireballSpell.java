@@ -204,21 +204,9 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(caster, from, target, power, null);
-	}
-
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
 		return castAtEntityFromLocation(null, from, target, power, args);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(null, from, target, power, null);
 	}
 
 	private Location offsetLocation(Location loc, LivingEntity caster, LivingEntity target, float power, String[] args) {

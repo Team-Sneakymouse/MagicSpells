@@ -55,7 +55,10 @@ public class WrittenBookHandler {
 
 		if (data.hasAttribute(TITLE)) bookMeta.setTitle((String) data.getAttribute(TITLE));
 		if (data.hasAttribute(AUTHOR)) bookMeta.setAuthor((String) data.getAttribute(AUTHOR));
-		if (data.hasAttribute(PAGES)) bookMeta.pages((List<Component>) data.getAttribute(PAGES));
+		if (data.hasAttribute(PAGES)) {
+			List<Component> pages = data.getAttribute(PAGES);
+			bookMeta.pages(pages);
+		}
 	}
 
 	public static void processMagicItemData(ItemMeta meta, MagicItemData data) {

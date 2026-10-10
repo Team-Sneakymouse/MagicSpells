@@ -34,7 +34,8 @@ public class LoreHandler {
 
 	public static void processItemMeta(ItemMeta meta, MagicItemData data) {
 		if (!data.hasAttribute(LORE)) return;
-		meta.lore((List<Component>) data.getAttribute(LORE));
+		List<Component> lore = data.getAttribute(LORE);
+		meta.lore(lore);
 	}
 	
 }

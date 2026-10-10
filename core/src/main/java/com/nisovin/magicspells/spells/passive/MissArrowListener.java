@@ -22,6 +22,7 @@ import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 
+@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class MissArrowListener extends PassiveListener {
 
 	private final Set<MagicItemData> items = new HashSet<>();

@@ -65,18 +65,6 @@ public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
 	private void toss(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (target == null) return;
 		if (caster == null) return;

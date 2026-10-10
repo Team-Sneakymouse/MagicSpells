@@ -442,7 +442,7 @@ public class MagicItemUpdater {
         if (meta instanceof BookMeta updatedBookMeta && bookMeta != null) {
             updatedBookMeta.setTitle(bookMeta.getTitle());
             updatedBookMeta.setAuthor(bookMeta.getAuthor());
-            updatedBookMeta.setPages(bookMeta.getPages());
+            updatedBookMeta.pages(bookMeta.pages());
             updatedBookMeta.setGeneration(bookMeta.getGeneration());
         }
 

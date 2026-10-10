@@ -75,18 +75,6 @@ public class PlaceholderAPIDataSpell extends TargetedSpell implements TargetedEn
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
 	private void setPlaceholders(Player caster, Player target, float power, String[] args) {
 		String value = MagicSpells.doArgumentSubstitution(placeholderAPITemplate, args);
 

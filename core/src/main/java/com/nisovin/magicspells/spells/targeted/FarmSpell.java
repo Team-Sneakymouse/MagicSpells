@@ -100,21 +100,9 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 		return farm(caster, target.subtract(0, 1, 0).getBlock(), power, args);
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return farm(caster, target.subtract(0, 1, 0).getBlock(), power, null);
-	}
-
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		return farm(null, target.getBlock(), power, args);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return farm(null, target.getBlock(), power, null);
 	}
 
 	private boolean farm(LivingEntity caster, Block center, float power, String[] args) {

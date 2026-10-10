@@ -58,29 +58,11 @@ public class EntityEditSpell extends TargetedSpell implements TargetedEntitySpel
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		playSpellEffects(caster, target, power, null);
-		applyAttributes(caster, target, power, null);
-		return true;
-	}
-
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target)) return false;
 		playSpellEffects(EffectPosition.TARGET, target, power, args);
 		applyAttributes(null, target, power, args);
-		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		playSpellEffects(EffectPosition.TARGET, target, power, null);
-		applyAttributes(null, target, power, null);
 		return true;
 	}
 

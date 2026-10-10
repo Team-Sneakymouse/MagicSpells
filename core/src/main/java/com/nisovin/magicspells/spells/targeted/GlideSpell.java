@@ -34,21 +34,19 @@ public class GlideSpell extends TargetedSpell implements TargetedEntitySpell{
 
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
-	@SuppressWarnings("deprecation")
+
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
+	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(caster, target)) return false;
 		target.setGliding(targetState.getBooleanState(target.isGliding()));
 		return true;
 	}
-	
-	@SuppressWarnings("deprecation")
+
 	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
+	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(target)) return false;
 		target.setGliding(targetState.getBooleanState(target.isGliding()));
 		return true;
 	}
-	
+
 }

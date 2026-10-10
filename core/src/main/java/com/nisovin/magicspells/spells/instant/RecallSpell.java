@@ -108,9 +108,8 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
+	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (!validTargetList.canTarget(caster, target))
 			return false;
 
@@ -120,12 +119,6 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 
 		target.teleportAsync(mark);
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
 	}
 
 	private Location getRecallLocation(LivingEntity caster) {

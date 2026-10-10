@@ -80,7 +80,10 @@ public class FireworkHandler {
 		if (!(meta instanceof FireworkMeta fireworkMeta)) return;
 
 		if (data.hasAttribute(POWER)) fireworkMeta.setPower((int) data.getAttribute(POWER));
-		if (data.hasAttribute(FIREWORK_EFFECTS)) fireworkMeta.addEffects((List<FireworkEffect>) data.getAttribute(FIREWORK_EFFECTS));
+		if (data.hasAttribute(FIREWORK_EFFECTS)) {
+			List<FireworkEffect> effects = data.getAttribute(FIREWORK_EFFECTS);
+			fireworkMeta.addEffects(effects);
+		}
 	}
 
 	public static void processMagicItemData(ItemMeta meta, MagicItemData data) {

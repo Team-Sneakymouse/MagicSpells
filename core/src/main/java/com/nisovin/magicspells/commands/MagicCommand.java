@@ -942,8 +942,8 @@ public class MagicCommand extends BaseCommand {
 
 			boolean casted;
 			// Handle with or without caster.
-			if (issuer.getIssuer() instanceof LivingEntity) casted = newSpell.castAtEntity(issuer.getIssuer(), target, 1F);
-			else casted = newSpell.castAtEntity(target, 1F);
+			if (issuer.getIssuer() instanceof LivingEntity) casted = newSpell.castAtEntity(issuer.getIssuer(), target, 1F, null);
+			else casted = newSpell.castAtEntity(target, 1F, null);
 			if (!casted) throw new ConditionFailedException("Spell probably cannot be cast from console.");
 		}
 

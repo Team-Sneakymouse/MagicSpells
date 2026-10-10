@@ -14,6 +14,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
+@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class FireworksEffect extends SpellEffect {
 
 	private ConfigData<Integer> type;

@@ -168,8 +168,8 @@ public class Metrics {
 	public JSONObject getPluginData() {
 		JSONObject data = new JSONObject();
 		
-		String pluginName = plugin.getDescription().getName();
-		String pluginVersion = plugin.getDescription().getVersion();
+		String pluginName = plugin.getPluginMeta().getName();
+		String pluginVersion = plugin.getPluginMeta().getVersion();
 		
 		data.put("pluginName", pluginName); // Append the name of the plugin
 		data.put("pluginVersion", pluginVersion); // Append the version of the plugin

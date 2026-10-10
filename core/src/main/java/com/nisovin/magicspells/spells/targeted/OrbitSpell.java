@@ -175,40 +175,11 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		new OrbitTracker(caster, target, power, null);
-		playSpellEffects(caster, target, power, null);
-		return false;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
 		new OrbitTracker(caster, target, power, args);
 		playSpellEffects(caster, target, power, args);
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		new OrbitTracker(caster, target, power, null);
-		playSpellEffects(caster, target, power, null);
-		return false;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
 	}
 
 	public boolean hasOrbit(LivingEntity target) {
@@ -429,7 +400,6 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 			return targetLoc.clone().add(0, orbHeight, 0).add(currentPosition.clone().multiply(orbRadius)).setDirection(perp);
 		}
-
 
 		private void stop(boolean removeTracker) {
 			if (target != null && target.isValid()) playSpellEffects(EffectPosition.DELAYED, getLocation(), data);

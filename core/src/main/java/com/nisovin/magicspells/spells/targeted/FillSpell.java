@@ -53,17 +53,10 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
         return PostCastAction.ALREADY_HANDLED;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public boolean castAtLocation(LivingEntity caster, Location target, float power) {
+    public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
         fillZone(caster, target);
-        return castAtLocation(target, power);
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public boolean castAtLocation(Location target, float power) {
-        return false;
+        return true;
     }
 
     private void fillZone(LivingEntity caster, Location location){
@@ -125,7 +118,6 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
                 loadBlock(point.add(0, 1, 0), layer+1);
             }
         }
-
 
         public void start(){
             BlockVector3 placePosition = getNextBlock(lowestCenter);
