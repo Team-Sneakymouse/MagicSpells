@@ -7,7 +7,7 @@ plugins {
 
 repositories {
     flatDir {
-        // Third-party plugins not published to a Maven repo (CMI / CMILib).
+        // CMI is paid/proprietary and has no public Maven; keep the jar in libs/.
         dirs '../libs'
     }
     maven {
@@ -31,8 +31,9 @@ dependencies {
     shadow(project(path: ":nms:shared", configuration: "apiElements"))
     shadow(project(path: ":nms:v26_2")) { transitive = false }
 
-    implementation(name:'CMI-9.8.9.8', ext:'jar')
-    implementation(name:'CMILib1.5.9.9', ext:'jar')
+    compileOnly(name: 'CMI-9.8.9.8', ext: 'jar')
+    // Latest GitHub tag published on JitPack (1.5.9.9 is on Spigot but not tagged for JitPack yet).
+    compileOnly(group: "com.github.Zrips", name: "CMILib", version: "1.5.9.6") { transitive = false }
     implementation(group: "commons-codec", name: "commons-codec", version: "1.16.1")
     compileOnly(group: "io.github.team-sneakymouse", name: "sneakycharactermanager-paper", version: "2026.10.09-84db8a554af1") { transitive = false }
     compileOnly(group: "io.github.team-sneakymouse", name: "sneakybagofholding", version: "2026.10.09-a79a55f6d44b") { transitive = false }
