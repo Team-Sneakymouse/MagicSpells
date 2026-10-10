@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.world.ChunkLoadEvent;
@@ -173,17 +174,7 @@ public class MagicItemUpdater {
                             continue;
 
                         for (Entity entity : chunk.getEntities()) {
-                            if (entity instanceof Item item) {
-                                ItemStack stack = item.getItemStack();
-                                ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
-                                if (updated != stack)
-                                    item.setItemStack(updated);
-                            } else if (entity instanceof ItemDisplay itemDisplay) {
-                                ItemStack stack = itemDisplay.getItemStack();
-                                ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
-                                if (updated != stack)
-                                    itemDisplay.setItemStack(updated);
-                            }
+                            updateGroundEntityIfNeeded(entity);
                         }
                     }
 
@@ -199,18 +190,43 @@ public class MagicItemUpdater {
                 return;
 
             for (Entity entity : event.getChunk().getEntities()) {
-                if (entity instanceof Item item) {
-                    ItemStack stack = item.getItemStack();
-                    ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
-                    if (updated != stack)
-                        item.setItemStack(updated);
-                } else if (entity instanceof ItemDisplay itemDisplay) {
-                    ItemStack stack = itemDisplay.getItemStack();
-                    ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
-                    if (updated != stack)
-                        itemDisplay.setItemStack(updated);
-                }
+                updateGroundEntityIfNeeded(entity);
             }
+        }
+
+        /**
+         * Updates magic items that appear in the world (chest spills, explosions, etc.).
+         * Skips player inventory drops: those already ran through inventory update paths,
+         * and Item.getThrower() is set for Q/death drops from a player.
+         */
+        @EventHandler(ignoreCancelled = true)
+        public void onItemSpawn(ItemSpawnEvent event) {
+            if (!MagicSpells.enableUpdateItemData())
+                return;
+
+            Item item = event.getEntity();
+            if (item.getThrower() != null)
+                return;
+
+            updateItemEntityIfNeeded(item);
+        }
+
+        private static void updateGroundEntityIfNeeded(Entity entity) {
+            if (entity instanceof Item item) {
+                updateItemEntityIfNeeded(item);
+            } else if (entity instanceof ItemDisplay itemDisplay) {
+                ItemStack stack = itemDisplay.getItemStack();
+                ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
+                if (updated != stack)
+                    itemDisplay.setItemStack(updated);
+            }
+        }
+
+        private static void updateItemEntityIfNeeded(Item item) {
+            ItemStack stack = item.getItemStack();
+            ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
+            if (updated != stack)
+                item.setItemStack(updated);
         }
     }
 
