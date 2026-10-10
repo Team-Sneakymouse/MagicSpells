@@ -42,11 +42,13 @@ public class SwitchSpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, float power) {
 		return false;

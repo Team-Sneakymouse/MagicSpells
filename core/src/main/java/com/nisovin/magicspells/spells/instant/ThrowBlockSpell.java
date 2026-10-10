@@ -170,6 +170,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
@@ -184,6 +185,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(target, power, null);

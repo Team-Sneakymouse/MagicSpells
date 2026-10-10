@@ -96,11 +96,13 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 		return removeClones(caster, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return removeClones(caster, target, power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return removeClones(null, target, power, null);

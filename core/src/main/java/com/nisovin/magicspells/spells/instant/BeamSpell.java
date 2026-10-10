@@ -163,6 +163,7 @@ public class BeamSpell extends InstantSpell
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target))
@@ -171,6 +172,7 @@ public class BeamSpell extends InstantSpell
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return false;
@@ -182,12 +184,14 @@ public class BeamSpell extends InstantSpell
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		shootBeam(caster, null, target, power, null);
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location location, float v) {
 		return false;
@@ -202,6 +206,7 @@ public class BeamSpell extends InstantSpell
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target))
@@ -363,6 +368,7 @@ public class BeamSpell extends InstantSpell
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
 		return false;

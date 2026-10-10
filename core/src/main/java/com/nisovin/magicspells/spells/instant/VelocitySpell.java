@@ -60,6 +60,7 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		return launch(caster, target, from, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target))
@@ -74,6 +75,7 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		return launch(null, target, from, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(target))
@@ -88,6 +90,7 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		return launch(caster, target, null, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target))
@@ -102,6 +105,7 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		return launch(null, target, null, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		if (!validTargetList.canTarget(target))

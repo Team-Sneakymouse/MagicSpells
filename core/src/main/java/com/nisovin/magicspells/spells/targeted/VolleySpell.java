@@ -108,11 +108,13 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return false;
@@ -127,6 +129,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		return castAtEntityFromLocation(caster, from, target, power, null);
@@ -140,6 +143,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
 		return castAtEntityFromLocation(from, target, power, null);

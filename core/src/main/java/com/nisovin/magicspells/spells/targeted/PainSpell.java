@@ -93,6 +93,7 @@ public class PainSpell extends TargetedSpell implements TargetedEntitySpell, Dam
 		return causePain(caster, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null);
@@ -104,6 +105,7 @@ public class PainSpell extends TargetedSpell implements TargetedEntitySpell, Dam
 		return causePain(null, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return castAtEntity(target, power, null);

@@ -76,6 +76,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target))
@@ -92,6 +93,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		if (!validTargetList.canTarget(target))
@@ -109,6 +111,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target))
@@ -125,6 +128,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(target))

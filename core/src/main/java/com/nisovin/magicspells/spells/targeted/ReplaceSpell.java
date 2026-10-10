@@ -184,6 +184,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		return replace(caster, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return replace(caster, target, power, null);
@@ -194,6 +195,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		return replace(null, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return replace(null, target, power, null);

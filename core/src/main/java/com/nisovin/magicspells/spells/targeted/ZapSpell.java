@@ -93,7 +93,7 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 					target = event.getTargetLocation().getBlock();
 			}
 			if (target == null)
-				return noTarget(caster, strCantZap, args);
+				return noTarget(caster, args);
 
 			if (!canZap(target))
 				return noTarget(caster, strCantZap, args);
@@ -125,6 +125,7 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 		return false;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
@@ -140,6 +141,7 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 		return false;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(target, power, null);

@@ -69,6 +69,7 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 		return combust(caster, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null);
@@ -80,6 +81,7 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 		return combust(null, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return castAtEntity(target, power, null);

@@ -546,11 +546,13 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		MagicSpells.getAttributeManager().addItemAttributes(item, resolved);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return conjureItemsAtLocation(target, power, caster, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return conjureItemsAtLocation(target, power, null, null);
@@ -620,6 +622,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target))
@@ -633,6 +636,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		if (!validTargetList.canTarget(target))

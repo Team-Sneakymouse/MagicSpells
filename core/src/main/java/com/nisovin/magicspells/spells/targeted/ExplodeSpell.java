@@ -123,11 +123,13 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		return explode(caster, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return explode(caster, target, power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return false;

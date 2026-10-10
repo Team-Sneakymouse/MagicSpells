@@ -74,6 +74,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 		return undo(caster, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return undo(caster, target, power, null);
@@ -84,6 +85,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 		return undo(null, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return undo(null, target, power, null);

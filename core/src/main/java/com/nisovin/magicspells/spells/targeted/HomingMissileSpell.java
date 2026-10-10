@@ -209,6 +209,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null);
@@ -222,6 +223,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return castAtEntity(target, power, null);
@@ -236,6 +238,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		return castAtEntityFromLocation(caster, from, target, power, null);
@@ -249,6 +252,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
 		return castAtEntityFromLocation(from, target, power, null);

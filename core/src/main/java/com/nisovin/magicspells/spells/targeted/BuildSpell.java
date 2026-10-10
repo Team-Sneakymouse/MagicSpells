@@ -112,11 +112,13 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 		return build(player, block, block, item, slot, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return false;

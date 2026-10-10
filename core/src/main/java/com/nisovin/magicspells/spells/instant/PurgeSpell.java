@@ -68,6 +68,7 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 		return killed;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
@@ -78,6 +79,7 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 		return castAtLocation(null, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(null, target, power, null);

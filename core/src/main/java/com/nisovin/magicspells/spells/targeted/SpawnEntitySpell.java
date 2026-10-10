@@ -468,6 +468,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
@@ -493,6 +494,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(target, power, null);
@@ -510,6 +512,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		return castAtEntityFromLocation(caster, from, target, power, null);
@@ -526,6 +529,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
 		return castAtEntityFromLocation(from, target, power, null);

@@ -83,6 +83,7 @@ public class TransmuteSpell extends TargetedSpell implements TargetedLocationSpe
 		return false;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
@@ -99,6 +100,7 @@ public class TransmuteSpell extends TargetedSpell implements TargetedLocationSpe
 		return false;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(target, power, null);

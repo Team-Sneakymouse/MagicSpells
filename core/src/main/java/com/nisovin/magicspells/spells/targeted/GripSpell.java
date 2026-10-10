@@ -61,11 +61,13 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return grip(caster, target, caster.getLocation(), power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return false;
@@ -79,6 +81,7 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return grip(caster, target, from, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		return castAtEntityFromLocation(caster, from, target, power, null);
@@ -91,6 +94,7 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return grip(null, target, from, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
 		return castAtEntityFromLocation(from, target, power, null);

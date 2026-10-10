@@ -293,6 +293,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		return false;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
@@ -309,6 +310,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		return false;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(target, power, null);

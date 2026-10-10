@@ -121,6 +121,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 		return runSpells(caster, null, null, target.clone().add(0, yOffset.get(caster, null, power, args), 0), power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return runSpells(caster, null, null, target.clone().add(0, yOffset.get(caster, null, power, null), 0), power, null);
@@ -131,6 +132,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 		return runSpells(null, null, null, target.clone().add(0, yOffset.get(null, null, power, args), 0), power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location location, float power) {
 		return runSpells(null, null, null, location.clone().add(0, yOffset.get(null, null, power, null), 0), power, null);
@@ -141,6 +143,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 		return runSpells(caster, null, target, null, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return runSpells(caster, null, target, null, power, null);
@@ -151,6 +154,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 		return runSpells(null, null, target, null, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return runSpells(null, null, target, null, power, null);
@@ -223,11 +227,13 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 		return runSpells(null, from, target, null, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		return runSpells(caster, from, target, null, power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
 		return runSpells(null, from, target, null, power, null);

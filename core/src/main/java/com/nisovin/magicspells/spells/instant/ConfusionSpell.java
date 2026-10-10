@@ -43,12 +43,14 @@ public class ConfusionSpell extends InstantSpell implements TargetedLocationSpel
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		confuse(caster, target, power, null);
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return false;

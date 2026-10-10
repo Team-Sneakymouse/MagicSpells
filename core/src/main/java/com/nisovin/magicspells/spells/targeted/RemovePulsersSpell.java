@@ -87,6 +87,7 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		removePulsers(caster, target, power, null);
@@ -99,6 +100,7 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		removePulsers(null, target, power, null);

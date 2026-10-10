@@ -197,6 +197,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		return activate(caster, target, power, args, true) == PostCastAction.HANDLE_NORMALLY;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target)) return false;
@@ -209,6 +210,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		return activate(null, target, power, args, true) == PostCastAction.HANDLE_NORMALLY;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		if (!validTargetList.canTarget(target)) return false;

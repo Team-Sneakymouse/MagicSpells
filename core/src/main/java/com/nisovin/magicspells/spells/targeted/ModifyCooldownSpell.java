@@ -56,6 +56,7 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target)) return false;
@@ -70,6 +71,7 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		if (!validTargetList.canTarget(target)) return false;

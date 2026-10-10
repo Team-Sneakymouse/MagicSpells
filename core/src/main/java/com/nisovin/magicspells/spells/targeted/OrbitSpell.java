@@ -175,6 +175,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target)) return false;
@@ -183,6 +184,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return false;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return false;
@@ -195,6 +197,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		new OrbitTracker(caster, target, power, null);
@@ -202,6 +205,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return false;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return false;

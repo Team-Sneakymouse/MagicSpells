@@ -112,6 +112,7 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null);
@@ -134,6 +135,7 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return castAtEntity(target, power, null);

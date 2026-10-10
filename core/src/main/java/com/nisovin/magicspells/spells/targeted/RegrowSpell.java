@@ -68,6 +68,7 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null);
@@ -79,6 +80,7 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 		return grow(null, sheep, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return castAtEntity(target, power, null);

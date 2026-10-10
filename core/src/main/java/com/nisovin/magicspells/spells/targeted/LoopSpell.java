@@ -284,6 +284,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target))
@@ -300,6 +301,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		if (!validTargetList.canTarget(target))
@@ -314,6 +316,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		initLoop(caster, null, target.clone().add(0, yOffset, 0), power, null);
@@ -326,6 +329,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		initLoop(null, null, target.clone().add(0, yOffset, 0), power, null);

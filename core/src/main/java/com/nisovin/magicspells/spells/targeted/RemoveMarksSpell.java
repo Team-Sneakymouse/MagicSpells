@@ -75,6 +75,7 @@ public class RemoveMarksSpell extends TargetedSpell implements TargetedLocationS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		removeMarks(caster, target, power, null);
@@ -87,6 +88,7 @@ public class RemoveMarksSpell extends TargetedSpell implements TargetedLocationS
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		removeMarks(null, target, power, null);

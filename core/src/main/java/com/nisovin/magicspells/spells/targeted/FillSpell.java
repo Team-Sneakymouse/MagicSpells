@@ -53,12 +53,14 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
         return PostCastAction.ALREADY_HANDLED;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public boolean castAtLocation(LivingEntity caster, Location target, float power) {
         fillZone(caster, target);
         return castAtLocation(target, power);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public boolean castAtLocation(Location target, float power) {
         return false;

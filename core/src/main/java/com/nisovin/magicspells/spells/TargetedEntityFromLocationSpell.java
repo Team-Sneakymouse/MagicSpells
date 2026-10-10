@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
+/** @see TargetedEntitySpell */
 public interface TargetedEntityFromLocationSpell {
 
 	default boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {

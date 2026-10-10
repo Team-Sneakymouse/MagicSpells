@@ -135,6 +135,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		return doAoe(caster, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return doAoe(caster, target, power, null);
@@ -145,6 +146,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		return doAoe(null, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return doAoe(null, target, power, null);

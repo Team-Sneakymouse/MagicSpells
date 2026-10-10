@@ -177,11 +177,13 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		return scan(null, target.clone(), power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return scan(caster, target.clone(), power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return scan(null, target.clone(), power, null);

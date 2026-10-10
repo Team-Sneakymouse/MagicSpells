@@ -44,6 +44,7 @@ public class CustomNameVisibilitySpell extends TargetedSpell implements Targeted
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null);
@@ -57,6 +58,7 @@ public class CustomNameVisibilitySpell extends TargetedSpell implements Targeted
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return castAtEntity(target, power, null);

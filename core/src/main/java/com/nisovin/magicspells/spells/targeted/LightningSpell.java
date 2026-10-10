@@ -95,6 +95,7 @@ public class LightningSpell extends TargetedSpell implements TargetedLocationSpe
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		lightning(target);
@@ -109,6 +110,7 @@ public class LightningSpell extends TargetedSpell implements TargetedLocationSpe
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		lightning(target);

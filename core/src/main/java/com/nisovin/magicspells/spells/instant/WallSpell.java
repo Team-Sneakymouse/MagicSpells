@@ -142,12 +142,14 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		makeWall(caster, target, target.getDirection(), power, null);
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return false;

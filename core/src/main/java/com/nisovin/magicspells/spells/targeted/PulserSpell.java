@@ -230,6 +230,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		return false;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
@@ -240,6 +241,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		return castAtLocation(null, target, power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(null, target, power, null);

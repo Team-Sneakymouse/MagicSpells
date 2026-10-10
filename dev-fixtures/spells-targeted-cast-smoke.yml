@@ -1,0 +1,79 @@
+# Live smoke for targeted cast paths after @SuppressWarnings on deprecated no-args castAt*.
+# Copy to core/run/plugins/MagicSpells/ — see MANUAL-TEST-TARGETED-CAST.md
+
+tc_dummy_entity:
+  spell-class: ".targeted.DummySpell"
+  name: tc_dummy_entity
+  always-granted: true
+  range: 30
+  require-entity-target: true
+  can-target: players,monsters,animals
+  str-cast-self: "TC: dummy entity ok"
+  str-no-target: "TC: need a living target"
+
+tc_dummy_loc:
+  spell-class: ".targeted.DummySpell"
+  name: tc_dummy_loc
+  always-granted: true
+  range: 30
+  require-entity-target: false
+  str-cast-self: "TC: dummy location ok"
+  str-no-target: "TC: look at a solid block"
+  effects:
+    1:
+      position: trail
+      effect: smoketrail
+
+tc_pain:
+  spell-class: ".targeted.PainSpell"
+  name: tc_pain
+  always-granted: true
+  range: 20
+  damage: 1
+  ignore-armor: false
+  check-plugins: true
+  can-target: players,monsters,animals
+  str-cast-self: "TC: pain"
+  str-no-target: "TC: no target"
+
+tc_zap:
+  spell-class: ".targeted.ZapSpell"
+  name: tc_zap
+  always-granted: true
+  range: 20
+  drop-block: false
+  check-plugins: false
+  # Solid blocks only. Overlays (snow, short_grass, etc.) are not LOS-transparent
+  # by default, so a "grass block" look often targets snow/plant instead.
+  allowed-block-types:
+    - dirt
+    - stone
+  str-cast-self: "TC: zap"
+  str-cant-zap: "TC: cant zap"
+  str-no-target: "TC: no block"
+
+tc_volley:
+  spell-class: ".targeted.VolleySpell"
+  name: tc_volley
+  always-granted: true
+  range: 30
+  arrows: 3
+  speed: 20
+  spread: 40
+  shoot-interval: 0
+  knockback-strength: 0
+  str-cast-self: "TC: volley"
+  str-no-target: "TC: no target"
+
+tc_multi_pain:
+  spell-class: ".TargetedMultiSpell"
+  name: tc_multi_pain
+  always-granted: true
+  range: 20
+  require-entity-target: true
+  pass-targeting: true
+  can-target: players,monsters,animals
+  spells:
+    - tc_pain
+  str-cast-self: "TC: multi → pain"
+  str-no-target: "TC: no target"

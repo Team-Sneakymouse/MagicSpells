@@ -56,6 +56,7 @@ public class SlotSelectSpell extends TargetedSpell implements TargetedEntitySpel
 		return validTargetList.canTarget(caster, target) && slotChange(caster, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return validTargetList.canTarget(caster, target) && slotChange(caster, target, power, null);
@@ -66,6 +67,7 @@ public class SlotSelectSpell extends TargetedSpell implements TargetedEntitySpel
 		return validTargetList.canTarget(target) && slotChange(null, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return validTargetList.canTarget(target) && slotChange(null, target, power, null);

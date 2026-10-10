@@ -92,6 +92,7 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 		return createFalsePlayer(caster, loc, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		Location loc = target.clone();
@@ -99,6 +100,7 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 		return createFalsePlayer(caster, loc, power, null);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return false;

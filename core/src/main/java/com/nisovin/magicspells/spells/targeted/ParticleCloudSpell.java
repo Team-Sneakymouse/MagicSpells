@@ -200,6 +200,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
@@ -210,6 +211,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		return castAtLocation(null, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(null, target, power, null);
@@ -223,6 +225,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null);
@@ -235,6 +238,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return castAtEntity(target, power, null);

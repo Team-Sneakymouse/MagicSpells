@@ -284,6 +284,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		return modify(caster, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return modify(caster, target, power, null);
@@ -294,6 +295,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		return modify(null, target, power, args);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return modify(null, target, power, null);

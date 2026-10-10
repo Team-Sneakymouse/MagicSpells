@@ -54,8 +54,8 @@ These do not appear in the default for-removal-only output:
 
 | Cluster | Notes |
 |---------|--------|
-| **`ChatColor`** | Many call sites. Migrate to Adventure; spot-check legacy codes. |
-| **Deprecated `Targeted*Spell` overloads** (no-`args`) | Prefer `@SuppressWarnings("deprecation")` on overrides. |
+| **Deprecated `Targeted*Spell` no-args overloads** | **Suppressed on overrides** (`@SuppressWarnings("deprecation")`). Debt: later invert interfaces so args methods are primary and no-args become defaults/`removed`. Live smoke: `MANUAL-TEST-TARGETED-CAST.md`. |
+| **`ChatColor`** | Many call sites. Migrate to Adventure; spot-check legacy codes. **Next real migration.** |
 | **Unchecked casts** | `CastItem`, `MagicItemData`, `MagicItems` — generics cleanup or suppress. |
 | **Misc** | `World.getPVP`, `BookMeta` string pages, `FixedMetadataValue`, `JavaPlugin.getDescription`, WorldEdit `ClipboardFormats.findByFile`, etc. |
 

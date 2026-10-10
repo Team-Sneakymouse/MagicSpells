@@ -29,6 +29,7 @@ public class EnderchestSpell extends InstantSpell implements TargetedEntitySpell
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target)) return false;
@@ -39,6 +40,7 @@ public class EnderchestSpell extends InstantSpell implements TargetedEntitySpell
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return false;

@@ -425,6 +425,7 @@ public class Subspell {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
 		return castAtEntity(caster, target, power, null, passTargeting);
 	}
@@ -569,6 +570,7 @@ public class Subspell {
 		return success;
 	}
 
+	@SuppressWarnings("deprecation")
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return castAtLocation(caster, target, null, power);
 	}
@@ -675,6 +677,7 @@ public class Subspell {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		return castAtEntityFromLocation(caster, from, target, power, null, passTargeting);
 	}
