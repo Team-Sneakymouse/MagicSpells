@@ -167,6 +167,7 @@ class VolatileCode_v26_2(helper: VolatileCodeHelper) : VolatileCodeHandle(helper
         (player as CraftPlayer).handle.connection.send(packet)
     }
 
+    @Suppress("DEPRECATION") // Player#updateInventory still needed after OpenScreenPacket
     override fun setInventoryTitle(player: Player, title: String) {
         val entityPlayer = (player as CraftPlayer).handle
         val container = entityPlayer.containerMenu

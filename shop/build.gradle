@@ -1,4 +1,8 @@
 dependencies {
     implementation project(":core")
-    compileOnly(group: "com.github.MilkBowl", name: "VaultAPI", version: "1.7.1") { transitive = false }
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") { transitive = false }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.addAll(["-Xlint:deprecation", "-Xlint:unchecked"])
 }

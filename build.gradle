@@ -74,7 +74,7 @@ subprojects {
 
   dependencies {
     // compileOnly: provided by the server at runtime
-    compileOnly(group: "io.papermc.paper", name: "paper-api", version: "26.2.build.116-stable")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.116-stable")
   }
 
   processResources {

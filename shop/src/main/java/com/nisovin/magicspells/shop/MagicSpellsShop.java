@@ -5,12 +5,18 @@ import java.util.regex.Pattern;
 
 import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.RegexUtil;
+import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.compat.EventUtil;
+
+import net.kyori.adventure.text.Component;
+
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.WallSign;
+import org.bukkit.block.sign.Side;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -18,6 +24,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -92,16 +99,16 @@ public class MagicSpellsShop extends JavaPlugin implements Listener {
 	
 	@EventHandler(priority=EventPriority.MONITOR)
 	public void onInteract(PlayerInteractEvent event) {
-		if (!this.ignoreOtherPlugins && event.isCancelled()) return;
+		if (!this.ignoreOtherPlugins && event.useInteractedBlock() == Event.Result.DENY) return;
 		
 		// Check for right-click on sign
 		if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 		Block block = event.getClickedBlock();
-		if (!(block.getBlockData() instanceof WallSign)) return;
+		if (block == null || !(block.getBlockData() instanceof WallSign)) return;
 
-		// Get shop sign
-		Sign sign = (Sign)block.getState();
-		String[] lines = sign.getLines();		
+		// Get shop sign (front side)
+		Sign sign = (Sign) block.getState();
+		String[] lines = frontLines(sign);
 		if (lines[0].equals(this.firstLine)) {
 			processSpellShopSign(event.getPlayer(), lines);
 		} else if (lines[0].equals(this.firstLineScroll)) {
@@ -173,12 +180,11 @@ public class MagicSpellsShop extends JavaPlugin implements Listener {
 		
 		// Give to player
 		int slot = player.getInventory().firstEmpty();
-		if (player.getItemInHand() == null) {
-			player.setItemInHand(scroll);
-			player.updateInventory();
+		ItemStack mainHand = player.getInventory().getItem(EquipmentSlot.HAND);
+		if (mainHand == null || mainHand.getType().isAir()) {
+			player.getInventory().setItem(EquipmentSlot.HAND, scroll);
 		} else if (slot >= 0) {
 			player.getInventory().setItem(slot, scroll);
-			player.updateInventory();
 		} else {
 			player.getWorld().dropItem(player.getLocation(), scroll);
 		}
@@ -212,7 +218,7 @@ public class MagicSpellsShop extends JavaPlugin implements Listener {
 		
 		boolean isSpellShop;
 		
-		String lines[] = event.getLines();
+		String[] lines = frontLines(event);
 		if (lines[0].equals(this.firstLine)) {
 			isSpellShop = true;
 		} else if (lines[0].equals(this.firstLineScroll)) {
@@ -268,9 +274,26 @@ public class MagicSpellsShop extends JavaPlugin implements Listener {
 		if (!(event.getBlock().getBlockData() instanceof WallSign)) return;
 
 		Sign sign = (Sign) event.getBlock().getState();
-		String line = sign.getLine(0);
+		String line = Util.getPlainString(sign.getSide(Side.FRONT).line(0));
 		if (!isShopSignFirstLine(line)) return;
 		if (!Perm.CREATESIGNSHOP.has(event.getPlayer())) event.setCancelled(true);
+	}
+
+	private static String[] frontLines(Sign sign) {
+		String[] lines = new String[4];
+		for (int i = 0; i < 4; i++) {
+			lines[i] = Util.getPlainString(sign.getSide(Side.FRONT).line(i));
+		}
+		return lines;
+	}
+
+	private static String[] frontLines(SignChangeEvent event) {
+		String[] lines = new String[4];
+		for (int i = 0; i < 4; i++) {
+			Component line = event.line(i);
+			lines[i] = line == null ? "" : Util.getPlainString(line);
+		}
+		return lines;
 	}
 
 	@Override
