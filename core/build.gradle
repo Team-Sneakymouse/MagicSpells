@@ -125,8 +125,6 @@ tasks.named("runServer").configure {
     pluginJars.from(tasks.named("shadowJar").flatMap { it.archiveFile })
 }
 
-/*
-tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xlint:none"
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.addAll(["-Xlint:deprecation", "-Xlint:unchecked"])
 }
-*/

@@ -27,6 +27,7 @@ public class IsNPCCondition extends Condition {
 		return false;
 	}
 
+	@SuppressWarnings("deprecation") // Citizens stamps entities with Metadata key "NPC"
 	private boolean isNPC(LivingEntity target) {
 		return target.hasMetadata("NPC");
 	}

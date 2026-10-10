@@ -30,6 +30,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * Check out https://bStats.org/ to learn more about bStats!
  */
+@SuppressWarnings({"deprecation", "unchecked", "rawtypes"}) // Vendored bStats; not worth a rewrite
 public class Metrics {
 	
 	static {

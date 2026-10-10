@@ -9,9 +9,11 @@ import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.LightningStrike;
-import org.bukkit.event.entity.PigZapEvent;
+import org.bukkit.entity.Pig;
 import org.bukkit.event.entity.CreeperPowerEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+
+import com.destroystokyo.paper.event.entity.EntityZapEvent;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
@@ -25,7 +27,7 @@ import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
 
 /**
  * Charge/zap flags must be available during {@code strikeLightning()} itself —
- * {@link CreeperPowerEvent} / {@link PigZapEvent} often fire before the returned
+ * {@link CreeperPowerEvent} / {@link EntityZapEvent} often fire before the returned
  * entity can be tagged. ThreadLocal covers the sync case; UUID map covers later ticks.
  */
 public class LightningSpell extends TargetedSpell implements TargetedLocationSpell {
@@ -142,8 +144,9 @@ public class LightningSpell extends TargetedSpell implements TargetedLocationSpe
 	}
 
 	@EventHandler
-	public void onPigZap(PigZapEvent event) {
-		Byte packed = flagsFor(event.getLightning());
+	public void onEntityZap(EntityZapEvent event) {
+		if (!(event.getEntity() instanceof Pig)) return;
+		Byte packed = flagsFor(event.getBolt());
 		if (packed == null) return;
 		if ((packed & 2) == 0) event.setCancelled(true);
 	}

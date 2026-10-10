@@ -415,7 +415,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 							i.setGravity(itemHasGravity);
 							UUID uuid = player.getUniqueId();
 							i.setThrower(uuid);
-							playSpellEffects(EffectPosition.SPECIAL, i);
+							playSpellEffects(EffectPosition.SPECIAL, i, spellData);
 						}
 
 						amt -= drop.getMaxStackSize();
@@ -444,7 +444,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			if (updateInv && forceUpdateInventory)
 				player.updateInventory();
 			if (depositedToBag) BagOfHoldingCompat.playPickupFeedback(player);
-			playSpellEffects(EffectPosition.CASTER, player);
+			playSpellEffects(EffectPosition.CASTER, player, spellData);
 		}
 		return succes;
 	}
@@ -600,7 +600,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 					i.setGravity(itemHasGravity);
 					if (player != null)
 						i.setThrower(player.getUniqueId());
-					playSpellEffects(EffectPosition.SPECIAL, i);
+					playSpellEffects(EffectPosition.SPECIAL, i, spellData);
 					EventUtil.call(new ConjureItemEvent(player, item));
 				}
 

@@ -1,0 +1,23 @@
+# Live fixture for bed/respawn recall (getRespawnLocation migration).
+# Copy: cp dev-fixtures/spells-xlint-smoke.yml core/run/plugins/MagicSpells/
+# Cast: /c xlint_recall_bed
+
+# Silences RecallSpell init when mark-spell is required even in bed mode.
+xlint_mark:
+  spell-class: ".instant.MarkSpell"
+  helper-spell: true
+  name: xlint_mark
+
+xlint_recall_bed:
+  spell-class: ".instant.RecallSpell"
+  name: xlint_recall_bed
+  always-granted: true
+  use-bed-location: true
+  allow-cross-world: true
+  max-range: 0
+  mark-spell: xlint_mark
+  str-cast-self: "XLIN: recalled to bed/respawn"
+  str-no-mark: "XLIN: no bed/respawn set — sleep in a bed first"
+  str-other-world: "XLIN: bed is in another world"
+  str-too-far: "XLIN: bed too far"
+  str-recall-failed: "XLIN: recall failed"

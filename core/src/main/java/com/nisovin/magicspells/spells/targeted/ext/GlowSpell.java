@@ -25,9 +25,10 @@ import com.nisovin.magicspells.spells.buff.InvisibilitySpell;
 
 /*
  * NOTE: ProtocolLib and XGlow are required for this spell class.
- * XGlow: https://github.com/Xezard/XGlow
- * XGlow's GlowBuilder still takes Bukkit ChatColor; suppress until that API moves.
+ * XGlow: https://github.com/Xezard/XGlow (appears abandoned).
+ * GlowBuilder still takes Bukkit ChatColor — no viable migration without replacing XGlow.
  */
+@SuppressWarnings("deprecation") // XGlow GlowBuilder#color(ChatColor)
 public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private final Multimap<UUID, GlowData> glowing;

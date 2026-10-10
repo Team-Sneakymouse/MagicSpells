@@ -1,19 +1,15 @@
 # Compile warnings backlog
 
-Snapshot from `:core:compileJava` on the DvZ fork (Paper / Bukkit for-removal APIs).
+Snapshot from `:core:compileJava` on the DvZ fork (Paper / Bukkit APIs).
 
 **Note:** `javac` reports at most **100** warnings per compile. Clearing a large cluster can make previously hidden warnings appear until the true total drops below 100.
+
+Lint is **on** in `core/build.gradle` (`-Xlint:deprecation`, `-Xlint:unchecked`).
 
 How to refresh:
 
 ```bash
 ./gradlew :core:compileJava --rerun-tasks 2>&1 | grep 'warning:' | sed 's/.*warning: //' | sort | uniq -c | sort -rn
-```
-
-For ordinary (non-removal) deprecations and unchecked casts, enable lint (currently `-Xlint:none` in `core/build.gradle`):
-
-```bash
-# temporarily: options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
 ```
 
 ---
@@ -38,35 +34,54 @@ For ordinary (non-removal) deprecations and unchecked casts, enable lint (curren
 | **`EntityDamageByEntityEvent` legacy ctor** | `DamageSource` builder | |
 | **`EntityEffect.HURT`** | `playHurtAnimation` | |
 | **`InventoryView.Property`** | `@SuppressWarnings` on stub | Dummy inventory only |
-| **`ChatColor`** | `ColorUtil` section-sign + MiniMessage; `getTextColor()` is now a `String` (`§` code) | Config chars unchanged; `GlowSpell` still uses ChatColor for XGlow |
-| **`Targeted*Spell` no-args** | Args overloads are primary; no-args are deprecated interface defaults (`null` args) | Removed per-spell `@SuppressWarnings` + no-args overrides; live smoke: `MANUAL-TEST-TARGETED-CAST.md` |
-| **Unchecked `getAttribute` casts** | Typed `MagicItemData.getAttribute` (single suppress) | Call sites assign without casts |
-| **`World.getPVP`** | `getGameRuleValue(GameRules.PVP)` | Not `GameRule.PVP` (for-removal) |
-| **`BookMeta` string pages** | Adventure `pages()` / `pages(List<Component>)` | |
+| **`ChatColor` (general)** | `ColorUtil` section-sign + MiniMessage | Config chars unchanged |
+| **`Targeted*Spell` no-args** | Args overloads are primary | Live: `MANUAL-TEST-TARGETED-CAST.md` |
+| **Unchecked `getAttribute` casts** | Typed `MagicItemData.getAttribute` | |
+| **`World.getPVP`** | `getGameRuleValue(GameRules.PVP)` | |
+| **`BookMeta` string pages** | Adventure `pages()` | |
 | **`JavaPlugin.getDescription`** | `getPluginMeta()` | |
-| **WorldEdit `ClipboardFormats.findByFile`** | `ClipboardFormatsCompat` — `findByPath` when present, else `findByFile` | Runtime WE may be older than compile 7.4 |
-| **Bukkit Metadata (`FixedMetadataValue`)** | `EntityPdc` flags/primitives + `ObjectStore` for BowSpell; LightningSpell uses ThreadLocal+UUID map (charge events fire inside `strikeLightning`); missarrow uses `getHitEntity()` | Live: `MANUAL-TEST-PDC.md`. Left alone: Citizens `IsNPCCondition` (`hasMetadata("NPC")`) |
+| **WorldEdit `ClipboardFormats.findByFile`** | `ClipboardFormatsCompat` | |
+| **Bukkit Metadata (MS-owned)** | `EntityPdc` / ThreadLocal / `getHitEntity()` | Live: `MANUAL-TEST-PDC.md` |
+| **`getBedSpawnLocation` / `setBedSpawnLocation`** | `getRespawnLocation` / `setRespawnLocation` | BedCoord* meta + RecallSpell |
+| **`PigZapEvent`** | Paper `EntityZapEvent` + `getBolt()` | LightningSpell |
+| **Deprecated `playSpellEffects(pos, entity)`** | Pass `SpellData` (ConjureSpell) | |
+| **`GlowSpell` ChatColor** | `@SuppressWarnings("deprecation")` | XGlow abandoned; `GlowBuilder#color(ChatColor)` only API |
+| **Citizens `IsNPCCondition`** | `@SuppressWarnings` on `hasMetadata("NPC")` | External Citizens convention |
+| **Vendored bStats `Metrics`** | Class-level `@SuppressWarnings` | Not worth rewriting |
 
-**Current `[removal]` count on `:core:compileJava`:** **0** (as of this migration pass).
+**Current `[removal]` count on `:core:compileJava`:** **0**.
 
 ## Manual / live verification
 
 See **[MANUAL-TEST-WARNING-MIGRATION.md](MANUAL-TEST-WARNING-MIGRATION.md)** for the human checklist.  
-Targeted cast smoke: **[MANUAL-TEST-TARGETED-CAST.md](MANUAL-TEST-TARGETED-CAST.md)** (already signed off).  
-ChatColor smoke: **[MANUAL-TEST-CHATCOLOR.md](MANUAL-TEST-CHATCOLOR.md)** (already signed off).  
-Inversion / misc: **[MANUAL-TEST-INVERSION.md](MANUAL-TEST-INVERSION.md)** (already signed off).  
-PDC / metadata: **[MANUAL-TEST-PDC.md](MANUAL-TEST-PDC.md)**.  
+Targeted cast smoke: **[MANUAL-TEST-TARGETED-CAST.md](MANUAL-TEST-TARGETED-CAST.md)** (signed off).  
+ChatColor smoke: **[MANUAL-TEST-CHATCOLOR.md](MANUAL-TEST-CHATCOLOR.md)** (signed off).  
+Inversion / misc: **[MANUAL-TEST-INVERSION.md](MANUAL-TEST-INVERSION.md)** (signed off).  
+PDC / metadata: **[MANUAL-TEST-PDC.md](MANUAL-TEST-PDC.md)** (signed off).  
 Tracked fixtures under `dev-fixtures/` (copy into `core/run/plugins/MagicSpells/` for `runServer`).
+
+`GlowSpell` is **not** live-testable here (XGlow abandoned / not on the test server).
 
 ---
 
-## Remaining when `-Xlint:deprecation` / `unchecked` is enabled
+## Remaining `-Xlint` clusters (next passes)
 
-| Cluster | Notes |
-|---------|--------|
-| **`GlowSpell` ChatColor** | XGlow API still takes Bukkit `ChatColor`. |
-| **Citizens `IsNPCCondition`** | Still reads external `hasMetadata("NPC")` — not MagicSpells-owned. |
-| **Misc leftovers** | Other `-Xlint:deprecation` / `unchecked` noise outside the clusters above (spot-check when enabling lint). |
+**Current total: 50** (after Metrics/GlowSpell/IsNPC suppress + bed/pigzap/Conjure fixes). Refresh with the command above.
+
+| Cluster | Count | Notes |
+|---------|-------|-------|
+| **`DamageModifier`** | 6 | `EntityDamageEvent` legacy modifiers |
+| **`sendMultiBlockChange`** | 5 | Player multi-block packet overload |
+| **`PotionEffectType` name/values/getByName** | 5 | Prefer registry keys (Sound-style) |
+| **Unchecked casts / raw types** | 5 | Outside Metrics |
+| **InventoryView title** | 3 | Adventure title APIs |
+| **Swim toggle `setCancelled`** | 2 | `EntityToggleSwimEvent` |
+| **`AttributeModifier.getSlot`** | 2 | Prefer `getSlotGroup` |
+| **Falling block spawn** | 2 | |
+| **SuspiciousStew `addCustomEffect`** | 2 | |
+| **Tree gen / tipped arrow / Sign / ItemMeta / WE / recipes / …** | rest | Odds and ends |
+
+No new fixtures for this pass. Re-check PDC lightning on Easy+ (now `EntityZapEvent`). Bed/recall: `getRespawnLocation` — use any existing recall-with-bed config if you want a spot check.
 
 ---
 

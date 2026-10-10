@@ -64,7 +64,7 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 			if (args != null && args.length == 1 && caster.hasPermission("magicspells.advanced." + internalName)) {
 				Player target = PlayerNameUtils.getPlayer(args[0]);
 				if (useBedLocation && target != null)
-					markLocation = target.getBedSpawnLocation();
+					markLocation = target.getRespawnLocation();
 				else if (markSpell != null) {
 					Location loc = markSpell
 							.getEffectiveMark(target != null ? target.getName().toLowerCase() : args[0].toLowerCase());
@@ -123,7 +123,7 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 
 	private Location getRecallLocation(LivingEntity caster) {
 		if (useBedLocation && caster instanceof Player)
-			return ((Player) caster).getBedSpawnLocation();
+			return ((Player) caster).getRespawnLocation();
 		if (markSpell == null)
 			return null;
 		return markSpell.getEffectiveMark(caster);
