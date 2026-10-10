@@ -27,6 +27,8 @@ import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
@@ -160,36 +162,24 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data.caster(), data.power(), data.args());
+		if (targetInfo.noTarget())
+			return new CastResult(noTarget(data.caster(), data.args(), targetInfo), data);
+
+		data = data.target(targetInfo.target()).power(targetInfo.power());
+		CastResult result = castAtEntity(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return result;
+
+		
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Location locToSpawn = null;
-			LivingEntity target = null;
-
-			if (canTargetEntities) {
-				TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-				if (targetInfo.cancelled()) return PostCastAction.ALREADY_HANDLED;
-
-				if (!targetInfo.empty()) {
-					power = targetInfo.power();
-					target = targetInfo.target();
-					locToSpawn = target.getLocation();
-				}
-			}
-
-			if (canTargetLocation && locToSpawn == null) {
-				Block targetBlock = getTargetedBlock(caster, power, args);
-				if (targetBlock != null) locToSpawn = targetBlock.getLocation().add(0.5, 1, 0.5);
-			}
-
-			if (locToSpawn == null) return noTarget(caster, args);
-
-			locToSpawn.setDirection(caster.getLocation().getDirection());
-
-			AreaEffectCloud cloud = spawnCloud(caster, target, locToSpawn, power, args);
-			cloud.setSource(caster);
-		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	@Override
@@ -205,19 +195,29 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		return castAtLocation(null, target, power, args);
 	}
 
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!canTargetEntities || !validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							AreaEffectCloud cloud = spawnCloud(data.caster(), data.target(), data.target().getLocation(), data.power(), data.args());
+							cloud.setSource(data.caster());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		} else {
+			if (!canTargetEntities || !validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							spawnCloud(null, data.target(), data.target().getLocation(), data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+	}
+
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!canTargetEntities || !validTargetList.canTarget(caster, target)) return false;
-		AreaEffectCloud cloud = spawnCloud(caster, target, target.getLocation(), power, args);
-		cloud.setSource(caster);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!canTargetEntities || !validTargetList.canTarget(target)) return false;
-		spawnCloud(null, target, target.getLocation(), power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private AreaEffectCloud spawnCloud(LivingEntity caster, LivingEntity target, Location loc, float power, String[] args) {

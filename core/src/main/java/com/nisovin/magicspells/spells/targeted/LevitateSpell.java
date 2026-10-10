@@ -23,6 +23,7 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.SpellFilter;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.events.SpellCastEvent;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -85,27 +86,35 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), data.args());
+					if (target.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), target), data);
+		
+					levitate(data.caster(), target.target(), target.power(), data.args());
+					sendMessages(data.caster(), target.target(), data.args());
+		
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (toggle && isLevitating(caster)) {
-			levitating.remove(caster.getUniqueId()).stop();
-			return PostCastAction.ALREADY_HANDLED;
-		} else if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			levitate(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
 
-			return PostCastAction.NO_MESSAGES;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+				levitate(data.caster(), data.target(), data.power(), data.args());
+				return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		levitate(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	public boolean isBeingLevitated(LivingEntity entity) {

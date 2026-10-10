@@ -9,6 +9,7 @@ import org.bukkit.enchantments.Enchantment;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -37,15 +38,21 @@ public class EnchantSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			ItemStack targetItem = caster.getEquipment().getItemInMainHand();
-			if (targetItem == null) return PostCastAction.ALREADY_HANDLED;
-			enchant(targetItem, new SpellData(caster, power, args));
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		ItemStack targetItem = data.caster().getEquipment().getItemInMainHand();
+					if (targetItem == null) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					enchant(targetItem, new SpellData(data.caster(), data.power(), data.args()));
+					playSpellEffects(EffectPosition.CASTER, data.caster(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	private void enchant(ItemStack item, SpellData spellData) {
 		if (enchantments == null) return;

@@ -17,6 +17,7 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.zones.NoMagicZoneManager;
@@ -146,14 +147,20 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			ItemProjectileTracker tracker = new ItemProjectileTracker(caster, caster.getLocation(), power, args);
-			setupTracker(tracker, caster, power, args);
-			tracker.start();
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		ItemProjectileTracker tracker = new ItemProjectileTracker(data.caster(), data.caster().getLocation(), data.power(), data.args());
+					setupTracker(tracker, data.caster(), data.power(), data.args());
+					tracker.start();
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castAtLocation(LivingEntity livingEntity, Location target, float power, String[] args) {

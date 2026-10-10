@@ -11,6 +11,8 @@ import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.CommandSpell;
 
 public class HelpSpell extends CommandSpell {
@@ -34,28 +36,37 @@ public class HelpSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (args == null || args.length == 0) {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			Spell spell = MagicSpells.getSpellByInGameName(Util.arrayJoin(args, ' '));
-			Spellbook spellbook = MagicSpells.getSpellbook(player);
-
-			if (spell == null || requireKnownSpell && !spellbook.hasSpell(spell)) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			sendMessage(strDescLine, player, args, "%s", spell.getName(), "%d", spell.getDescription());
-			if (spell.getCostStr() != null && !spell.getCostStr().isEmpty()) {
-				sendMessage(strCostLine, player, args, "%c", spell.getCostStr());
-			}
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (data.args() == null || data.args().length == 0) {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					Spell spell = MagicSpells.getSpellByInGameName(Util.arrayJoin(data.args(), ' '));
+					Spellbook spellbook = MagicSpells.getSpellbook(player);
+		
+					if (spell == null || requireKnownSpell && !spellbook.hasSpell(spell)) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					sendMessage(strDescLine, player, data.args(), "%s", spell.getName(), "%d", spell.getDescription());
+					if (spell.getCostStr() != null && !spell.getCostStr().isEmpty()) {
+						sendMessage(strCostLine, player, data.args(), "%c", spell.getCostStr());
+					}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

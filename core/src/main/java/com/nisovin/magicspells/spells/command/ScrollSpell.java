@@ -1,5 +1,7 @@
 package com.nisovin.magicspells.spells.command;
 
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -120,51 +122,59 @@ public class ScrollSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (args == null || args.length == 0) {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			ItemStack inHand = player.getInventory().getItemInMainHand();
-			if (inHand.getAmount() != 1 || itemType != inHand.getType()) {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			Spell spell = MagicSpells.getSpellByInGameName(args[0]);
-			Spellbook spellbook = MagicSpells.getSpellbook(player);
-			if (spell == null || !spellbook.hasSpell(spell)) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;			
-			}
-			if (requireTeachPerm && !spellbook.canTeach(spell)) {
-				sendMessage(strCantTeach, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			int uses = defaultUses;
-			if (args.length > 1 && RegexUtil.matches(CAST_ARGUMENT_USE_COUNT_PATTERN, args[1])) uses = Integer.parseInt(args[1]);
-			if (uses > maxUses || (maxUses > 0 && uses <= 0)) uses = maxUses;
-			
-			if (chargeReagentsForSpellPerCharge && uses > 0) {
-				SpellReagents reagents = spell.getReagents().multiply(uses);
-				if (!hasReagents(player, reagents)) {
-					sendMessage(strMissingReagents, player, args);
-					return PostCastAction.ALREADY_HANDLED;
-				}
-				removeReagents(player, reagents);
-			}
-			
-			inHand = createScroll(spell, uses, inHand);
-			player.getInventory().setItemInMainHand(inHand);
-			
-			sendMessage(strCastSelf, player, args, "%s", spell.getName());
-			return PostCastAction.NO_MESSAGES;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		if (data.args() == null || data.args().length == 0) {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					ItemStack inHand = player.getInventory().getItemInMainHand();
+					if (inHand.getAmount() != 1 || itemType != inHand.getType()) {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					Spell spell = MagicSpells.getSpellByInGameName(data.args()[0]);
+					Spellbook spellbook = MagicSpells.getSpellbook(player);
+					if (spell == null || !spellbook.hasSpell(spell)) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);			
+					}
+					if (requireTeachPerm && !spellbook.canTeach(spell)) {
+						sendMessage(strCantTeach, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					int uses = defaultUses;
+					if (data.args().length > 1 && RegexUtil.matches(CAST_ARGUMENT_USE_COUNT_PATTERN, data.args()[1])) uses = Integer.parseInt(data.args()[1]);
+					if (uses > maxUses || (maxUses > 0 && uses <= 0)) uses = maxUses;
+					
+					if (chargeReagentsForSpellPerCharge && uses > 0) {
+						SpellReagents reagents = spell.getReagents().multiply(uses);
+						if (!hasReagents(player, reagents)) {
+							sendMessage(strMissingReagents, player, data.args());
+							return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+						}
+						removeReagents(player, reagents);
+					}
+					
+					inHand = createScroll(spell, uses, inHand);
+					player.getInventory().setItemInMainHand(inHand);
+					
+					sendMessage(strCastSelf, player, data.args(), "%s", spell.getName());
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

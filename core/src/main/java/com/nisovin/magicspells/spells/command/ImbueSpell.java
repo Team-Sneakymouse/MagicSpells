@@ -1,5 +1,7 @@
 package com.nisovin.magicspells.spells.command;
 
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -84,75 +86,84 @@ public class ImbueSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (args == null || args.length == 0) {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			// Get item
-			ItemStack inHand = player.getInventory().getItemInMainHand();
-			if (!allowedItemTypes.contains(inHand.getType())) {
-				sendMessage(strCantImbueItem, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			boolean allowed = false;
-			for (Material m : allowedItemMaterials) {
-				if (m == inHand.getType()) {
-					allowed = true;
-					break;
-				}
-			}
-			if (!allowed) {
-				sendMessage(strCantImbueItem, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			// Check for already imbued
-			if (DataUtil.getString(inHand, key) != null) {
-				sendMessage(strCantImbueItem, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			Spell spell = MagicSpells.getSpellByInGameName(args[0]);
-			if (spell == null) {
-				sendMessage(strCantImbueSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			if (!MagicSpells.getSpellbook(player).hasSpell(spell)) {
-				sendMessage(strCantImbueSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			if (requireTeachPerm && !MagicSpells.getSpellbook(player).canTeach(spell)) {
-				sendMessage(strCantImbueSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			int uses = defaultUses;
-			if (args.length > 1 && RegexUtil.matches(CAST_ARG_USES_PATTERN, args[1]) && (allowSpecifyUses || Perm.ADVANCED_IMBUE.has(player))) {
-				uses = Integer.parseInt(args[1]);
-				if (uses > maxUses) uses = maxUses;
-				else if (uses <= 0) uses = 1;
-			}
-			
-			if (chargeReagentsForSpellPerUse && !Perm.NO_REAGENTS.has(player)) {
-				SpellReagents reagents = spell.getReagentsPreCast(player, power, args).multiply(uses);
-				if (!hasReagents(player, reagents)) {
-					sendMessage(strMissingReagents, player, args);
-					return PostCastAction.ALREADY_HANDLED;
-				}
-				removeReagents(player, reagents);
-			}
-			
-			setItemNameAndLore(inHand, spell, uses);
-			DataUtil.setString(inHand, key, spell.getInternalName() + ',' + uses);
-			player.getInventory().setItemInMainHand(inHand);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (data.args() == null || data.args().length == 0) {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					// Get item
+					ItemStack inHand = player.getInventory().getItemInMainHand();
+					if (!allowedItemTypes.contains(inHand.getType())) {
+						sendMessage(strCantImbueItem, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					boolean allowed = false;
+					for (Material m : allowedItemMaterials) {
+						if (m == inHand.getType()) {
+							allowed = true;
+							break;
+						}
+					}
+					if (!allowed) {
+						sendMessage(strCantImbueItem, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					// Check for already imbued
+					if (DataUtil.getString(inHand, key) != null) {
+						sendMessage(strCantImbueItem, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					Spell spell = MagicSpells.getSpellByInGameName(data.args()[0]);
+					if (spell == null) {
+						sendMessage(strCantImbueSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					if (!MagicSpells.getSpellbook(player).hasSpell(spell)) {
+						sendMessage(strCantImbueSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					if (requireTeachPerm && !MagicSpells.getSpellbook(player).canTeach(spell)) {
+						sendMessage(strCantImbueSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					int uses = defaultUses;
+					if (data.args().length > 1 && RegexUtil.matches(CAST_ARG_USES_PATTERN, data.args()[1]) && (allowSpecifyUses || Perm.ADVANCED_IMBUE.has(player))) {
+						uses = Integer.parseInt(data.args()[1]);
+						if (uses > maxUses) uses = maxUses;
+						else if (uses <= 0) uses = 1;
+					}
+					
+					if (chargeReagentsForSpellPerUse && !Perm.NO_REAGENTS.has(player)) {
+						SpellReagents reagents = spell.getReagentsPreCast(player, data.power(), data.args()).multiply(uses);
+						if (!hasReagents(player, reagents)) {
+							sendMessage(strMissingReagents, player, data.args());
+							return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+						}
+						removeReagents(player, reagents);
+					}
+					
+					setItemNameAndLore(inHand, spell, uses);
+					DataUtil.setString(inHand, key, spell.getInternalName() + ',' + uses);
+					player.getInventory().setItemInMainHand(inHand);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

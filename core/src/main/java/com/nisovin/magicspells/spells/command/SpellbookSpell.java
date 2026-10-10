@@ -28,6 +28,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.util.MagicLocation;
 import com.nisovin.magicspells.spells.CommandSpell;
@@ -97,56 +98,64 @@ public class SpellbookSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (args == null || args.length < 1 || args.length > 2
-					|| (args.length == 2 && !RegexUtil.matches(PATTERN_CAST_ARG_USAGE, args[1]))) {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.HANDLE_NORMALLY;
-			}
-			if (player.isOp() && args[0].equalsIgnoreCase("reload")) {
-				bookLocations = new ArrayList<>();
-				bookSpells = new ArrayList<>();
-				bookUses = new ArrayList<>();
-				loadSpellbooks();
-				player.sendMessage("Spellbook file reloaded.");
-				return PostCastAction.ALREADY_HANDLED;
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			Spellbook spellbook = MagicSpells.getSpellbook(player);
-			Spell spell = MagicSpells.getSpellByInGameName(args[0]);
-			if (spell == null || !spellbook.hasSpell(spell)) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			if (!MagicSpells.getSpellbook(player).canTeach(spell)) {
-				sendMessage(strCantTeach, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			Block target = getTargetedBlock(player, 10, args);
-			if (target == null || !spellbookBlock.equals(target.getType())) {
-				sendMessage(strNoTarget, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			if (bookLocations.contains(new MagicLocation(target.getLocation()))) {
-				sendMessage(strHasSpellbook, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			bookLocations.add(new MagicLocation(target.getLocation()));
-			bookSpells.add(spell.getInternalName());
-			if (args.length == 1)
-				bookUses.add(defaultUses);
-			else
-				bookUses.add(Integer.parseInt(args[1]));
-
-			saveSpellbooks();
-			sendMessage(strCastSelf, player, args, "%s", spell.getName());
-			playSpellEffects(player, target.getLocation(), power, args);
-			return PostCastAction.NO_MESSAGES;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (data.args() == null || data.args().length < 1 || data.args().length > 2
+							|| (data.args().length == 2 && !RegexUtil.matches(PATTERN_CAST_ARG_USAGE, data.args()[1]))) {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+					}
+					if (player.isOp() && data.args()[0].equalsIgnoreCase("reload")) {
+						bookLocations = new ArrayList<>();
+						bookSpells = new ArrayList<>();
+						bookUses = new ArrayList<>();
+						loadSpellbooks();
+						player.sendMessage("Spellbook file reloaded.");
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					Spellbook spellbook = MagicSpells.getSpellbook(player);
+					Spell spell = MagicSpells.getSpellByInGameName(data.args()[0]);
+					if (spell == null || !spellbook.hasSpell(spell)) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					if (!MagicSpells.getSpellbook(player).canTeach(spell)) {
+						sendMessage(strCantTeach, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					Block target = getTargetedBlock(player, 10, data.args());
+					if (target == null || !spellbookBlock.equals(target.getType())) {
+						sendMessage(strNoTarget, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					if (bookLocations.contains(new MagicLocation(target.getLocation()))) {
+						sendMessage(strHasSpellbook, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					bookLocations.add(new MagicLocation(target.getLocation()));
+					bookSpells.add(spell.getInternalName());
+					if (data.args().length == 1)
+						bookUses.add(defaultUses);
+					else
+						bookUses.add(Integer.parseInt(data.args()[1]));
+		
+					saveSpellbooks();
+					sendMessage(strCastSelf, player, data.args(), "%s", spell.getName());
+					playSpellEffects(player, target.getLocation(), data.power(), data.args());
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

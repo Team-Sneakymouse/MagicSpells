@@ -19,6 +19,7 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -119,33 +120,42 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			boolean added = false;
-			ItemStack item = firework.clone();
-			item.setAmount(count.get(caster, null, power, args));
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			ItemMeta meta = item.getItemMeta();
-			if (meta instanceof FireworkMeta fMeta)
-				fMeta.setPower(flight.get(caster, null, power, args));
+		boolean added = false;
+		ItemStack item = firework.clone();
+		item.setAmount(count.get(player, null, data.power(), data.args()));
 
-			if (addToInventory)
-				added = Util.addToInventory(player, player.getInventory(), item, true, false);
-			SpellData data = new SpellData(caster, power, args);
-			if (!added) {
-				Item dropped = player.getWorld().dropItem(player.getLocation(), item);
-				dropped.setItemStack(item);
-				dropped.setGravity(gravity);
+		ItemMeta meta = item.getItemMeta();
+		if (meta instanceof FireworkMeta fMeta)
+			fMeta.setPower(flight.get(player, null, data.power(), data.args()));
 
-				int delay = Math.max(pickupDelay.get(caster, null, power, args), 0);
-				dropped.setPickupDelay(delay);
+		if (addToInventory)
+			added = Util.addToInventory(player, player.getInventory(), item, true, false);
+		SpellData effectData = new SpellData(player, data.power(), data.args());
+		if (!added) {
+			Item dropped = player.getWorld().dropItem(player.getLocation(), item);
+			dropped.setItemStack(item);
+			dropped.setGravity(gravity);
 
-				playSpellEffects(EffectPosition.SPECIAL, dropped, data);
-			}
-			playSpellEffects(EffectPosition.CASTER, player, data);
+			int delay = Math.max(pickupDelay.get(player, null, effectData.power(), effectData.args()), 0);
+			dropped.setPickupDelay(delay);
+
+			playSpellEffects(EffectPosition.SPECIAL, dropped, effectData);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		playSpellEffects(EffectPosition.CASTER, player, effectData);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+		@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {

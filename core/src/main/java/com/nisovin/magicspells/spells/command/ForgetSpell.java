@@ -12,6 +12,8 @@ import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.CommandSpell;
 import com.nisovin.magicspells.util.PlayerNameUtils;
 import com.nisovin.magicspells.util.compat.EventUtil;
@@ -50,83 +52,91 @@ public class ForgetSpell extends CommandSpell {
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (args == null || args.length == 0 || args.length > 2) {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			Spellbook casterSpellbook = MagicSpells.getSpellbook(player);
-			
-			Player target;
-			if (args.length == 1 && allowSelfForget) target = player;
-			else if (args.length == 2 && casterSpellbook.hasAdvancedPerm("forget")) {
-				List<Player> players = MagicSpells.plugin.getServer().matchPlayer(args[0]);
-				if (players.size() != 1) {
-					sendMessage(strNoTarget, player, args);
-					return PostCastAction.ALREADY_HANDLED;
-				}
-				target = players.get(0);
-			} else {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			String spellName = args.length == 1 ? args[0] : args[1];
-			boolean all = false;
-			Spell spell = null;
-			if (spellName.equals("*")) all = true;
-			else spell = MagicSpells.getSpellByInGameName(spellName);
-
-			if (spell == null && !all) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			if (!all && !casterSpellbook.hasSpell(spell)) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			Spellbook targetSpellbook = MagicSpells.getSpellbook(target);
-			if (!all && !targetSpellbook.hasSpell(spell)) {
-				sendMessage(strDoesntKnow, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-
-			String playerDisplayName = Util.getStringFromComponent(player.displayName());
-			String targetDisplayName = Util.getStringFromComponent(target.displayName());
-			// Remove spell(s)
-			if (!all) {
-				targetSpellbook.removeSpell(spell);
-				targetSpellbook.save();
-				if (!player.equals(target)) {
-					sendMessage(strCastTarget, target, args, "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
-					sendMessage(strCastSelf, player, args, "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
-					playSpellEffects(player, target, power, args);
-				} else {
-					sendMessage(strCastSelfTarget, player, args, "%s", spell.getName());
-					playSpellEffects(EffectPosition.CASTER, player, power, args);
-				}
-				return PostCastAction.NO_MESSAGES;
-			}
-
-			targetSpellbook.removeAllSpells();
-			targetSpellbook.save();
-
-			if (!player.equals(target)) {
-				sendMessage(strResetTarget, player, args, "%t", targetDisplayName);
-				playSpellEffects(player, target, power, args);
-			} else {
-				sendMessage(strResetSelf, player, args);
-				playSpellEffects(EffectPosition.CASTER, player, power, args);
-			}
-			return PostCastAction.NO_MESSAGES;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (data.args() == null || data.args().length == 0 || data.args().length > 2) {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					Spellbook playerSpellbook = MagicSpells.getSpellbook(player);
+					
+					Player target;
+					if (data.args().length == 1 && allowSelfForget) target = player;
+					else if (data.args().length == 2 && playerSpellbook.hasAdvancedPerm("forget")) {
+						List<Player> players = MagicSpells.plugin.getServer().matchPlayer(data.args()[0]);
+						if (players.size() != 1) {
+							sendMessage(strNoTarget, player, data.args());
+							return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+						}
+						target = players.get(0);
+					} else {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					String spellName = data.args().length == 1 ? data.args()[0] : data.args()[1];
+					boolean all = false;
+					Spell spell = null;
+					if (spellName.equals("*")) all = true;
+					else spell = MagicSpells.getSpellByInGameName(spellName);
+		
+					if (spell == null && !all) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					if (!all && !playerSpellbook.hasSpell(spell)) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					Spellbook targetSpellbook = MagicSpells.getSpellbook(target);
+					if (!all && !targetSpellbook.hasSpell(spell)) {
+						sendMessage(strDoesntKnow, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+		
+					String playerDisplayName = Util.getStringFromComponent(player.displayName());
+					String targetDisplayName = Util.getStringFromComponent(target.displayName());
+					// Remove spell(s)
+					if (!all) {
+						targetSpellbook.removeSpell(spell);
+						targetSpellbook.save();
+						if (!player.equals(target)) {
+							sendMessage(strCastTarget, target, data.args(), "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
+							sendMessage(strCastSelf, player, data.args(), "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
+							playSpellEffects(player, target, data.power(), data.args());
+						} else {
+							sendMessage(strCastSelfTarget, player, data.args(), "%s", spell.getName());
+							playSpellEffects(EffectPosition.CASTER, player, data.power(), data.args());
+						}
+						return new CastResult(PostCastAction.NO_MESSAGES, data);
+					}
+		
+					targetSpellbook.removeAllSpells();
+					targetSpellbook.save();
+		
+					if (!player.equals(target)) {
+						sendMessage(strResetTarget, player, data.args(), "%t", targetDisplayName);
+						playSpellEffects(player, target, data.power(), data.args());
+					} else {
+						sendMessage(strResetSelf, player, data.args());
+						playSpellEffects(EffectPosition.CASTER, player, data.power(), data.args());
+					}
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 	
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

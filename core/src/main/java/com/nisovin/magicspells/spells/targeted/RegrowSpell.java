@@ -7,6 +7,8 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.ValidTargetChecker;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
@@ -46,31 +48,47 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), SHEEP, data.args());
+					if (target.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), target), data);
+		
+					boolean done = grow(data.caster(), (Sheep) target.target(), data.power(), data.args());
+					if (!done) return new CastResult(noTarget(data.caster(), data.args()), data);
+		
+					sendMessages(data.caster(), target.target(), data.args());
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, SHEEP, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			boolean done = grow(caster, (Sheep) target.target(), power, args);
-			if (!done) return noTarget(caster, args);
 
-			sendMessages(caster, target.target(), args);
-			return PostCastAction.NO_MESSAGES;
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!(data.target() instanceof Sheep sheep) || !validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			if (!(grow(data.caster(), sheep, data.power(), data.args()))) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		} else {
+			if (!(data.target() instanceof Sheep sheep) || !validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			if (!(grow(null, sheep, data.power(), data.args()))) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
-
-		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Sheep sheep) || !validTargetList.canTarget(caster, target)) return false;
-		return grow(caster, sheep, power, args);
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Sheep sheep) || !validTargetList.canTarget(target)) return false;
-		return grow(null, sheep, power, args);
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private boolean grow(LivingEntity caster, Sheep target, float power, String[] args) {

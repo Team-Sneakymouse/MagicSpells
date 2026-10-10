@@ -13,6 +13,8 @@ import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.SpellFilter;
 import com.nisovin.magicspells.spells.PassiveSpell;
 import com.nisovin.magicspells.spells.CommandSpell;
@@ -49,44 +51,53 @@ public class ListSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			Spellbook spellbook = MagicSpells.getSpellbook(player);
-			String extra = "";
-			if (args != null && args.length > 0 && spellbook.hasAdvancedPerm("list")) {
-				Player p = PlayerNameUtils.getPlayer(args[0]);
-				if (p != null) {
-					spellbook = MagicSpells.getSpellbook(p);
-					extra = '(' + Util.getStringFromComponent(p.displayName()) + ") ";
-				}
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			if (reloadGrantedSpells) spellbook.addGrantedSpells();
-
-			if (spellbook.getSpells().isEmpty()) {
-				sendMessage(strNoSpells, player, args);
-				return PostCastAction.HANDLE_NORMALLY;
-			}
-
-			String s = "";
-			for (Spell spell : spellbook.getSpells()) {
-				if (shouldListSpell(spell, spellbook)) {
-					if (s.isEmpty()) s = spell.getName();
-					else s += ", " + spell.getName();
-				}
-			}
-
-			s = strPrefix + ' ' + extra + s;
-			while (s.length() > lineLength) {
-				int i = s.substring(0, lineLength).lastIndexOf(' ');
-				if (i < 0) break;
-				sendMessage(s.substring(0, i), player, args);
-				s = s.substring(i + 1);
-			}
-			if (!s.isEmpty()) sendMessage(s, player, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		Spellbook spellbook = MagicSpells.getSpellbook(player);
+					String extra = "";
+					if (data.args() != null && data.args().length > 0 && spellbook.hasAdvancedPerm("list")) {
+						Player p = PlayerNameUtils.getPlayer(data.args()[0]);
+						if (p != null) {
+							spellbook = MagicSpells.getSpellbook(p);
+							extra = '(' + Util.getStringFromComponent(p.displayName()) + ") ";
+						}
+					}
+		
+					if (reloadGrantedSpells) spellbook.addGrantedSpells();
+		
+					if (spellbook.getSpells().isEmpty()) {
+						sendMessage(strNoSpells, player, data.args());
+						return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+					}
+		
+					String s = "";
+					for (Spell spell : spellbook.getSpells()) {
+						if (shouldListSpell(spell, spellbook)) {
+							if (s.isEmpty()) s = spell.getName();
+							else s += ", " + spell.getName();
+						}
+					}
+		
+					s = strPrefix + ' ' + extra + s;
+					while (s.length() > lineLength) {
+						int i = s.substring(0, lineLength).lastIndexOf(' ');
+						if (i < 0) break;
+						sendMessage(s.substring(0, i), player, data.args());
+						s = s.substring(i + 1);
+					}
+					if (!s.isEmpty()) sendMessage(s, player, data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

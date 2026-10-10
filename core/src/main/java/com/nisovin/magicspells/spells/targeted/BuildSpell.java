@@ -18,6 +18,8 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.handlers.DebugHandler;
@@ -75,29 +77,37 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			int slot = this.slot.get(caster, null, power, args);
-			ItemStack item = player.getInventory().getItem(slot);
-			if (item == null || !isAllowed(item.getType())) return noTarget(player, strInvalidBlock, args);
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			List<Block> lastBlocks;
-			try {
-				lastBlocks = getLastTwoTargetedBlocks(player, power, args);
-			} catch (IllegalStateException e) {
-				DebugHandler.debugIllegalState(e);
-				lastBlocks = null;
-			}
-
-			if (lastBlocks == null || lastBlocks.size() < 2 || BlockUtils.isAir(lastBlocks.get(1).getType()))
-				return noTarget(player, strCantBuild, args);
-
-			boolean built = build(player, lastBlocks.get(0), lastBlocks.get(1), item, slot, power, args);
-			if (!built) return noTarget(player, strCantBuild, args);
-
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		int slot = this.slot.get(player, null, data.power(), data.args());
+					ItemStack item = player.getInventory().getItem(slot);
+					if (item == null || !isAllowed(item.getType())) return new CastResult(noTarget(player, strInvalidBlock, data.args()), data);
+		
+					List<Block> lastBlocks;
+					try {
+						lastBlocks = getLastTwoTargetedBlocks(player, data.power(), data.args());
+					} catch (IllegalStateException e) {
+						DebugHandler.debugIllegalState(e);
+						lastBlocks = null;
+					}
+		
+					if (lastBlocks == null || lastBlocks.size() < 2 || BlockUtils.isAir(lastBlocks.get(1).getType()))
+						return new CastResult(noTarget(player, strCantBuild, data.args()), data);
+		
+					boolean built = build(player, lastBlocks.get(0), lastBlocks.get(1), item, slot, data.power(), data.args());
+					if (!built) return new CastResult(noTarget(player, strCantBuild, data.args()), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {

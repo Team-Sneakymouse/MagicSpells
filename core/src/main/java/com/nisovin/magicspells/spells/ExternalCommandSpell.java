@@ -19,6 +19,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.MessageBlocker;
 import com.nisovin.magicspells.util.ValidTargetList;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -110,27 +111,31 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Player target = null;
-			if (requirePlayerTarget) {
-				TargetInfo<Player> targetInfo = getTargetedPlayer(caster, power, args);
-				if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
-
-				target = targetInfo.target();
-				power = targetInfo.power();
-			}
-
-			process(caster, target, power, args);
-
-			if (target != null) sendMessages(caster, target, args);
-			else sendMessages(caster, args);
-
-			return PostCastAction.NO_MESSAGES;
-		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		Player target = null;
+					if (requirePlayerTarget) {
+						TargetInfo<Player> targetInfo = getTargetedPlayer(data.caster(), data.power(), data.args());
+						if (targetInfo.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), targetInfo), data);
+		
+						target = targetInfo.target();
+						data = data.power(targetInfo.power());
+					}
+		
+					process(data.caster(), target, data.power(), data.args());
+		
+					if (target != null) sendMessages(data.caster(), target, data.args());
+					else sendMessages(data.caster(), data.args());
+		
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 	
 	private void process(CommandSender sender, Player target, float power, String[] args) {
 		// Get actual sender
@@ -229,28 +234,34 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		}
 	}
 
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							if (requirePlayerTarget && data.target() instanceof Player player) {
+								process(data.caster(), player, data.power(), data.args());
+								return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+							}
+							return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		} else {
+			if (!validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							if (requirePlayerTarget && data.target() instanceof Player player) {
+								process(null, player, data.power(), data.args());
+								return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+							}
+							return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		}
+	}
+
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-
-		if (requirePlayerTarget && target instanceof Player player) {
-			process(caster, player, power, args);
-			return true;
-		}
-
-		return false;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-
-		if (requirePlayerTarget && target instanceof Player player) {
-			process(null, player, power, args);
-			return true;
-		}
-
-		return false;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override

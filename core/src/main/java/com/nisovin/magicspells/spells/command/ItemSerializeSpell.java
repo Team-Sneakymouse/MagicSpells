@@ -13,6 +13,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.spells.CommandSpell;
@@ -57,17 +59,26 @@ public class ItemSerializeSpell extends CommandSpell {
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			ItemStack heldItem = player.getInventory().getItemInMainHand();
-			if (InventoryUtil.isNothing(heldItem)) {
-				player.sendMessage("You must be holding an item in your hand");
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			processItem(heldItem);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		ItemStack heldItem = player.getInventory().getItemInMainHand();
+					if (InventoryUtil.isNothing(heldItem)) {
+						player.sendMessage("You must be holding an item in your hand");
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					processItem(heldItem);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

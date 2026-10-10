@@ -6,6 +6,8 @@ import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -43,40 +45,56 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data.caster(), data.power(), checker, data.args());
+					if (targetInfo.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), targetInfo), data);
+		
+					LivingEntity target = targetInfo.target();
+					data = data.power(targetInfo.power());
+		
+					if (cancelIfFull && target.getHealth() == Util.getMaxHealth(target))
+						return new CastResult(noTarget(data.caster(), formatMessage(strMaxHealth, "%t", getTargetName(target)), data.args()), data);
+		
+					boolean healed = heal(data.caster(), target, data.power(), data.args());
+					if (!healed) return new CastResult(noTarget(data.caster(), data.args()), data);
+		
+					sendMessages(data.caster(), target, data.args());
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, checker, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			LivingEntity target = targetInfo.target();
-			power = targetInfo.power();
 
-			if (cancelIfFull && target.getHealth() == Util.getMaxHealth(target))
-				return noTarget(caster, formatMessage(strMaxHealth, "%t", getTargetName(target)), args);
-
-			boolean healed = heal(caster, target, power, args);
-			if (!healed) return noTarget(caster, args);
-
-			sendMessages(caster, target, args);
-			return PostCastAction.NO_MESSAGES;
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (validTargetList.canTarget(data.caster(), data.target()) && (!cancelIfFull || data.target().getHealth() < Util.getMaxHealth(data.target()))) {
+				boolean ok = heal(data.caster(), data.target(), data.power(), data.args());
+				return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
+			}
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (validTargetList.canTarget(data.target()) && (!cancelIfFull || data.target().getHealth() < Util.getMaxHealth(data.target()))) {
+			boolean ok = heal(null, data.target(), data.power(), data.args());
+			return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
+		}
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (validTargetList.canTarget(caster, target) && (!cancelIfFull || target.getHealth() < Util.getMaxHealth(target)))
-			return heal(caster, target, power, args);
-
-		return false;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (validTargetList.canTarget(target) && (!cancelIfFull || target.getHealth() < Util.getMaxHealth(target)))
-			return heal(null, target, power, args);
-
-		return false;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override

@@ -15,6 +15,8 @@ import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.CastItem;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.CommandSpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
@@ -51,69 +53,77 @@ public class UnbindSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (args == null || args.length == 0) {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			CastItem item = new CastItem(player.getEquipment().getItemInMainHand());
-			Spellbook spellbook = MagicSpells.getSpellbook(player);
-
-			if (args[0] != null && args[0].equalsIgnoreCase("*")) {
-				List<Spell> spells = new ArrayList<>();
-
-				for (CastItem i : spellbook.getItemSpells().keySet()) {
-					if (!i.equals(item)) continue;
-					spells.addAll(spellbook.getItemSpells().get(i));
-				}
-
-				for (Spell s : spells) {
-					spellbook.removeCastItem(s, item);
-				}
-
-				spellbook.save();
-				spellbook.reload();
-				sendMessage(strUnbindAll, player, args);
-				playSpellEffects(EffectPosition.CASTER, player, power, args);
-				return PostCastAction.NO_MESSAGES;
-			}
-
-			Spell spell = MagicSpells.getSpellByInGameName(Util.arrayJoin(args, ' '));
-			if (spell == null) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (!spellbook.hasSpell(spell)) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (!spell.canCastWithItem()) {
-				sendMessage(strCantBindSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (allowedSpells != null && !allowedSpells.contains(spell)) {
-				sendMessage(strCantUnbind, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			boolean removed = spellbook.removeCastItem(spell, item);
-			if (!removed) {
-				sendMessage(strNotBound, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			spellbook.save();
-			sendMessage(strCastSelf, player, args, "%s", spell.getName());
-			playSpellEffects(EffectPosition.CASTER, player, power, args);
-			return PostCastAction.NO_MESSAGES;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (data.args() == null || data.args().length == 0) {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					CastItem item = new CastItem(player.getEquipment().getItemInMainHand());
+					Spellbook spellbook = MagicSpells.getSpellbook(player);
+		
+					if (data.args()[0] != null && data.args()[0].equalsIgnoreCase("*")) {
+						List<Spell> spells = new ArrayList<>();
+		
+						for (CastItem i : spellbook.getItemSpells().keySet()) {
+							if (!i.equals(item)) continue;
+							spells.addAll(spellbook.getItemSpells().get(i));
+						}
+		
+						for (Spell s : spells) {
+							spellbook.removeCastItem(s, item);
+						}
+		
+						spellbook.save();
+						spellbook.reload();
+						sendMessage(strUnbindAll, player, data.args());
+						playSpellEffects(EffectPosition.CASTER, player, data.power(), data.args());
+						return new CastResult(PostCastAction.NO_MESSAGES, data);
+					}
+		
+					Spell spell = MagicSpells.getSpellByInGameName(Util.arrayJoin(data.args(), ' '));
+					if (spell == null) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					if (!spellbook.hasSpell(spell)) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					if (!spell.canCastWithItem()) {
+						sendMessage(strCantBindSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					if (allowedSpells != null && !allowedSpells.contains(spell)) {
+						sendMessage(strCantUnbind, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					boolean removed = spellbook.removeCastItem(spell, item);
+					if (!removed) {
+						sendMessage(strNotBound, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					spellbook.save();
+					sendMessage(strCastSelf, player, data.args(), "%s", spell.getName());
+					playSpellEffects(EffectPosition.CASTER, player, data.power(), data.args());
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

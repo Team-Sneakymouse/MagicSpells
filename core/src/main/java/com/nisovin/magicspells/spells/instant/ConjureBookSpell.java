@@ -19,6 +19,8 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -57,33 +59,42 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			boolean added = false;
-			ItemStack item = createBook(player, args);
-			if (openInstead) player.openBook(item);
-			else {
-				if (addToInventory) {
-					player.getEquipment().getItemInMainHand();
-					if (BlockUtils.isAir(player.getEquipment().getItemInMainHand().getType())) {
-						player.getEquipment().setItemInMainHand(item);
-						added = true;
-					} else added = Util.addToInventory(player, player.getInventory(), item, false, false);
-				}
-				if (!added) {
-					Item dropped = player.getWorld().dropItem(player.getLocation(), item);
-					dropped.setItemStack(item);
-					dropped.setGravity(gravity);
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-					int delay = Math.max(pickupDelay.get(caster, null, power, args), 0);
-					dropped.setPickupDelay(delay);
-
-					playSpellEffects(EffectPosition.SPECIAL, dropped, power, args);
-				}
-			}
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		boolean added = false;
+					ItemStack item = createBook(player, data.args());
+					if (openInstead) player.openBook(item);
+					else {
+						if (addToInventory) {
+							player.getEquipment().getItemInMainHand();
+							if (BlockUtils.isAir(player.getEquipment().getItemInMainHand().getType())) {
+								player.getEquipment().setItemInMainHand(item);
+								added = true;
+							} else added = Util.addToInventory(player, player.getInventory(), item, false, false);
+						}
+						if (!added) {
+							Item dropped = player.getWorld().dropItem(player.getLocation(), item);
+							dropped.setItemStack(item);
+							dropped.setGravity(gravity);
+		
+							int delay = Math.max(pickupDelay.get(player, null, data.power(), data.args()), 0);
+							dropped.setPickupDelay(delay);
+		
+							playSpellEffects(EffectPosition.SPECIAL, dropped, data.power(), data.args());
+						}
+					}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {

@@ -5,6 +5,8 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.mana.ManaChangeReason;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -24,16 +26,27 @@ public class ManaSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			int amount = mana.get(caster, null, power, args);
-			if (Boolean.TRUE.equals(powerAffectsMana.get(caster, null, power, args))) amount = Math.round(amount * power);
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			boolean added = MagicSpells.getManaHandler().addMana(player, amount, ManaChangeReason.OTHER);
-			if (!added) return PostCastAction.ALREADY_HANDLED;
-			playSpellEffects(EffectPosition.CASTER, player, power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		int amount = mana.get(player, null, data.power(), data.args());
+		if (Boolean.TRUE.equals(powerAffectsMana.get(player, null, data.power(), data.args())))
+			amount = Math.round(amount * data.power());
+
+		boolean added = MagicSpells.getManaHandler().addMana(player, amount, ManaChangeReason.OTHER);
+		if (!added)
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		playSpellEffects(EffectPosition.CASTER, player, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 }

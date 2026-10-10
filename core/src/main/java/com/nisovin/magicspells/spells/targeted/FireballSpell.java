@@ -32,6 +32,7 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -106,71 +107,76 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			boolean selfTarget = false;
-			LivingEntity target = null;
-			Location targetLoc = null;
+	public CastResult cast(SpellData data) {
+		boolean selfTarget = false;
+					LivingEntity target = null;
+					Location targetLoc = null;
+		
+					if (Boolean.TRUE.equals(requireEntityTarget.get(data.caster(), null, data.power(), data.args()))) {
+						TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data.caster(), data.power(), data.args());
+						if (targetInfo.noTarget())
+							return new CastResult(noTarget(data.caster(), data.args(), targetInfo), data);
+		
+						target = targetInfo.target();
+						data = data.power(targetInfo.power());
+		
+						if (Boolean.TRUE.equals(checkPlugins.get(data.caster(), target, data.power(), data.args()))) {
+							// Run a pvp damage check
+							MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(data.caster(),
+									target, DamageCause.MAGIC, 1D, this);
+							EventUtil.call(event);
+							if (event.isCancelled())
+								return new CastResult(noTarget(data.caster(), data.args()), data);
+						}
+		
+						targetLoc = target.getLocation();
+						if (target.equals(data.caster()))
+							selfTarget = true;
+					}
+		
+					// Create fireball
+					Location loc;
+					Location pLoc = data.caster().getLocation();
+					if (!selfTarget) {
+						loc = data.caster().getEyeLocation().toVector().add(pLoc.getDirection().multiply(2))
+								.toLocation(data.caster().getWorld(), pLoc.getYaw(), pLoc.getPitch());
+						loc = offsetLocation(loc, data.caster(), target, data.power(), data.args());
+						loc = applyOffsetTargetingCorrection(loc, targetLoc, data.caster(), target, data.power(), data.args());
+					} else {
+						loc = pLoc.toVector().add(pLoc.getDirection().setY(0).multiply(2)).toLocation(data.caster().getWorld(),
+								pLoc.getYaw() + 180, 0);
+					}
+					Fireball fireball;
+					if (Boolean.TRUE.equals(smallFireball.get(data.caster(), target, data.power(), data.args())) && data.caster() instanceof Player) {
+						fireball = data.caster().launchProjectile(SmallFireball.class);
+						data.caster().getWorld().playEffect(data.caster().getLocation(), Effect.GHAST_SHOOT, 0);
+					} else {
+						fireball = data.caster().getWorld().spawn(loc, Fireball.class);
+						data.caster().getWorld().playEffect(data.caster().getLocation(), Effect.GHAST_SHOOT, 0);
+						fireballs.put(fireball, new CastData(data.power(), data.args()));
+					}
+		
+					fireball.setShooter(data.caster());
+					fireball.setGravity(Boolean.TRUE.equals(fireballGravity.get(data.caster(), target, data.power(), data.args())));
+		
+					SpellData effectData = new SpellData(data.caster(), loc, data.power(), data.args());
+		playSpellEffects(EffectPosition.CASTER, data.caster(), effectData);
+		playSpellEffects(EffectPosition.PROJECTILE, fireball, effectData);
 
-			if (Boolean.TRUE.equals(requireEntityTarget.get(caster, null, power, args))) {
-				TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-				if (targetInfo.noTarget())
-					return noTarget(caster, args, targetInfo);
-
-				target = targetInfo.target();
-				power = targetInfo.power();
-
-				if (Boolean.TRUE.equals(checkPlugins.get(caster, target, power, args))) {
-					// Run a pvp damage check
-					MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster,
-							target, DamageCause.MAGIC, 1D, this);
-					EventUtil.call(event);
-					if (event.isCancelled())
-						return noTarget(caster, args);
-				}
-
-				targetLoc = target.getLocation();
-				if (target.equals(caster))
-					selfTarget = true;
-			}
-
-			// Create fireball
-			Location loc;
-			Location pLoc = caster.getLocation();
-			if (!selfTarget) {
-				loc = caster.getEyeLocation().toVector().add(pLoc.getDirection().multiply(2))
-						.toLocation(caster.getWorld(), pLoc.getYaw(), pLoc.getPitch());
-				loc = offsetLocation(loc, caster, target, power, args);
-				loc = applyOffsetTargetingCorrection(loc, targetLoc, caster, target, power, args);
-			} else {
-				loc = pLoc.toVector().add(pLoc.getDirection().setY(0).multiply(2)).toLocation(caster.getWorld(),
-						pLoc.getYaw() + 180, 0);
-			}
-			Fireball fireball;
-			if (Boolean.TRUE.equals(smallFireball.get(caster, target, power, args)) && caster instanceof Player) {
-				fireball = caster.launchProjectile(SmallFireball.class);
-				caster.getWorld().playEffect(caster.getLocation(), Effect.GHAST_SHOOT, 0);
-			} else {
-				fireball = caster.getWorld().spawn(loc, Fireball.class);
-				caster.getWorld().playEffect(caster.getLocation(), Effect.GHAST_SHOOT, 0);
-				fireballs.put(fireball, new CastData(power, args));
-			}
-
-			fireball.setShooter(caster);
-			fireball.setGravity(Boolean.TRUE.equals(fireballGravity.get(caster, target, power, args)));
-
-			SpellData data = new SpellData(caster, loc, power, args);
-			playSpellEffects(EffectPosition.CASTER, caster, data);
-			playSpellEffects(EffectPosition.PROJECTILE, fireball, data);
-
-			if (target != null) {
-				sendMessages(caster, target, args);
-				return PostCastAction.NO_MESSAGES;
-			}
+		if (target != null) {
+			sendMessages(data.caster(), target, data.args());
+			return new CastResult(PostCastAction.NO_MESSAGES, data);
 		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,

@@ -11,6 +11,8 @@ import org.bukkit.inventory.PlayerInventory;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
@@ -47,33 +49,42 @@ public class UnconjureSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			PlayerInventory inventory = player.getInventory();
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			ItemStack[] contents = new ItemStack[1];
-
-			// Search for the hovering item first.
-			InventoryView invView = player.getOpenInventory();
-			boolean stop = false;
-			if (invView.getCursor() != null) {
-				contents[0] = invView.getCursor();
-				stop = filterItems(contents);
-				invView.setCursor(contents[0]);
-			}
-			if (stop) return PostCastAction.ALREADY_HANDLED;
-
-			contents = inventory.getContents();
-			stop = filterItems(contents);
-			inventory.setContents(contents);
-			if (stop) return PostCastAction.ALREADY_HANDLED;
-
-			contents = inventory.getArmorContents();
-			filterItems(contents);
-			inventory.setArmorContents(contents);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		PlayerInventory inventory = player.getInventory();
+		
+					ItemStack[] contents = new ItemStack[1];
+		
+					// Search for the hovering item first.
+					InventoryView invView = player.getOpenInventory();
+					boolean stop = false;
+					if (invView.getCursor() != null) {
+						contents[0] = invView.getCursor();
+						stop = filterItems(contents);
+						invView.setCursor(contents[0]);
+					}
+					if (stop) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		
+					contents = inventory.getContents();
+					stop = filterItems(contents);
+					inventory.setContents(contents);
+					if (stop) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		
+					contents = inventory.getArmorContents();
+					filterItems(contents);
+					inventory.setArmorContents(contents);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	private boolean filterItems(ItemStack[] oldItems) {
 		boolean stop = false;

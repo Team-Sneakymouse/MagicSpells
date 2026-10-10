@@ -162,126 +162,134 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			List<Block> lastTwo;
-			try {
-				lastTwo = getLastTwoTargetedBlocks(player, power, args);
-			} catch (IllegalStateException e) {
-				DebugHandler.debugIllegalState(e);
-				lastTwo = null;
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			if (lastTwo == null || lastTwo.size() != 2)
-				return noTarget(player, args);
-			if (!BlockUtils.isAir(lastTwo.get(0).getType()) || BlockUtils.isAir(lastTwo.get(1).getType()))
-				return noTarget(player, args);
-
-			Block block = lastTwo.get(0);
-			Block against = lastTwo.get(1);
-			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, block.getLocation(), power,
-					args);
-			EventUtil.call(event);
-			if (event.isCancelled())
-				return noTarget(player, strFailed, args);
-			block = event.getTargetLocation().getBlock();
-			power = event.getPower();
-
-			if (!hasMiddle) {
-				boolean done = materialize(player, block, against, power, args);
-				if (!done)
-					return noTarget(player, strFailed, args);
-				return PostCastAction.HANDLE_NORMALLY;
-			}
-
-			// Unfortunately, shape array placement is world relative, will fix later.
-			// This is the top-left edge of the shape array
-			Location patternStart = against.getLocation();
-
-			patternStart.setX(against.getX() - Math.ceil(rowSize / 2F));
-			patternStart.setZ(against.getZ() - Math.ceil(columnSize / 2F));
-
-			// spawnBlock is the current position in the loop where it will spawn the block
-			Location spawnBlock = patternStart;
-
-			Block air;
-			Block ground;
-
-			/*
-			 * The row position dictates which block within a row pattern will be used
-			 * when placing the new block.
-			 */
-			int rowPosition = 0;
-
-			int height = this.height.get(caster, null, power, args);
-
-			// If height is 0, the code ceases to function. Lets not have that.
-			if (height == 0)
-				height = 1;
-
-			// Lets start at the bottom floor then work our way up; or down if height is
-			// less than 0.
-			for (int y = 0; y < height; y++) {
-				/*
-				 * The pattern position is the pattern being read for a specific row
-				 * This should always reset when it goes over into a new height.
-				 */
-				int patternPosition = 0;
-
-				// The block placement loop will start finish a row of coloumns then move down a
-				// row..
-				for (int z = 0; z < columnSize; z++) {
-					// Everytime a shape row is finished, we need to start at the topleft and move
-					// down 1 row.
-					spawnBlock = patternStart.clone().add(0, y, z);
-
-					// Lets parse the list of patterns for that row.
-					if (patterns != null && patternPosition >= patterns.size())
-						patternPosition = 0;
-
-					int rowLength = getRowLength(patternPosition);
-
-					// If they want the pattern to restart on each row, reset rowpositon to 0.
-					if (restartPatternEachRow)
-						rowPosition = 0;
-
-					// Lets spawn a block on each column before we move down a row.
-					for (int x = 0; x < rowSize; x++) {
-						ground = spawnBlock.getBlock();
-						air = ground.getRelative(BlockFace.UP);
-
-						/*
-						 * Now if we are looking for a block outside of the rowlist range.
-						 * We need to go back to the start and repeat that row pattern
-						 */
-						if (rowPosition >= rowLength)
-							rowPosition = 0;
-
-						// Doesn't really become a pattern if you randomize it but ok!
-						if (!stretchPattern || y < 1)
-							material = blockGenerator(randomizePattern, patternPosition, rowPosition);
-						else
-							material = ground.getType();
-
-						// Add one to the row position so that it will move to the next block.
-						rowPosition++;
-
-						// As soon as a block can't be spawned, it will return an error.
-						boolean done = materialize(player, air, ground, power, args);
-						if (!done)
-							return noTarget(player, strFailed, args);
-
-						// Done with placing that one block? Move on to the next one.
-						spawnBlock.setX((ground.getX() + 1));
+		List<Block> lastTwo;
+					try {
+						lastTwo = getLastTwoTargetedBlocks(player, data.power(), data.args());
+					} catch (IllegalStateException e) {
+						DebugHandler.debugIllegalState(e);
+						lastTwo = null;
 					}
-					// If multiple patterns were requested, lets move to the next line.
-					patternPosition++;
-				}
-			}
-
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		
+					if (lastTwo == null || lastTwo.size() != 2)
+						return new CastResult(noTarget(player, data.args()), data);
+					if (!BlockUtils.isAir(lastTwo.get(0).getType()) || BlockUtils.isAir(lastTwo.get(1).getType()))
+						return new CastResult(noTarget(player, data.args()), data);
+		
+					Block block = lastTwo.get(0);
+					Block against = lastTwo.get(1);
+					SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, block.getLocation(), data.power(),
+							data.args());
+					EventUtil.call(event);
+					if (event.isCancelled())
+						return new CastResult(noTarget(player, strFailed, data.args()), data);
+					block = event.getTargetLocation().getBlock();
+					data = data.power(event.getPower());
+		
+					if (!hasMiddle) {
+						boolean done = materialize(player, block, against, data.power(), data.args());
+						if (!done)
+							return new CastResult(noTarget(player, strFailed, data.args()), data);
+						return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+					}
+		
+					// Unfortunately, shape array placement is world relative, will fix later.
+					// This is the top-left edge of the shape array
+					Location patternStart = against.getLocation();
+		
+					patternStart.setX(against.getX() - Math.ceil(rowSize / 2F));
+					patternStart.setZ(against.getZ() - Math.ceil(columnSize / 2F));
+		
+					// spawnBlock is the current position in the loop where it will spawn the block
+					Location spawnBlock = patternStart;
+		
+					Block air;
+					Block ground;
+		
+					/*
+					 * The row position dictates which block within a row pattern will be used
+					 * when placing the new block.
+					 */
+					int rowPosition = 0;
+		
+					int height = this.height.get(player, null, data.power(), data.args());
+		
+					// If height is 0, the code ceases to function. Lets not have that.
+					if (height == 0)
+						height = 1;
+		
+					// Lets start at the bottom floor then work our way up; or down if height is
+					// less than 0.
+					for (int y = 0; y < height; y++) {
+						/*
+						 * The pattern position is the pattern being read for a specific row
+						 * This should always reset when it goes over into a new height.
+						 */
+						int patternPosition = 0;
+		
+						// The block placement loop will start finish a row of coloumns then move down a
+						// row..
+						for (int z = 0; z < columnSize; z++) {
+							// Everytime a shape row is finished, we need to start at the topleft and move
+							// down 1 row.
+							spawnBlock = patternStart.clone().add(0, y, z);
+		
+							// Lets parse the list of patterns for that row.
+							if (patterns != null && patternPosition >= patterns.size())
+								patternPosition = 0;
+		
+							int rowLength = getRowLength(patternPosition);
+		
+							// If they want the pattern to restart on each row, reset rowpositon to 0.
+							if (restartPatternEachRow)
+								rowPosition = 0;
+		
+							// Lets spawn a block on each column before we move down a row.
+							for (int x = 0; x < rowSize; x++) {
+								ground = spawnBlock.getBlock();
+								air = ground.getRelative(BlockFace.UP);
+		
+								/*
+								 * Now if we are looking for a block outside of the rowlist range.
+								 * We need to go back to the start and repeat that row pattern
+								 */
+								if (rowPosition >= rowLength)
+									rowPosition = 0;
+		
+								// Doesn't really become a pattern if you randomize it but ok!
+								if (!stretchPattern || y < 1)
+									material = blockGenerator(randomizePattern, patternPosition, rowPosition);
+								else
+									material = ground.getType();
+		
+								// Add one to the row position so that it will move to the next block.
+								rowPosition++;
+		
+								// As soon as a block can't be spawned, it will return an error.
+								boolean done = materialize(player, air, ground, data.power(), data.args());
+								if (!done)
+									return new CastResult(noTarget(player, strFailed, data.args()), data);
+		
+								// Done with placing that one block? Move on to the next one.
+								spawnBlock.setX((ground.getX() + 1));
+							}
+							// If multiple patterns were requested, lets move to the next line.
+							patternPosition++;
+						}
+					}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public CastResult castAtLocation(SpellData data) {

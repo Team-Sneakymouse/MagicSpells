@@ -4,6 +4,8 @@ import com.comphenix.protocol.PacketType;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spells.targeted.PasteSpell;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
@@ -21,18 +23,19 @@ public class UndoPasteSpell extends InstantSpell {
     }
 
     @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-
-        if(state == SpellCastState.NORMAL){
-
-            if(ignoreOtherPlayers){
-                PasteSpell.undoPlayerPastes(pasteSpellName, caster.getUniqueId().toString());
-            }else{
-                PasteSpell.undoPastes(pasteSpellName);
-            }
-
+    public CastResult cast(SpellData data) {
+        if (ignoreOtherPlayers) {
+            PasteSpell.undoPlayerPastes(pasteSpellName, data.caster().getUniqueId().toString());
+        } else {
+            PasteSpell.undoPastes(pasteSpellName);
         }
+        return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+    }
 
-        return PostCastAction.HANDLE_NORMALLY;
+    @Override
+    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+        if (state != SpellCastState.NORMAL)
+            return PostCastAction.HANDLE_NORMALLY;
+        return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
     }
 }

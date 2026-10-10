@@ -14,6 +14,8 @@ import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
@@ -72,61 +74,62 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<Player> targetInfo = getTargetedPlayer(data.caster(), data.power(), data.args());
+		if (targetInfo.noTarget())
+			return new CastResult(noTarget(data.caster(), data.args(), targetInfo), data);
+
+		data = data.target(targetInfo.target()).power(targetInfo.power());
+		CastResult result = castAtEntity(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return result;
+
+		sendMessages(data.caster(), data.target(), data.args());
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			this.parseHashVariable();
-			TargetInfo<Player> info = getTargetedPlayer(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
-			Player target = info.target();
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			try {
-				target.setResourcePack(url, hash, target.hasPermission("magicspells.bypassresourcepacks") ? false : required, prompt);
-			} catch (IllegalArgumentException e) {
-				DebugHandler.debugIllegalArgumentException(e);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			playSpellEffects(caster, target, info.power(), args);
-			sendMessages(caster, target, args);
-
-			return PostCastAction.NO_MESSAGES;
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							this.parseHashVariable();
+							try {
+								player.setResourcePack(url, hash, player.hasPermission("magicspells.bypassresourcepacks") ? false : required, prompt);
+							} catch (IllegalArgumentException e) {
+								DebugHandler.debugIllegalArgumentException(e);
+								return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							}
+							playSpellEffects(data.caster(), data.target(), data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		} else {
+			if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							this.parseHashVariable();
+							try {
+								player.setResourcePack(url, hash, player.hasPermission("magicspells.bypassresourcepacks") ? false : required, prompt);
+							} catch (IllegalArgumentException e) {
+								DebugHandler.debugIllegalArgumentException(e);
+								return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							}
+							playSpellEffects(EffectPosition.TARGET, data.target(), data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
-
-		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
-		
-		this.parseHashVariable();
-
-		try {
-			player.setResourcePack(url, hash, player.hasPermission("magicspells.bypassresourcepacks") ? false : required, prompt);
-		} catch (IllegalArgumentException e) {
-			DebugHandler.debugIllegalArgumentException(e);
-			return false;
-		}
-
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
-		
-		this.parseHashVariable();
-
-		try {
-			player.setResourcePack(url, hash, player.hasPermission("magicspells.bypassresourcepacks") ? false : required, prompt);
-		} catch (IllegalArgumentException e) {
-			DebugHandler.debugIllegalArgumentException(e);
-			return false;
-		}
-
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 }

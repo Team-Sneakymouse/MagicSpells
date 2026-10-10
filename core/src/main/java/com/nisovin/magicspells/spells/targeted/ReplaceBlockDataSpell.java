@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.NumberConversions;
 
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -64,16 +65,22 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Block target = pointBlank ? caster.getLocation().getBlock() : getTargetedBlock(caster, power, args);
-			if (target == null)
-				return noTarget(caster, args);
-			if (!replaceBlockData(caster, target.getLocation(), power, args))
-				return PostCastAction.ALREADY_HANDLED;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		Block target = pointBlank ? data.caster().getLocation().getBlock() : getTargetedBlock(data.caster(), data.power(), data.args());
+		if (target == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+		if (!replaceBlockData(data.caster(), target.getLocation(), data.power(), data.args()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {

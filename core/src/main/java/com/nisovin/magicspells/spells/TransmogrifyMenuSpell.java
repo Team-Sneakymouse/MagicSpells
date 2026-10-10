@@ -30,6 +30,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.util.DataUtil;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -130,24 +131,24 @@ public class TransmogrifyMenuSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state != SpellCastState.NORMAL || !(caster instanceof Player player)) {
-			return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player)) {
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
 
 		ItemStack held = player.getInventory().getItemInMainHand();
 		String magicItemName = getMagicItemName(held);
 		if (magicItemName == null) {
-			sendMessage(strNotMagicItem, player, args);
-			return PostCastAction.ALREADY_HANDLED;
+			sendMessage(strNotMagicItem, player, data.args());
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		}
 
 		MenuSession session = new MenuSession(
 				player.getInventory().getHeldItemSlot(),
 				held.clone(),
 				magicItemName,
-				power,
-				args,
+				data.power(),
+				data.args(),
 				0,
 				Map.of()
 		);
@@ -156,7 +157,14 @@ public class TransmogrifyMenuSpell extends InstantSpell {
 		if (delay > 0) MagicSpells.scheduleDelayedTask(() -> openMenu(player), delay);
 		else openMenu(player);
 
-		return PostCastAction.HANDLE_NORMALLY;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	private void openMenu(Player opener) {

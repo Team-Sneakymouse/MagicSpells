@@ -6,6 +6,8 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -23,35 +25,49 @@ public class SkinSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<Player> info = getTargetedPlayer(data.caster(), data.power(), data.args());
+					if (info.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), info), data);
+		
+					Util.setSkin(info.target(), texture, signature);
+					playSpellEffects(data.caster(), info.target(), info.power(), data.args());
+					sendMessages(data.caster(), info.target(), data.args());
+		
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			TargetInfo<Player> info = getTargetedPlayer(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			Util.setSkin(info.target(), texture, signature);
-			playSpellEffects(caster, info.target(), info.power(), args);
-			sendMessages(caster, info.target(), args);
 
-			return PostCastAction.NO_MESSAGES;
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							Util.setSkin(player, texture, signature);
+							playSpellEffects(data.caster(), data.target(), data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		} else {
+			if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							Util.setSkin(player, texture, signature);
+							playSpellEffects(EffectPosition.TARGET, data.target(), data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
-
-		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
-		Util.setSkin(player, texture, signature);
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
-		Util.setSkin(player, texture, signature);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 }

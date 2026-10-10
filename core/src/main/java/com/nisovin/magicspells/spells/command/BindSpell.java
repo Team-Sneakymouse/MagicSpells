@@ -15,6 +15,8 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.CastItem;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.CommandSpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
@@ -66,71 +68,79 @@ public class BindSpell extends CommandSpell {
 	// DEBUG INFO: level 3, performing bind
 	// DEBUG INFO: level 3, bind successful
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (args == null || args.length == 0) {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			Spell spell = MagicSpells.getSpellByInGameName(Util.arrayJoin(args, ' '));
-			Spellbook spellbook = MagicSpells.getSpellbook(player);
-
-			if (spell == null) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (spell.isHelperSpell()) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (!spellbook.hasSpell(spell)) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (!spell.canCastWithItem()) {
-				sendMessage(strCantBindSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (allowedSpells != null && !allowedSpells.contains(spell)) {
-				sendMessage(strSpellCantBind, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			CastItem castItem = new CastItem(player.getEquipment().getItemInMainHand());
-			MagicSpells.debug(3, "Trying to bind spell '" + spell.getInternalName() + "' to cast item " + castItem + "...");
-
-			if (BlockUtils.isAir(castItem.getType()) && !allowBindToFist) {
-				sendMessage(strCantBindItem, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (bindableItems != null && !bindableItems.contains(castItem)) {
-				sendMessage(strCantBindItem, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (!spell.canBind(castItem)) {
-				String msg = spell.getCantBindError();
-				if (msg == null) msg = strCantBindItem;
-				sendMessage(msg, player, args);
-				return PostCastAction.NO_MESSAGES;
-			}
-
-			MagicSpells.debug(3, "    Performing bind...");
-			spellbook.addCastItem(spell, castItem);
-			spellbook.save();
-			MagicSpells.debug(3, "    Bind successful.");
-			sendMessage(strCastSelf, player, args, "%s", spell.getName());
-			playSpellEffects(EffectPosition.CASTER, player, power, args);
-			return PostCastAction.NO_MESSAGES;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (data.args() == null || data.args().length == 0) {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					Spell spell = MagicSpells.getSpellByInGameName(Util.arrayJoin(data.args(), ' '));
+					Spellbook spellbook = MagicSpells.getSpellbook(player);
+		
+					if (spell == null) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					if (spell.isHelperSpell()) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					if (!spellbook.hasSpell(spell)) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					if (!spell.canCastWithItem()) {
+						sendMessage(strCantBindSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					if (allowedSpells != null && !allowedSpells.contains(spell)) {
+						sendMessage(strSpellCantBind, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					CastItem castItem = new CastItem(player.getEquipment().getItemInMainHand());
+					MagicSpells.debug(3, "Trying to bind spell '" + spell.getInternalName() + "' to cast item " + castItem + "...");
+		
+					if (BlockUtils.isAir(castItem.getType()) && !allowBindToFist) {
+						sendMessage(strCantBindItem, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					if (bindableItems != null && !bindableItems.contains(castItem)) {
+						sendMessage(strCantBindItem, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					if (!spell.canBind(castItem)) {
+						String msg = spell.getCantBindError();
+						if (msg == null) msg = strCantBindItem;
+						sendMessage(msg, player, data.args());
+						return new CastResult(PostCastAction.NO_MESSAGES, data);
+					}
+		
+					MagicSpells.debug(3, "    Performing bind...");
+					spellbook.addCastItem(spell, castItem);
+					spellbook.save();
+					MagicSpells.debug(3, "    Bind successful.");
+					sendMessage(strCastSelf, player, data.args(), "%s", spell.getName());
+					playSpellEffects(EffectPosition.CASTER, player, data.power(), data.args());
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

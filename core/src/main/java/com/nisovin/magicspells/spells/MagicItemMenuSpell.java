@@ -24,6 +24,7 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors;
 import com.nisovin.magicspells.util.magicitems.MagicItemExpirationScheduler;
@@ -61,33 +62,51 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		if (targetSelf) {
+						openDelay(player, player, data.power(), data.args());
+						return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+					}
+		
+					TargetInfo<Player> targetInfo = getTargetedPlayer(player, data.power(), data.args());
+					if (targetInfo.noTarget()) return new CastResult(noTarget(player, data.args(), targetInfo), data);
+					openDelay(player, targetInfo.target(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (targetSelf) {
-				openDelay(player, player, power, args);
-				return PostCastAction.HANDLE_NORMALLY;
-			}
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			TargetInfo<Player> targetInfo = getTargetedPlayer(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
-			openDelay(caster, targetInfo.target(), power, args);
+
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							openDelay(data.caster(), player, data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		} else {
+			if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							openDelay(null, player, data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
-
-		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
-		openDelay(caster, player, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
-		openDelay(null, player, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override

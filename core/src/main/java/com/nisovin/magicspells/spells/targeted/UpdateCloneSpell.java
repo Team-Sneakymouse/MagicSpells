@@ -4,6 +4,8 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.config.ConfigData;
 import org.bukkit.Bukkit;
@@ -31,25 +33,31 @@ public class UpdateCloneSpell extends TargetedSpell implements TargetedLocationS
     }
 
     @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-
-        Block block = getTargetedBlock(caster, power, args);
+    public CastResult cast(SpellData data) {
+        Block block = getTargetedBlock(data.caster(), data.power(), data.args());
 
         Collection<Entity> nearbyEntities = block.getLocation().getNearbyEntities(
-                maxX.get(caster, null, power, args),
-                maxY.get(caster, null, power, args),
-                maxZ.get(caster, null, power, args));
+                maxX.get(data.caster(), null, data.power(), data.args()),
+                maxY.get(data.caster(), null, data.power(), data.args()),
+                maxZ.get(data.caster(), null, data.power(), data.args()));
 
         Bukkit.getLogger().info("I am checking for nearby block entities! " + nearbyEntities.size());
         Bukkit.getLogger().info("Position: " + block.getX() + " | " + block.getY() + " | " + block.getZ());
 
-        for(Entity entity : nearbyEntities){
-            if(entity instanceof Display
-                    && MagicSpells.getVolatileCodeHandler().isRelatedToFalsePlayer((Display)entity)){
-                MagicSpells.getVolatileCodeHandler().updateFalsePlayer((Display)entity);
+        for (Entity entity : nearbyEntities) {
+            if (entity instanceof Display
+                    && MagicSpells.getVolatileCodeHandler().isRelatedToFalsePlayer((Display) entity)) {
+                MagicSpells.getVolatileCodeHandler().updateFalsePlayer((Display) entity);
             }
         }
-        return PostCastAction.HANDLE_NORMALLY;
+        return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+    }
+
+    @Override
+    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+        if (state != SpellCastState.NORMAL)
+            return PostCastAction.HANDLE_NORMALLY;
+        return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
     }
 
     @Override

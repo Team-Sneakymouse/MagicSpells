@@ -14,6 +14,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
@@ -90,8 +91,13 @@ public class AutoPickupSpell extends Spell {
      * This spell cannot be cast directly - it only responds to pickup events.
      */
     @Override
+    public CastResult cast(SpellData data) {
+        return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+    }
+
+    @Override
     public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-        return PostCastAction.ALREADY_HANDLED;
+        return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -55,21 +57,26 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
-
-			boolean ok = geyser(caster, target.target(), target.power(), args);
-			if (!ok) return noTarget(caster, args);
-
-			playSpellEffects(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
-
-			return PostCastAction.NO_MESSAGES;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), data.args());
+					if (target.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), target), data);
+		
+					boolean ok = geyser(data.caster(), target.target(), target.power(), data.args());
+					if (!ok) return new CastResult(noTarget(data.caster(), data.args()), data);
+		
+					playSpellEffects(data.caster(), target.target(), target.power(), data.args());
+					sendMessages(data.caster(), target.target(), data.args());
+		
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	private boolean geyser(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		double damage = this.damage.get(caster, target, power, args);
@@ -118,20 +125,30 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							geyser(data.caster(), data.target(), data.power(), data.args());
+							playSpellEffects(data.caster(), data.target(), data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		} else {
+			if (!validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							geyser(null, data.target(), data.power(), data.args());
+							playSpellEffects(EffectPosition.TARGET, data.target(), data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+	}
+
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		geyser(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		geyser(null, target, power, args);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private static class GeyserAnimation extends SpellAnimation {

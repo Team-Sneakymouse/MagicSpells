@@ -3,6 +3,8 @@ package com.nisovin.magicspells.spells.targeted;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector3;
@@ -44,13 +46,20 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
     }
 
     @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-        if(castAtCaster){
-            fillZone(caster, caster.getLocation());
-        }else{
-            fillZone(caster, getTargetedBlock(caster, power, args).getLocation());
+    public CastResult cast(SpellData data) {
+        if (castAtCaster) {
+            fillZone(data.caster(), data.caster().getLocation());
+        } else {
+            fillZone(data.caster(), getTargetedBlock(data.caster(), data.power(), data.args()).getLocation());
         }
-        return PostCastAction.ALREADY_HANDLED;
+        return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+    }
+
+    @Override
+    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+        if (state != SpellCastState.NORMAL)
+            return PostCastAction.HANDLE_NORMALLY;
+        return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
     }
 
     @Override

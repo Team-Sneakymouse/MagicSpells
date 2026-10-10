@@ -20,6 +20,7 @@ import com.nisovin.magicspells.util.DataUtil;
 import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.spells.CommandSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.events.SpellLearnEvent;
@@ -72,43 +73,52 @@ public class TomeSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			Spell spell;
-			if (args == null || args.length == 0) {
-				sendMessage(strUsage, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			Spellbook spellbook = MagicSpells.getSpellbook(player);
-			spell = MagicSpells.getSpellByInGameName(args[0]);
-			if (spell == null || !spellbook.hasSpell(spell)) {
-				sendMessage(strNoSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			if (requireTeachPerm && !MagicSpells.getSpellbook(player).canTeach(spell)) {
-				sendMessage(strCantTeach, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			ItemStack item = player.getInventory().getItemInMainHand();
-			if (item.getType() != Material.WRITTEN_BOOK) {
-				sendMessage(strNoBook, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			if (!allowOverwrite && DataUtil.getString(item, key) != null) {
-				sendMessage(strAlreadyHasSpell, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			int uses = defaultUses;
-			if (args.length > 1 && RegexUtil.matches(INT_PATTERN, args[1]))
-				uses = Integer.parseInt(args[1]);
-			item = createTome(spell, uses, item);
-			player.getInventory().setItemInMainHand(item);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		Spell spell;
+					if (data.args() == null || data.args().length == 0) {
+						sendMessage(strUsage, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					Spellbook spellbook = MagicSpells.getSpellbook(player);
+					spell = MagicSpells.getSpellByInGameName(data.args()[0]);
+					if (spell == null || !spellbook.hasSpell(spell)) {
+						sendMessage(strNoSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					if (requireTeachPerm && !MagicSpells.getSpellbook(player).canTeach(spell)) {
+						sendMessage(strCantTeach, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					ItemStack item = player.getInventory().getItemInMainHand();
+					if (item.getType() != Material.WRITTEN_BOOK) {
+						sendMessage(strNoBook, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					if (!allowOverwrite && DataUtil.getString(item, key) != null) {
+						sendMessage(strAlreadyHasSpell, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					int uses = defaultUses;
+					if (data.args().length > 1 && RegexUtil.matches(INT_PATTERN, data.args()[1]))
+						uses = Integer.parseInt(data.args()[1]);
+					item = createTome(spell, uses, item);
+					player.getInventory().setItemInMainHand(item);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

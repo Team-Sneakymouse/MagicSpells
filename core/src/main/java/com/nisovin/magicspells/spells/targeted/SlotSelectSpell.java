@@ -6,6 +6,8 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -37,28 +39,52 @@ public class SlotSelectSpell extends TargetedSpell implements TargetedEntitySpel
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		TargetInfo<Player> info = getTargetedPlayer(data.caster(), data.power(), data.args());
+		if (info.noTarget())
+			return new CastResult(noTarget(data.caster(), data.args(), info), data);
+
+		data = data.target(info.target()).power(info.power());
+		CastResult result = castAtEntity(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		sendMessages(data.caster(), data.target(), data.args());
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			TargetInfo<Player> info = getTargetedPlayer(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			if (!slotChange(caster, info.target(), info.power(), args)) return noTarget(caster, args);
-
-			sendMessages(caster, info.target(), args);
-			return PostCastAction.NO_MESSAGES;
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			boolean ok = slotChange(data.caster(), data.target(), data.power(), data.args());
+			return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+		if (!validTargetList.canTarget(data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		boolean ok = slotChange(null, data.target(), data.power(), data.args());
+		return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return validTargetList.canTarget(caster, target) && slotChange(caster, target, power, args);
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return validTargetList.canTarget(target) && slotChange(null, target, power, args);
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private boolean slotChange(LivingEntity caster, LivingEntity target, float power, String[] args) {

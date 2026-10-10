@@ -14,6 +14,8 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.targeted.PulserSpell.Pulser;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -64,22 +66,28 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Location loc = null;
-			if (pointBlank)
-				loc = caster.getLocation();
-			else {
-				Block b = getTargetedBlock(caster, power, args);
-				if (b != null && !BlockUtils.isAir(b.getType()))
-					loc = b.getLocation();
-			}
-			if (loc == null)
-				return noTarget(caster, args);
-			removePulsers(caster, loc, power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		Location loc = null;
+					if (pointBlank)
+						loc = data.caster().getLocation();
+					else {
+						Block b = getTargetedBlock(data.caster(), data.power(), data.args());
+						if (b != null && !BlockUtils.isAir(b.getType()))
+							loc = b.getLocation();
+					}
+					if (loc == null)
+						return new CastResult(noTarget(data.caster(), data.args()), data);
+					removePulsers(data.caster(), loc, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {

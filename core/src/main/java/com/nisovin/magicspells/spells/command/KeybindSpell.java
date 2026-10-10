@@ -23,6 +23,8 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.spells.CommandSpell;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
@@ -92,45 +94,54 @@ public class KeybindSpell extends CommandSpell {
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (args.length != 1) {
-				player.sendMessage("Invalid args.");
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			Keybinds keybinds = playerKeybinds.computeIfAbsent(player.getName(), name -> new Keybinds(player));
-			
-			int slot = player.getInventory().getHeldItemSlot();
-			ItemStack item = player.getEquipment().getItemInMainHand();
-			
-			if (args[0].equalsIgnoreCase("clear")) {
-				keybinds.clearKeybind(slot);
-				saveKeybinds(keybinds);
-				return PostCastAction.HANDLE_NORMALLY;
-			}
-			if (args[0].equalsIgnoreCase("clearall")) {
-				keybinds.clearKeybinds();
-				saveKeybinds(keybinds);
-				return PostCastAction.HANDLE_NORMALLY;
-			}
-			if (!BlockUtils.isAir(item.getType())) {
-				player.sendMessage("Not empty.");
-				return PostCastAction.ALREADY_HANDLED;
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			Spell spell = MagicSpells.getSpellbook(player).getSpellByName(args[0]);
-			if (spell == null) {
-				player.sendMessage("No spell.");
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			keybinds.setKeybind(slot, spell);
-			keybinds.select(slot);
-			saveKeybinds(keybinds);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (data.args().length != 1) {
+						player.sendMessage("Invalid data.args().");
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+					
+					Keybinds keybinds = playerKeybinds.computeIfAbsent(player.getName(), name -> new Keybinds(player));
+					
+					int slot = player.getInventory().getHeldItemSlot();
+					ItemStack item = player.getEquipment().getItemInMainHand();
+					
+					if (data.args()[0].equalsIgnoreCase("clear")) {
+						keybinds.clearKeybind(slot);
+						saveKeybinds(keybinds);
+						return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+					}
+					if (data.args()[0].equalsIgnoreCase("clearall")) {
+						keybinds.clearKeybinds();
+						saveKeybinds(keybinds);
+						return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+					}
+					if (!BlockUtils.isAir(item.getType())) {
+						player.sendMessage("Not empty.");
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					Spell spell = MagicSpells.getSpellbook(player).getSpellByName(data.args()[0]);
+					if (spell == null) {
+						player.sendMessage("No spell.");
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					keybinds.setKeybind(slot, spell);
+					keybinds.select(slot);
+					saveKeybinds(keybinds);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {

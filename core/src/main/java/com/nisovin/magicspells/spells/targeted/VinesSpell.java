@@ -12,6 +12,8 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.MultipleFacing;
 
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.SpellAnimation;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -33,17 +35,23 @@ public class VinesSpell extends TargetedSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			List<Block> target = getLastTwoTargetedBlocks(caster, power, args);
-			if (target == null || target.size() != 2) return noTarget(caster, args);
-			if (target.get(0).getType() != Material.AIR || !target.get(1).getType().isSolid()) return noTarget(caster, args);
-
-			boolean success = growVines(caster, target.get(0), target.get(1), power, args);
-			if (!success) return noTarget(caster, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		List<Block> target = getLastTwoTargetedBlocks(data.caster(), data.power(), data.args());
+					if (target == null || target.size() != 2) return new CastResult(noTarget(data.caster(), data.args()), data);
+					if (target.get(0).getType() != Material.AIR || !target.get(1).getType().isSolid()) return new CastResult(noTarget(data.caster(), data.args()), data);
+		
+					boolean success = growVines(data.caster(), target.get(0), target.get(1), data.power(), data.args());
+					if (!success) return new CastResult(noTarget(data.caster(), data.args()), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 	
 	private boolean growVines(LivingEntity caster, Block air, Block solid, float power, String[] args) {
 		BlockFace face = air.getFace(solid);

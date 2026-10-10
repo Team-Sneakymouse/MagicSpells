@@ -10,6 +10,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MobUtil;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -33,34 +34,40 @@ public class RoarSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			double radius = Math.min(this.radius.get(caster, null, power, args), MagicSpells.getGlobalRadius());
-			List<Entity> entities = caster.getNearbyEntities(radius, radius, radius);
+	public CastResult cast(SpellData data) {
+		double radius = Math.min(this.radius.get(data.caster(), null, data.power(), data.args()), MagicSpells.getGlobalRadius());
+		List<Entity> entities = data.caster().getNearbyEntities(radius, radius, radius);
 
-			int count = 0;
-			for (Entity entity : entities) {
-				if (!(entity instanceof LivingEntity livingEntity)) continue;
-				if (entity instanceof Player) continue;
-				if (!validTargetList.canTarget(caster, entity)) continue;
+		int count = 0;
+		for (Entity entity : entities) {
+			if (!(entity instanceof LivingEntity livingEntity)) continue;
+			if (entity instanceof Player) continue;
+			if (!validTargetList.canTarget(data.caster(), entity)) continue;
 
-				MobUtil.setTarget(livingEntity, caster);
-				count++;
+			MobUtil.setTarget(livingEntity, data.caster());
+			count++;
 
-				SpellData data = new SpellData(caster, livingEntity, power, args);
-				playSpellEffectsTrail(caster.getLocation(), entity.getLocation(), data);
-				playSpellEffects(EffectPosition.TARGET, entity, data);
-			}
-
-			if (cancelIfNoTargets && count == 0) {
-				sendMessage(strNoTarget, caster, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+			SpellData effectData = new SpellData(data.caster(), livingEntity, data.power(), data.args());
+			playSpellEffectsTrail(data.caster().getLocation(), entity.getLocation(), effectData);
+			playSpellEffects(EffectPosition.TARGET, entity, effectData);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		if (cancelIfNoTargets && count == 0) {
+			sendMessage(strNoTarget, data.caster(), data.args());
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		}
+
+		playSpellEffects(EffectPosition.CASTER, data.caster(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	public String getStrNoTarget() {
 		return strNoTarget;

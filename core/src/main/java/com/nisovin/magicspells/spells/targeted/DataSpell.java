@@ -8,6 +8,8 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.util.data.DataLivingEntity;
@@ -40,30 +42,43 @@ public class DataSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 	
 	@Override
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		TargetInfo<LivingEntity> targetInfo = getTargetedEntity(player, data.power(), data.args());
+					if (targetInfo.noTarget()) return new CastResult(noTarget(player, data.args(), targetInfo), data);
+					LivingEntity target = targetInfo.target();
+		
+					playSpellEffects(player, target, targetInfo.power(), data.args());
+					String value = dataElement.apply(target);
+					MagicSpells.getVariableManager().set(variableName, player, value);
+		
+					sendMessages(player, target, data.args());
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(player, power, args);
-			if (targetInfo.noTarget()) return noTarget(player, args, targetInfo);
-			LivingEntity target = targetInfo.target();
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			playSpellEffects(player, target, targetInfo.power(), args);
-			String value = dataElement.apply(target);
-			MagicSpells.getVariableManager().set(variableName, player, value);
 
-			sendMessages(caster, target, args);
-			return PostCastAction.NO_MESSAGES;
-		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (!(data.caster() instanceof Player) || !validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+				playSpellEffects(data.caster(), data.target(), data.power(), data.args());
+				String value = dataElement.apply(data.target());
+				MagicSpells.getVariableManager().set(variableName, (Player) data.caster(), value);
+				return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(caster instanceof Player) || !validTargetList.canTarget(caster, target)) return false;
-		playSpellEffects(caster, target, power, args);
-		String value = dataElement.apply(target);
-		MagicSpells.getVariableManager().set(variableName, (Player) caster, value);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 }

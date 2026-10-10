@@ -6,6 +6,8 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
@@ -23,19 +25,25 @@ public class PermissionSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && permissionNodes != null) {
-			int duration = this.duration.get(caster, null, power, args);
-			if (duration <= 0) return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		if (permissionNodes != null) {
+			int duration = this.duration.get(data.caster(), null, data.power(), data.args());
+			if (duration <= 0) return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
 			for (String node : permissionNodes) {
-				caster.addAttachment(MagicSpells.plugin, node, true, duration);
+				data.caster().addAttachment(MagicSpells.plugin, node, true, duration);
 			}
 
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+			playSpellEffects(EffectPosition.CASTER, data.caster(), data.power(), data.args());
 		}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
 
-		return PostCastAction.HANDLE_NORMALLY;
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 }

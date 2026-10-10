@@ -16,6 +16,8 @@ import org.bukkit.inventory.meta.Damageable;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -90,86 +92,95 @@ public class RepairSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			boolean repaired = false;
-			for (String s : toRepair) {
-				if (s.equals(REPAIR_SELECTOR_KEY_HELD)) {
-					ItemStack item = player.getInventory().getItemInMainHand();
-					item = repair(caster, item, power, args);
-					if (item == null) continue;
-					repaired = true;
-					player.getInventory().setItemInMainHand(item);
-					continue;
-				}
-				
-				if (s.equals(REPAIR_SELECTOR_KEY_HOTBAR) || s.equals(REPAIR_SELECTOR_KEY_INVENTORY)) {
-					int start;
-					int end;
-					ItemStack[] items = player.getInventory().getContents();
-					if (s.equals(REPAIR_SELECTOR_KEY_HOTBAR)) {
-						start = 0; 
-						end = 9;
-					} else {
-						start = 9; 
-						end = 36;
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		boolean repaired = false;
+					for (String s : toRepair) {
+						if (s.equals(REPAIR_SELECTOR_KEY_HELD)) {
+							ItemStack item = player.getInventory().getItemInMainHand();
+							item = repair(player, item, data.power(), data.args());
+							if (item == null) continue;
+							repaired = true;
+							player.getInventory().setItemInMainHand(item);
+							continue;
+						}
+						
+						if (s.equals(REPAIR_SELECTOR_KEY_HOTBAR) || s.equals(REPAIR_SELECTOR_KEY_INVENTORY)) {
+							int start;
+							int end;
+							ItemStack[] items = player.getInventory().getContents();
+							if (s.equals(REPAIR_SELECTOR_KEY_HOTBAR)) {
+								start = 0; 
+								end = 9;
+							} else {
+								start = 9; 
+								end = 36;
+							}
+							for (int i = start; i < end; i++) {
+								ItemStack item = items[i];
+								item = repair(player, item, data.power(), data.args());
+								if (item == null) continue;
+								items[i] = item;
+								repaired = true;
+							}
+							player.getInventory().setContents(items);
+							continue;
+						}
+		
+						if (s.equals(REPAIR_SELECTOR_KEY_HELMET)) {
+							ItemStack item = player.getInventory().getHelmet();
+							item = repair(player, item, data.power(), data.args());
+							if (item == null) continue;
+							repaired = true;
+							player.getInventory().setHelmet(item);
+							continue;
+						}
+		
+						if (s.equals(REPAIR_SELECTOR_KEY_CHESTPLATE)) {
+							ItemStack item = player.getInventory().getChestplate();
+							item = repair(player, item, data.power(), data.args());
+							if (item == null) continue;
+							repaired = true;
+							player.getInventory().setChestplate(item);
+							continue;
+						}
+		
+						if (s.equals(REPAIR_SELECTOR_KEY_LEGGINGS)) {
+							ItemStack item = player.getInventory().getLeggings();
+							item = repair(player, item, data.power(), data.args());
+							if (item == null) continue;
+							repaired = true;
+							player.getInventory().setLeggings(item);
+							continue;
+						}
+		
+						if (s.equals(REPAIR_SELECTOR_KEY_BOOTS)) {
+							ItemStack item = player.getInventory().getBoots();
+							item = repair(player, item, data.power(), data.args());
+							if (item == null) continue;
+							repaired = true;
+							player.getInventory().setBoots(item);
+						}
+		
 					}
-					for (int i = start; i < end; i++) {
-						ItemStack item = items[i];
-						item = repair(caster, item, power, args);
-						if (item == null) continue;
-						items[i] = item;
-						repaired = true;
+					if (!repaired) {
+						sendMessage(strNothingToRepair, player, data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 					}
-					player.getInventory().setContents(items);
-					continue;
-				}
-
-				if (s.equals(REPAIR_SELECTOR_KEY_HELMET)) {
-					ItemStack item = player.getInventory().getHelmet();
-					item = repair(caster, item, power, args);
-					if (item == null) continue;
-					repaired = true;
-					player.getInventory().setHelmet(item);
-					continue;
-				}
-
-				if (s.equals(REPAIR_SELECTOR_KEY_CHESTPLATE)) {
-					ItemStack item = player.getInventory().getChestplate();
-					item = repair(caster, item, power, args);
-					if (item == null) continue;
-					repaired = true;
-					player.getInventory().setChestplate(item);
-					continue;
-				}
-
-				if (s.equals(REPAIR_SELECTOR_KEY_LEGGINGS)) {
-					ItemStack item = player.getInventory().getLeggings();
-					item = repair(caster, item, power, args);
-					if (item == null) continue;
-					repaired = true;
-					player.getInventory().setLeggings(item);
-					continue;
-				}
-
-				if (s.equals(REPAIR_SELECTOR_KEY_BOOTS)) {
-					ItemStack item = player.getInventory().getBoots();
-					item = repair(caster, item, power, args);
-					if (item == null) continue;
-					repaired = true;
-					player.getInventory().setBoots(item);
-				}
-
-			}
-			if (!repaired) {
-				sendMessage(strNothingToRepair, player, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-			
-			playSpellEffects(EffectPosition.CASTER, player, power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+					
+					playSpellEffects(EffectPosition.CASTER, player, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	private ItemStack repair(LivingEntity caster, ItemStack item, float power, String[] args) {
 		if (item == null) return null;

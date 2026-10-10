@@ -13,6 +13,8 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -54,60 +56,66 @@ public class PhaseSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			int r = getRange(caster, power, args);
-
-			int distance = maxDistance.get(caster, null, power, args);
-			if (Boolean.TRUE.equals(powerAffectsMaxDistance.get(caster, null, power, args))) distance = Math.round(distance * power);
-
-			BlockIterator iter;
-			try {
-				iter = new BlockIterator(caster, distance << 1);
-			} catch (IllegalStateException e) {
-				sendMessage(strCantPhase, caster, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			int i = 0;
-			Block start = null;
-			Location location = null;
-
-			while (i++ < r << 1 && iter.hasNext()) {
-				Block b = iter.next();
-				if (BlockUtils.isAir(b.getType())) continue;
-				if (caster.getLocation().distanceSquared(b.getLocation()) >= r * r) continue;
-				start = b;
-				break;
-			}
-
-			if (start != null) {
-				if (canPassThrough(start)) {
-					while (i++ < distance << 1 && iter.hasNext()) {
-						Block block = iter.next();
-						if (BlockUtils.isAir(block.getType()) && BlockUtils.isAir(block.getRelative(0, 1, 0).getType()) && caster.getLocation().distanceSquared(block.getLocation()) < distance * distance) {
-							location = block.getLocation();
-							break;
-						}
-						if (!canPassThrough(block)) break;
+	public CastResult cast(SpellData data) {
+		int r = getRange(data.caster(), data.power(), data.args());
+		
+					int distance = maxDistance.get(data.caster(), null, data.power(), data.args());
+					if (Boolean.TRUE.equals(powerAffectsMaxDistance.get(data.caster(), null, data.power(), data.args()))) distance = Math.round(distance * data.power());
+		
+					BlockIterator iter;
+					try {
+						iter = new BlockIterator(data.caster(), distance << 1);
+					} catch (IllegalStateException e) {
+						sendMessage(strCantPhase, data.caster(), data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 					}
-				}
-			}
-
-			if (location == null) {
-				sendMessage(strCantPhase, caster, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			location.setX(location.getX() + 0.5);
-			location.setZ(location.getZ() + 0.5);
-			location.setPitch(caster.getLocation().getPitch());
-			location.setYaw(caster.getLocation().getYaw());
-			playSpellEffects(caster, location, power, args);
-			caster.teleportAsync(location);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		
+					int i = 0;
+					Block start = null;
+					Location location = null;
+		
+					while (i++ < r << 1 && iter.hasNext()) {
+						Block b = iter.next();
+						if (BlockUtils.isAir(b.getType())) continue;
+						if (data.caster().getLocation().distanceSquared(b.getLocation()) >= r * r) continue;
+						start = b;
+						break;
+					}
+		
+					if (start != null) {
+						if (canPassThrough(start)) {
+							while (i++ < distance << 1 && iter.hasNext()) {
+								Block block = iter.next();
+								if (BlockUtils.isAir(block.getType()) && BlockUtils.isAir(block.getRelative(0, 1, 0).getType()) && data.caster().getLocation().distanceSquared(block.getLocation()) < distance * distance) {
+									location = block.getLocation();
+									break;
+								}
+								if (!canPassThrough(block)) break;
+							}
+						}
+					}
+		
+					if (location == null) {
+						sendMessage(strCantPhase, data.caster(), data.args());
+						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+					}
+		
+					location.setX(location.getX() + 0.5);
+					location.setZ(location.getZ() + 0.5);
+					location.setPitch(data.caster().getLocation().getPitch());
+					location.setYaw(data.caster().getLocation().getYaw());
+					playSpellEffects(data.caster(), location, data.power(), data.args());
+					data.caster().teleportAsync(location);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
 
 	private boolean canPassThrough(Block block) {
 		// Check only blacklist.

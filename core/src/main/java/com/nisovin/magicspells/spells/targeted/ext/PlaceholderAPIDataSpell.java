@@ -8,6 +8,8 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 
@@ -52,27 +54,44 @@ public class PlaceholderAPIDataSpell extends TargetedSpell implements TargetedEn
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		TargetInfo<Player> targetInfo = getTargetedPlayer(player, data.power(), data.args());
+		if (targetInfo.noTarget())
+			return new CastResult(noTarget(player, data.args(), targetInfo), data);
+
+		data = data.target(targetInfo.target()).power(targetInfo.power());
+		CastResult result = castAtEntity(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return result;
+
+		sendMessages(data.caster(), data.target(), data.args());
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			TargetInfo<Player> targetInfo = getTargetedPlayer(player, power, args);
-			if (targetInfo.noTarget()) return noTarget(player, args, null);
-			Player target = targetInfo.target();
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			setPlaceholders(player, target, targetInfo.power(), args);
-			sendMessages(caster, target, args);
-
-			return PostCastAction.NO_MESSAGES;
-		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (!(data.caster() instanceof Player casterPlayer) || !(data.target() instanceof Player targetPlayer))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!validTargetList.canTarget(data.caster(), data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		setPlaceholders(casterPlayer, targetPlayer, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(caster instanceof Player casterPlayer) || !(target instanceof Player targetPlayer)) return false;
-		if (!validTargetList.canTarget(caster, target)) return false;
-		setPlaceholders(casterPlayer, targetPlayer, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void setPlaceholders(Player caster, Player target, float power, String[] args) {

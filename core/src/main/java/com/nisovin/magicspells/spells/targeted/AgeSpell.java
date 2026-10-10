@@ -6,6 +6,8 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.ValidTargetChecker;
@@ -30,32 +32,46 @@ public class AgeSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<LivingEntity> info = getTargetedEntity(data.caster(), data.power(), AGEABLE, data.args());
+					if (info.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), info), data);
+		
+					applyAgeChanges(data.caster(), (Ageable) info.target(), info.power(), data.args());
+					sendMessages(data.caster(), info.target(), data.args());
+		
+					return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, AGEABLE, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			applyAgeChanges(caster, (Ageable) info.target(), info.power(), args);
-			sendMessages(caster, info.target(), args);
 
-			return PostCastAction.NO_MESSAGES;
+	
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()) || !(data.target() instanceof Ageable ageable)) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							applyAgeChanges(data.caster(), ageable, data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		} else {
+			if (!validTargetList.canTarget(data.target()) || !(data.target() instanceof Ageable ageable)) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+							applyAgeChanges(null, ageable, data.power(), data.args());
+							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
-
-		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target) || !(target instanceof Ageable ageable)) return false;
-		applyAgeChanges(caster, ageable, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target) || !(target instanceof Ageable ageable)) return false;
-		applyAgeChanges(null, ageable, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void applyAgeChanges(LivingEntity caster, Ageable target, float power, String[] args) {
