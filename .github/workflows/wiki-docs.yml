@@ -1,0 +1,81 @@
+name: Wiki docs (spell surfaces)
+
+# When spell/effect/modifier Java changes on DvZ, verify the sibling wiki clone
+# still has index coverage. Expects MagicSpells.wiki checked out beside this repo
+# in CI via a second checkout.
+
+on:
+  push:
+    branches: [DvZ]
+    paths:
+      - 'core/src/main/java/com/nisovin/magicspells/spells/**'
+      - 'core/src/main/java/com/nisovin/magicspells/spelleffects/**'
+      - 'core/src/main/java/com/nisovin/magicspells/castmodifiers/**'
+      - '.github/workflows/wiki-docs.yml'
+  pull_request:
+    branches: [DvZ]
+    paths:
+      - 'core/src/main/java/com/nisovin/magicspells/spells/**'
+      - 'core/src/main/java/com/nisovin/magicspells/spelleffects/**'
+      - 'core/src/main/java/com/nisovin/magicspells/castmodifiers/**'
+      - '.github/workflows/wiki-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: magicspells-wiki-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout MagicSpells
+        uses: actions/checkout@v4
+        with:
+          path: MagicSpells
+
+      - name: Checkout MagicSpells.wiki
+        uses: actions/checkout@v4
+        with:
+          repository: Team-Sneakymouse/MagicSpells.wiki
+          path: MagicSpells.wiki
+
+      - name: Checkout workspace scripts (wiki tooling)
+        uses: actions/checkout@v4
+        with:
+          repository: Team-Sneakymouse/MagicSpells-Workspace
+          path: MagicSpells-Workspace
+          sparse-checkout: |
+            scripts/wiki
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Arrange layout for scripts
+        run: |
+          # scripts expect workspace root with MagicSpells/ + MagicSpells.wiki/
+          mkdir -p /tmp/ms-wiki-check
+          cp -a MagicSpells /tmp/ms-wiki-check/MagicSpells
+          cp -a MagicSpells.wiki /tmp/ms-wiki-check/MagicSpells.wiki
+          mkdir -p /tmp/ms-wiki-check/scripts
+          cp -a MagicSpells-Workspace/scripts/wiki /tmp/ms-wiki-check/scripts/wiki
+
+      - name: Generate and check indexes
+        working-directory: /tmp/ms-wiki-check
+        run: |
+          if [ -f scripts/wiki/generate-all.py ]; then
+            python3 scripts/wiki/generate-all.py
+            python3 scripts/wiki/check-spell-index.py
+            python3 scripts/wiki/check-page-shape.py
+          else
+            # Fallback: wiki-local wrappers / legacy scripts
+            python3 MagicSpells.wiki/scripts/generate-all.py || python3 MagicSpells.wiki/scripts/generate-spell-index.py
+            python3 MagicSpells.wiki/scripts/check-spell-index.py
+          fi
