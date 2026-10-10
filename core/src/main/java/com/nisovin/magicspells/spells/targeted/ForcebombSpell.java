@@ -29,7 +29,7 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 
 	private boolean addYForceInstead;
 	private boolean callTargetEvents;
-	private boolean powerAffectsForce;
+	private ConfigData<Boolean> powerAffectsForce;
 	private boolean addVelocityInstead;
 
 	public ForcebombSpell(MagicConfig config, String spellName) {
@@ -43,7 +43,7 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 
 		addYForceInstead = getConfigBoolean("add-y-force-instead", false);
 		callTargetEvents = getConfigBoolean("call-target-events", true);
-		powerAffectsForce = getConfigBoolean("power-affects-force", true);
+		powerAffectsForce = getConfigDataBoolean("power-affects-force", true);
 		addVelocityInstead = getConfigBoolean("add-velocity-instead", false);
 	}
 
@@ -147,13 +147,13 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 		}
 
 		double force = this.force.get(caster, target, power, args) / 10;
-		if (powerAffectsForce)
+		if (Boolean.TRUE.equals(powerAffectsForce.get(caster, target, basePower, args)))
 			force *= power;
 
 		Vector v = target.getLocation().toVector().subtract(location.toVector()).normalize().multiply(force);
 
 		double yForce = this.yForce.get(caster, target, power, args) / 10;
-		if (powerAffectsForce)
+		if (Boolean.TRUE.equals(powerAffectsForce.get(caster, target, basePower, args)))
 			yForce *= power;
 
 		double maxYForce = this.maxYForce.get(caster, target, power, args) / 10;

@@ -36,7 +36,7 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 	private final boolean stunBody;
 	private final boolean stunMonitor;
 	private final boolean useTargetLocation;
-	private final boolean powerAffectsDuration;
+	private final ConfigData<Boolean> powerAffectsDuration;
 
 	private final StunListener listener;
 
@@ -49,7 +49,7 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 		stunBody = getConfigBoolean("stun-body", true);
 		stunMonitor = getConfigBoolean("stun-monitor", true);
 		useTargetLocation = getConfigBoolean("use-target-location", true);
-		powerAffectsDuration = getConfigBoolean("power-affects-duration", true);
+		powerAffectsDuration = getConfigDataBoolean("power-affects-duration", true);
 
 		listener = new StunListener();
 		stunnedLivingEntities = new HashMap<>();
@@ -112,7 +112,7 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private void stunLivingEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		long duration = this.duration.get(caster, target, power, args) * TimeUtil.MILLISECONDS_PER_SECOND / 20;
-		if (powerAffectsDuration) duration = Math.round(duration * power);
+		if (Boolean.TRUE.equals(powerAffectsDuration.get(caster, target, power, args))) duration = Math.round(duration * power);
 
 		StunnedInfo info = new StunnedInfo(caster, target, System.currentTimeMillis() + duration, target.getLocation());
 		stunnedLivingEntities.put(target.getUniqueId(), info);

@@ -19,8 +19,8 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 	private final ConfigData<Float> seconds;
 	private final ConfigData<Float> multiplier;
 
-	private final boolean powerAffectsSeconds;
-	private final boolean powerAffectsMultiplier;
+	private final ConfigData<Boolean> powerAffectsSeconds;
+	private final ConfigData<Boolean> powerAffectsMultiplier;
 
 	public ModifyCooldownSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -28,8 +28,8 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 		seconds = getConfigDataFloat("seconds", 1F);
 		multiplier = getConfigDataFloat("multiplier", 1F);
 
-		powerAffectsSeconds = getConfigBoolean("power-affects-seconds", true);
-		powerAffectsMultiplier = getConfigBoolean("power-affects-multiplier", true);
+		powerAffectsSeconds = getConfigDataBoolean("power-affects-seconds", true);
+		powerAffectsMultiplier = getConfigDataBoolean("power-affects-multiplier", true);
 
 		filter = getConfigSpellFilter();
 	}
@@ -79,10 +79,10 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 
 	private void modifyCooldowns(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		float sec = seconds.get(caster, target, power, args);
-		if (powerAffectsSeconds) sec *= power;
+		if (Boolean.TRUE.equals(powerAffectsSeconds.get(caster, target, power, args))) sec *= power;
 
 		float mult = multiplier.get(caster, target, power, args);
-		if (powerAffectsMultiplier) mult /= power;
+		if (Boolean.TRUE.equals(powerAffectsMultiplier.get(caster, target, power, args))) mult /= power;
 
 		for (Spell spell : MagicSpells.spells()) {
 			if (!spell.onCooldown(target)) continue;

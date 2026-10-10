@@ -55,9 +55,9 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 	private boolean alwaysOnGround;
 	private boolean preventBreaking;
 	private boolean checkPluginsPerBlock;
-	private boolean powerAffectsWallWidth;
-	private boolean powerAffectsWallHeight;
-	private boolean powerAffectsWallDuration;
+	private ConfigData<Boolean> powerAffectsWallWidth;
+	private ConfigData<Boolean> powerAffectsWallHeight;
+	private ConfigData<Boolean> powerAffectsWallDuration;
 
 	public WallSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -92,9 +92,9 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 		alwaysOnGround = getConfigBoolean("always-on-ground", false);
 		preventBreaking = getConfigBoolean("prevent-breaking", false);
 		checkPluginsPerBlock = getConfigBoolean("check-plugins-per-block", checkPlugins);
-		powerAffectsWallWidth = getConfigBoolean("power-affects-wall-width", true);
-		powerAffectsWallHeight = getConfigBoolean("power-affects-wall-height", true);
-		powerAffectsWallDuration = getConfigBoolean("power-affects-wall-duration", true);
+		powerAffectsWallWidth = getConfigDataBoolean("power-affects-wall-width", true);
+		powerAffectsWallHeight = getConfigDataBoolean("power-affects-wall-height", true);
+		powerAffectsWallDuration = getConfigDataBoolean("power-affects-wall-duration", true);
 	}
 	
 	@Override
@@ -191,10 +191,10 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 		Vector dir = direction.clone();
 
 		int wallWidth = this.wallWidth.get(caster, null, power, args);
-		if (powerAffectsWallWidth) wallWidth = Math.round(wallWidth * power);
+		if (Boolean.TRUE.equals(powerAffectsWallWidth.get(caster, null, power, args))) wallWidth = Math.round(wallWidth * power);
 
 		int wallHeight = this.wallHeight.get(caster, null, power, args);
-		if (powerAffectsWallHeight) wallHeight = Math.round(wallHeight * power);
+		if (Boolean.TRUE.equals(powerAffectsWallHeight.get(caster, null, power, args))) wallHeight = Math.round(wallHeight * power);
 
 		int wallDepth = this.wallDepth.get(caster, null, power, args);
 
@@ -219,7 +219,7 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 		}
 
 		int wallDuration = this.wallDuration.get(caster, null, power, args);
-		if (powerAffectsWallDuration) wallDuration = Math.round(wallDuration * power);
+		if (Boolean.TRUE.equals(powerAffectsWallDuration.get(caster, null, power, args))) wallDuration = Math.round(wallDuration * power);
 
 		if (wallDuration > 0) {
 			blockSets.put(caster.getUniqueId(), blockSet);

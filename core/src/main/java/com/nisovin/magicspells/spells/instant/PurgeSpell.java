@@ -25,14 +25,14 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 
 	private ConfigData<Double> radius;
 
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 
 	public PurgeSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
 		radius = getConfigDataDouble("radius", 15);
 
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
 
 		List<String> list = getConfigStringList("entities", null);
 		if (list != null && !list.isEmpty()) {
@@ -85,7 +85,7 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 
 	private boolean purge(LivingEntity caster, Location loc, float power, String[] args) {
 		double castingRange = radius.get(caster, null, power, args);
-		if (powerAffectsRadius)
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args)))
 			castingRange *= power;
 		castingRange = Math.min(castingRange, MagicSpells.getGlobalRadius());
 

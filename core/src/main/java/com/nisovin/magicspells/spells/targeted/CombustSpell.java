@@ -28,10 +28,10 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 	private ConfigData<Integer> fireTicks;
 	private ConfigData<Double> fireTickDamage;
 
-	private boolean checkPlugins;
-	private boolean preventImmunity;
-	private boolean powerAffectsFireTicks;
-	private boolean powerAffectsFireTickDamage;
+	private ConfigData<Boolean> checkPlugins;
+	private ConfigData<Boolean> preventImmunity;
+	private ConfigData<Boolean> powerAffectsFireTicks;
+	private ConfigData<Boolean> powerAffectsFireTickDamage;
 
 	public CombustSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -39,10 +39,10 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 		fireTicks = getConfigDataInt("fire-ticks", 100);
 		fireTickDamage = getConfigDataDouble("fire-tick-damage", 1);
 
-		checkPlugins = getConfigBoolean("check-plugins", true);
-		preventImmunity = getConfigBoolean("prevent-immunity", true);
-		powerAffectsFireTicks = getConfigBoolean("power-affects-fire-ticks", true);
-		powerAffectsFireTickDamage = getConfigBoolean("power-affects-fire-tick-damage", true);
+		checkPlugins = getConfigDataBoolean("check-plugins", true);
+		preventImmunity = getConfigDataBoolean("prevent-immunity", true);
+		powerAffectsFireTicks = getConfigDataBoolean("power-affects-fire-ticks", true);
+		powerAffectsFireTickDamage = getConfigDataBoolean("power-affects-fire-tick-damage", true);
 
 		combusting = new HashMap<>();
 	}
@@ -86,14 +86,14 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	private boolean combust(LivingEntity caster, final LivingEntity target, float power, String[] args) {
-		if (checkPlugins && caster != null) {
+		if (caster != null && Boolean.TRUE.equals(checkPlugins.get(caster, target, power, args))) {
 			MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, DamageCause.MAGIC, 1, this);
 			EventUtil.call(event);
 			if (event.isCancelled()) return false;
 		}
 
 		int duration = fireTicks.get(caster, target, power, args);
-		if (powerAffectsFireTicks) duration = Math.round(duration * power);
+		if (Boolean.TRUE.equals(powerAffectsFireTicks.get(caster, target, power, args))) duration = Math.round(duration * power);
 		target.setFireTicks(duration);
 
 		combusting.put(target.getUniqueId(), new CombustData(caster, power, args));
@@ -117,12 +117,14 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 		if (data == null) return;
 
 		double fireTickDamage = this.fireTickDamage.get(data.caster, target, data.power, data.args);
-		if (powerAffectsFireTickDamage) fireTickDamage = fireTickDamage * data.power;
+		if (Boolean.TRUE.equals(powerAffectsFireTickDamage.get(data.caster, target, data.power, data.args))) fireTickDamage = fireTickDamage * data.power;
 
 		EventUtil.call(new SpellApplyDamageEvent(this, data.caster, target, fireTickDamage, DamageCause.FIRE_TICK, ""));
 		event.setDamage(fireTickDamage);
 
-		if (preventImmunity) MagicSpells.scheduleDelayedTask(() -> target.setNoDamageTicks(0), 0);
+		if (Boolean.TRUE.equals(preventImmunity.get(data.caster, target, data.power, data.args))) {
+			MagicSpells.scheduleDelayedTask(() -> target.setNoDamageTicks(0), 0);
+		}
 	}
 
 	private record CombustData(LivingEntity caster, float power, String[] args) {}

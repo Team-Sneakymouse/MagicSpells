@@ -38,7 +38,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 
 	private boolean circle;
 	private boolean removeOnTouch;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 
 	private String spellOnTouchName;
 	private Subspell spellOnTouch;
@@ -61,7 +61,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 
 		circle = getConfigBoolean("circle", false);
 		removeOnTouch = getConfigBoolean("remove-on-touch", true);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
 
 		spellOnTouchName = getConfigString("spell-on-touch", "");
 
@@ -163,7 +163,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 		int y = loc.getBlockY();
 
 		int rad = this.radius.get(player, null, power, args);
-		if (powerAffectsRadius)
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(player, null, power, args)))
 			rad = Math.round(rad * power);
 
 		SpellData data = new SpellData(player, loc, power, args);

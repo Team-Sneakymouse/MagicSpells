@@ -35,7 +35,7 @@ public class HasteSpell extends BuffSpell {
 	private ConfigData<Integer> accelerationInterval;
 
 	private boolean hidden;
-	private boolean powerAffectsStrength;
+	private ConfigData<Boolean> powerAffectsStrength;
 
 	public HasteSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -48,7 +48,7 @@ public class HasteSpell extends BuffSpell {
 		accelerationInterval = getConfigDataInt("acceleration-interval", 0);
 
 		hidden = getConfigBoolean("hidden", false);
-		powerAffectsStrength = getConfigBoolean("power-affects-strength", true);
+		powerAffectsStrength = getConfigDataBoolean("power-affects-strength", true);
 
 		players = new HashMap<>();
 	}
@@ -170,7 +170,7 @@ public class HasteSpell extends BuffSpell {
 
 		private HasteData(LivingEntity entity, float power, String[] args) {
 			int strength = HasteSpell.this.strength.get(entity, null, power, args);
-			if (powerAffectsStrength) strength = AccurateMath.round(strength * power);
+			if (Boolean.TRUE.equals(powerAffectsStrength.get(entity, null, power, args))) strength = AccurateMath.round(strength * power);
 			this.strength = strength;
 
 			accelerationIncrease = HasteSpell.this.accelerationIncrease.get(entity, null, power, args);

@@ -40,7 +40,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 	private boolean growPotatoes;
 	private boolean growBeetroot;
 	private boolean growPitcherPlants;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 	private boolean resolveGrowthPerCrop;
 
 	public FarmSpell(MagicConfig config, String spellName) {
@@ -61,7 +61,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 		growPotatoes = getConfigBoolean("grow-potatoes", true);
 		growBeetroot = getConfigBoolean("grow-beetroot", false);
 		growPitcherPlants = getConfigBoolean("grow-pitcher-plants", true);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
 		resolveGrowthPerCrop = getConfigBoolean("resolve-growth-per-crop", false);
 	}
 
@@ -117,7 +117,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private boolean farm(LivingEntity caster, Block center, float power, String[] args) {
 		int radius = this.radius.get(caster, null, power, args);
-		if (powerAffectsRadius) radius = Math.round(radius * power);
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) radius = Math.round(radius * power);
 
 		int cx = center.getX();
 		int cy = center.getY() - (requiresFarmland ? 0 : 1);

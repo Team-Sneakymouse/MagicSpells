@@ -56,8 +56,8 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 	private final boolean pointBlank;
 	private final boolean blockCoords;
 	private final boolean failIfNoTargets;
-	private final boolean powerAffectsRadius;
-	private final boolean powerAffectsMaxBlocks;
+	private final ConfigData<Boolean> powerAffectsRadius;
+	private final ConfigData<Boolean> powerAffectsMaxBlocks;
 
 	public AreaScanSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -90,8 +90,8 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		pointBlank = getConfigBoolean("point-blank", false);
 		blockCoords = getConfigBoolean("block-coords", false);
 		failIfNoTargets = getConfigBoolean("fail-if-not-found", true);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
-		powerAffectsMaxBlocks = getConfigBoolean("power-affects-max-blocks", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
+		powerAffectsMaxBlocks = getConfigDataBoolean("power-affects-max-blocks", true);
 
 		List<String> blockStrings = getConfigStringList("blocks", null);
 		if (blockStrings != null && !blockStrings.isEmpty()) {
@@ -206,7 +206,7 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		int yInnerRadius = this.yInnerRadius.get(caster, null, power, args);
 		int zInnerRadius = this.zInnerRadius.get(caster, null, power, args);
 
-		if (powerAffectsRadius) {
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) {
 			xRadius = Math.round(xRadius * power);
 			yRadius = Math.round(yRadius * power);
 			zRadius = Math.round(zRadius * power);
@@ -225,7 +225,7 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		zInnerRadius = Math.min(zInnerRadius, MagicSpells.getGlobalRadius());
 
 		int count = this.maxBlocks.get(caster, null, power, args);
-		if (powerAffectsMaxBlocks)
+		if (Boolean.TRUE.equals(powerAffectsMaxBlocks.get(caster, null, power, args)))
 			count = Math.round(count * power);
 
 		SpellData data = new SpellData(caster, origin, power, args);

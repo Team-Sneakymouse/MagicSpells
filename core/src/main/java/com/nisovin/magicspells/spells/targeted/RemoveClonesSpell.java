@@ -24,7 +24,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 	private ConfigData<Float> radius;
 
 	private boolean pointBlank;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 
 	private List<String> cloneSpellNames;
 	private List<CloneSpell> cloneSpells;
@@ -35,7 +35,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
         radius = getConfigDataFloat("radius", 10F);
 
 		pointBlank = getConfigBoolean("point-blank", true);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", false);
 
 		cloneSpellNames = getConfigStringList("clone-spells", null);
 		cloneSpells = new ArrayList<CloneSpell>();
@@ -108,7 +108,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 
     private boolean removeClones(LivingEntity caster, Location loc, float power, String[] args) {
 		float radSq = radius.get(caster, null, power, args);
-		if (powerAffectsRadius) radSq *= power;
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) radSq *= power;
 
 		radSq *= radSq;
 

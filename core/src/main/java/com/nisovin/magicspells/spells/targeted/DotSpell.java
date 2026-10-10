@@ -32,11 +32,11 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 
 	private ConfigData<Double> damage;
 
-	private boolean ignoreArmor;
-	private boolean checkPlugins;
-	private boolean powerAffectsDamage;
-	private boolean avoidDamageModification;
-	private boolean tryAvoidingAntiCheatPlugins;
+	private ConfigData<Boolean> ignoreArmor;
+	private ConfigData<Boolean> checkPlugins;
+	private ConfigData<Boolean> powerAffectsDamage;
+	private ConfigData<Boolean> avoidDamageModification;
+	private ConfigData<Boolean> tryAvoidingAntiCheatPlugins;
 
 	private String spellDamageType;
 	private DamageCause damageType;
@@ -50,11 +50,11 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 
 		damage = getConfigDataDouble("damage", 2);
 
-		ignoreArmor = getConfigBoolean("ignore-armor", false);
-		checkPlugins = getConfigBoolean("check-plugins", true);
-		powerAffectsDamage = getConfigBoolean("power-affects-damage", true);
-		avoidDamageModification = getConfigBoolean("avoid-damage-modification", true);
-		tryAvoidingAntiCheatPlugins = getConfigBoolean("try-avoiding-anticheat-plugins", false);
+		ignoreArmor = getConfigDataBoolean("ignore-armor", false);
+		checkPlugins = getConfigDataBoolean("check-plugins", true);
+		powerAffectsDamage = getConfigDataBoolean("power-affects-damage", true);
+		avoidDamageModification = getConfigDataBoolean("avoid-damage-modification", true);
+		tryAvoidingAntiCheatPlugins = getConfigDataBoolean("try-avoiding-anticheat-plugins", false);
 
 		spellDamageType = getConfigString("spell-damage-type", "");
 		String damageTypeName = getConfigString("damage-type", "MAGIC");
@@ -193,14 +193,16 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 				return;
 			}
 
-			double localDamage = damage.get(caster, target, power, args);
-			if (powerAffectsDamage) localDamage *= power;
+			SpellData data = new SpellData(caster, target, power, args);
 
-			if (checkPlugins) {
+			double localDamage = damage.get(data);
+			if (Boolean.TRUE.equals(powerAffectsDamage.get(data))) localDamage *= power;
+
+			if (Boolean.TRUE.equals(checkPlugins.get(data))) {
 				MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, damageType, localDamage, DotSpell.this);
 				EventUtil.call(event);
 				if (event.isCancelled()) return;
-				if (!avoidDamageModification) localDamage = event.getDamage();
+				if (!Boolean.TRUE.equals(avoidDamageModification.get(data))) localDamage = event.getDamage();
 				target.setLastDamageCause(event);
 			}
 
@@ -208,7 +210,7 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 			EventUtil.call(event);
 			localDamage = event.getFinalDamage();
 
-			if (ignoreArmor) {
+			if (Boolean.TRUE.equals(ignoreArmor.get(data))) {
 				double maxHealth = Util.getMaxHealth(target);
 				double health = target.getHealth();
 
@@ -228,11 +230,11 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 				if (caster != null) MagicSpells.getVolatileCodeHandler().playHurtAnimation(target, LocationUtil.getRotatedLocation(caster.getLocation(), target.getLocation()).getYaw());
 				else MagicSpells.getVolatileCodeHandler().playHurtAnimation(target, target.getLocation().getYaw());
 			} else {
-				if (tryAvoidingAntiCheatPlugins) target.damage(localDamage);
+				if (Boolean.TRUE.equals(tryAvoidingAntiCheatPlugins.get(data))) target.damage(localDamage);
 				else target.damage(localDamage, caster);
 			}
 
-			playSpellEffects(EffectPosition.DELAYED, target, new SpellData(caster, target, power, args));
+			playSpellEffects(EffectPosition.DELAYED, target, data);
 			target.setNoDamageTicks(0);
 		}
 

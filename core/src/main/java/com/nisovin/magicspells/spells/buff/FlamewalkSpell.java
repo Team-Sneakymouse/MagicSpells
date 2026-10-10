@@ -28,7 +28,7 @@ public class FlamewalkSpell extends BuffSpell {
 	private ConfigData<Double> radius;
 	private int tickInterval;
 
-	private boolean powerAffectsFireTicks;
+	private ConfigData<Boolean> powerAffectsFireTicks;
 	private boolean checkPlugins;
 
 	private Burner burner;
@@ -41,7 +41,7 @@ public class FlamewalkSpell extends BuffSpell {
 		tickInterval = getConfigInt("tick-interval", 100);
 
 		checkPlugins = getConfigBoolean("check-plugins", true);
-		powerAffectsFireTicks = getConfigBoolean("power-affects-fire-ticks", true);
+		powerAffectsFireTicks = getConfigDataBoolean("power-affects-fire-ticks", true);
 
 		entities = new HashMap<>();
 	}
@@ -127,7 +127,7 @@ public class FlamewalkSpell extends BuffSpell {
 					}
 
 					int fireTicks = FlamewalkSpell.this.fireTicks.get(entity, livingTarget, data.power(), data.args());
-					if (powerAffectsFireTicks) fireTicks = Math.round(fireTicks * data.power());
+					if (Boolean.TRUE.equals(powerAffectsFireTicks.get(entity, livingTarget, data.power(), data.args()))) fireTicks = Math.round(fireTicks * data.power());
 					target.setFireTicks(fireTicks);
 
 					addUseAndChargeCost(entity);

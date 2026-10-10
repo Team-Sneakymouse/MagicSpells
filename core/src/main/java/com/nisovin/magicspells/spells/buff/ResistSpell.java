@@ -32,14 +32,14 @@ public class ResistSpell extends BuffSpell {
 
 	private ConfigData<Float> multiplier;
 
-	private boolean powerAffectsMultiplier;
+	private ConfigData<Boolean> powerAffectsMultiplier;
 
 	public ResistSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
 		multiplier = getConfigDataFloat("multiplier", 0.5F);
 
-		powerAffectsMultiplier = getConfigBoolean("power-affects-multiplier", true);
+		powerAffectsMultiplier = getConfigDataBoolean("power-affects-multiplier", true);
 
 		normalDamageTypes = new HashSet<>();
 		List<String> causes = getConfigStringList("normal-damage-types", null);
@@ -96,7 +96,7 @@ public class ResistSpell extends BuffSpell {
 		CastData data = entities.get(caster.getUniqueId());
 
 		float modifier = multiplier.get(caster, event.getCaster(), data.power(), data.args());
-		if (powerAffectsMultiplier) {
+		if (Boolean.TRUE.equals(powerAffectsMultiplier.get(caster, null, data.power(), data.args()))) {
 			if (modifier < 1) modifier /= data.power();
 			else if (modifier > 1) modifier *= data.power();
 		}
@@ -122,7 +122,7 @@ public class ResistSpell extends BuffSpell {
 		CastData data = entities.get(caster.getUniqueId());
 
 		float modifier = multiplier.get(caster, target, data.power(), data.args());
-		if (powerAffectsMultiplier) {
+		if (Boolean.TRUE.equals(powerAffectsMultiplier.get(caster, target, data.power(), data.args()))) {
 			if (modifier < 1) modifier /= data.power();
 			else if (modifier > 1) modifier *= data.power();
 		}

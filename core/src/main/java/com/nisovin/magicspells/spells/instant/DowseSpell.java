@@ -38,7 +38,7 @@ public class DowseSpell extends InstantSpell {
 	private boolean setCompass;
 	private boolean getDistance;
 	private boolean rotatePlayer;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 
 	public DowseSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -64,7 +64,7 @@ public class DowseSpell extends InstantSpell {
 
 		setCompass = getConfigBoolean("set-compass", true);
 		rotatePlayer = getConfigBoolean("rotate-player", true);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
 
 		getDistance = strCastSelf != null && strCastSelf.contains("%d");
 
@@ -75,7 +75,7 @@ public class DowseSpell extends InstantSpell {
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			double radius = this.radius.get(caster, null, power, args);
-			if (powerAffectsRadius) radius *= power;
+			if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) radius *= power;
 
 			radius = Math.min(radius, MagicSpells.getGlobalRadius());
 

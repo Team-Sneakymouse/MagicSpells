@@ -55,7 +55,7 @@ public class HomingProjectileSpell extends TargetedSpell
 	private ConfigData<Float> verticalHitRadius;
 
 	private boolean stopOnModifierFail;
-	private boolean powerAffectsVelocity;
+	private ConfigData<Boolean> powerAffectsVelocity;
 
 	private ConfigData<Double> maxDuration;
 
@@ -98,7 +98,7 @@ public class HomingProjectileSpell extends TargetedSpell
 		verticalHitRadius = getConfigDataFloat("vertical-hit-radius", 2F);
 
 		stopOnModifierFail = getConfigBoolean("stop-on-modifier-fail", true);
-		powerAffectsVelocity = getConfigBoolean("power-affects-velocity", true);
+		powerAffectsVelocity = getConfigDataBoolean("power-affects-velocity", true);
 
 		maxDuration = getConfigDataDouble("max-duration", 10);
 
@@ -344,7 +344,7 @@ public class HomingProjectileSpell extends TargetedSpell
 				intermediateSpecialEffects = 0;
 
 			velocity = HomingProjectileSpell.this.velocity.get(caster, target, power, args);
-			if (powerAffectsVelocity)
+			if (Boolean.TRUE.equals(powerAffectsVelocity.get(caster, target, power, args)))
 				velocity *= power;
 
 			maxDuration = HomingProjectileSpell.this.maxDuration.get(caster, target, power, args)

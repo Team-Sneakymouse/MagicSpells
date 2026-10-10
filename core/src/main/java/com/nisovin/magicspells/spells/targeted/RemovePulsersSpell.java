@@ -25,7 +25,7 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 	private ConfigData<Float> radius;
 
 	private boolean pointBlank;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 	private boolean ownedPulsersOnly;
 
 	private List<String> pulserSpellNames;
@@ -37,7 +37,7 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 		radius = getConfigDataFloat("radius", 10F);
 
 		pointBlank = getConfigBoolean("point-blank", true);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
 		ownedPulsersOnly = getConfigBoolean("owned-pulsers-only", false);
 
 		pulserSpellNames = getConfigStringList("pulser-spells", null);
@@ -107,7 +107,7 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 
 	private void removePulsers(LivingEntity caster, Location loc, float power, String[] args) {
 		float radSq = radius.get(caster, null, power, args);
-		if (powerAffectsRadius)
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args)))
 			radSq *= power;
 
 		radSq *= radSq;

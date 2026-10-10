@@ -27,8 +27,8 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 	private boolean teleport;
 	private boolean forcePickup;
 	private boolean removeItemGravity;
-	private boolean powerAffectsRadius;
-	private boolean powerAffectsVelocity;
+	private ConfigData<Boolean> powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsVelocity;
 	private boolean resolveVelocityPerItem;
 
 	public MagnetSpell(MagicConfig config, String spellName) {
@@ -41,8 +41,8 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 		teleport = getConfigBoolean("teleport-items", false);
 		forcePickup = getConfigBoolean("force-pickup", false);
 		removeItemGravity = getConfigBoolean("remove-item-gravity", false);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
-		powerAffectsVelocity = getConfigBoolean("power-affects-velocity", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
+		powerAffectsVelocity = getConfigDataBoolean("power-affects-velocity", true);
 		resolveVelocityPerItem = getConfigBoolean("resolve-velocity-per-item", false);
 	}
 
@@ -84,7 +84,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 			return List.of();
 
 		double radius = this.radius.get(caster, null, power, args);
-		if (powerAffectsRadius)
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args)))
 			radius *= power;
 		radius = Math.min(radius, MagicSpells.getGlobalRadius());
 
@@ -113,7 +113,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 		double velocity = 0;
 		if (!resolveVelocityPerItem) {
 			velocity = this.velocity.get(caster, null, power, args);
-			if (powerAffectsVelocity)
+			if (Boolean.TRUE.equals(powerAffectsVelocity.get(caster, null, power, args)))
 				velocity *= power;
 		}
 
@@ -133,7 +133,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 		else {
 			if (resolveVelocityPerItem) {
 				velocity = this.velocity.get(caster, null, power, args);
-				if (powerAffectsVelocity)
+				if (Boolean.TRUE.equals(powerAffectsVelocity.get(caster, null, power, args)))
 					velocity *= power;
 			}
 

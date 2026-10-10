@@ -38,8 +38,8 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean preventBlockDamage;
 	private boolean preventPlayerDamage;
 	private boolean preventAnimalDamage;
-	private boolean powerAffectsExplosionSize;
-	private boolean powerAffectsDamageMultiplier;
+	private ConfigData<Boolean> powerAffectsExplosionSize;
+	private ConfigData<Boolean> powerAffectsDamageMultiplier;
 
 	private long currentTick = 0;
 	private String[] currentArgs;
@@ -60,8 +60,8 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		preventBlockDamage = getConfigBoolean("prevent-block-damage", false);
 		preventPlayerDamage = getConfigBoolean("prevent-player-damage", false);
 		preventAnimalDamage = getConfigBoolean("prevent-animal-damage", false);
-		powerAffectsExplosionSize = getConfigBoolean("power-affects-explosion-size", true);
-		powerAffectsDamageMultiplier = getConfigBoolean("power-affects-damage-multiplier", true);
+		powerAffectsExplosionSize = getConfigDataBoolean("power-affects-explosion-size", true);
+		powerAffectsDamageMultiplier = getConfigDataBoolean("power-affects-damage-multiplier", true);
 	}
 	
 	@Override
@@ -94,7 +94,7 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 	
 	private boolean explode(LivingEntity caster, Location target, float power, String[] args) {
 		float explosionSize = this.explosionSize.get(caster, null, power, args);
-		if (powerAffectsExplosionSize) explosionSize *= power;
+		if (Boolean.TRUE.equals(powerAffectsExplosionSize.get(caster, null, power, args))) explosionSize *= power;
 
 		if (simulateTnt) {
 			boolean cancelled = MagicSpells.getVolatileCodeHandler().simulateTnt(target, caster, explosionSize, addFire);
@@ -144,7 +144,7 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		if (preventPlayerDamage && event.getEntity() instanceof Player) event.setCancelled(true);
 		else if (preventAnimalDamage && event.getEntity() instanceof Animals) event.setCancelled(true);
 		else if (damageMultiplier > 0) {
-			if (powerAffectsDamageMultiplier) damageMultiplier *= currentPower;
+			if (Boolean.TRUE.equals(powerAffectsDamageMultiplier.get(currentCaster, event.getEntity() instanceof LivingEntity le ? le : null, currentPower, currentArgs))) damageMultiplier *= currentPower;
 			event.setDamage(damageMultiplier);
 		}
 	}

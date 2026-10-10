@@ -42,7 +42,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 	private boolean preventCommands;
 	private boolean notifyHelperSpells;
 	private boolean notifyPassiveSpells;
-	private boolean powerAffectsDuration;
+	private ConfigData<Boolean> powerAffectsDuration;
 
 	private final String preventCastSpellName;
 	private final String preventChatSpellName;
@@ -64,7 +64,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		preventCommands = getConfigBoolean("prevent-commands", false);
 		notifyHelperSpells = getConfigBoolean("notify-helper-spells", false);
 		notifyPassiveSpells = getConfigBoolean("notify-passive-spells", false);
-		powerAffectsDuration = getConfigBoolean("power-affects-duration", true);
+		powerAffectsDuration = getConfigDataBoolean("power-affects-duration", true);
 
 		preventCastSpellName = getConfigString("spell-on-denied-cast", "");
 		preventChatSpellName = getConfigString("spell-on-denied-chat", "");
@@ -143,7 +143,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		if (u != null) u.cancel();
 
 		int duration = this.duration.get(caster, target, power, args);
-		if (powerAffectsDuration) duration = Math.round(duration * power);
+		if (Boolean.TRUE.equals(powerAffectsDuration.get(caster, target, power, args))) duration = Math.round(duration * power);
 
 		silenced.put(target.getUniqueId(), new Unsilencer(target, duration));
 	}

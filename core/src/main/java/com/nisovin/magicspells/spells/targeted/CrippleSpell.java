@@ -19,8 +19,8 @@ public class CrippleSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private boolean useSlownessEffect;
 	private boolean applyPortalCooldown;
-	private boolean powerAffectsDuration;
-	private boolean powerAffectsPortalCooldown;
+	private ConfigData<Boolean> powerAffectsDuration;
+	private ConfigData<Boolean> powerAffectsPortalCooldown;
 
 	public CrippleSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -31,8 +31,8 @@ public class CrippleSpell extends TargetedSpell implements TargetedEntitySpell {
 
 		useSlownessEffect = getConfigBoolean("use-slowness-effect", true);
 		applyPortalCooldown = getConfigBoolean("apply-portal-cooldown", false);
-		powerAffectsDuration = getConfigBoolean("power-affects-duration", true);
-		powerAffectsPortalCooldown = getConfigBoolean("power-affects-portal-cooldown", true);
+		powerAffectsDuration = getConfigDataBoolean("power-affects-duration", true);
+		powerAffectsPortalCooldown = getConfigDataBoolean("power-affects-portal-cooldown", true);
 	}
 
 	@Override
@@ -83,14 +83,14 @@ public class CrippleSpell extends TargetedSpell implements TargetedEntitySpell {
 		if (useSlownessEffect) {
 			int strength = this.strength.get(caster, target, power, args);
 			int duration = this.duration.get(caster, target, power, args);
-			if (powerAffectsDuration) duration = Math.round(duration * power);
+			if (Boolean.TRUE.equals(powerAffectsDuration.get(caster, target, power, args))) duration = Math.round(duration * power);
 
 			target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, duration, strength));
 		}
 
 		if (applyPortalCooldown) {
 			int portalCooldown = this.portalCooldown.get(caster, target, power, args);
-			if (powerAffectsPortalCooldown) portalCooldown = Math.round(portalCooldown * power);
+			if (Boolean.TRUE.equals(powerAffectsPortalCooldown.get(caster, target, power, args))) portalCooldown = Math.round(portalCooldown * power);
 
 			if (target.getPortalCooldown() < portalCooldown) target.setPortalCooldown(portalCooldown);
 		}

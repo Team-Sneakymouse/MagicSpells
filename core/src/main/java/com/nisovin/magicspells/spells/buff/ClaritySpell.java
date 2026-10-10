@@ -21,7 +21,7 @@ public class ClaritySpell extends BuffSpell {
 
 	private ConfigData<Float> multiplier;
 
-	private boolean powerAffectsMultiplier;
+	private ConfigData<Boolean> powerAffectsMultiplier;
 
 	private SpellFilter filter;
 
@@ -29,7 +29,7 @@ public class ClaritySpell extends BuffSpell {
 		super(config, spellName);
 
 		multiplier = getConfigDataFloat("multiplier", 0.5F);
-		powerAffectsMultiplier = getConfigBoolean("power-affects-multiplier", true);
+		powerAffectsMultiplier = getConfigDataBoolean("power-affects-multiplier", true);
 		filter = getConfigSpellFilter();
 
 		entities = new HashMap<>();
@@ -65,7 +65,7 @@ public class ClaritySpell extends BuffSpell {
 		CastData data = entities.get(caster.getUniqueId());
 
 		float multiplier = this.multiplier.get(caster, null, data.power(), data.args());
-		if (powerAffectsMultiplier) {
+		if (Boolean.TRUE.equals(powerAffectsMultiplier.get(caster, null, data.power(), data.args()))) {
 			if (multiplier < 1) multiplier /= data.power();
 			else if (multiplier > 1) multiplier *= data.power();
 		}

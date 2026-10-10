@@ -22,7 +22,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 	private ConfigData<Integer> radius;
 
 	private boolean pointBlank;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 	private boolean applyPhysics;
 
 	private List<String> spellNames;
@@ -33,7 +33,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		radius = getConfigDataInt("radius", 10);
 		pointBlank = getConfigBoolean("point-blank", true);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
 		applyPhysics = getConfigBoolean("apply-physics", true);
 		spellNames = getConfigStringList("spells", null);
 		spells = new ArrayList<>();
@@ -91,7 +91,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private boolean undo(LivingEntity caster, Location loc, float power, String[] args) {
 		int rad = radius.get(caster, null, power, args);
-		if (powerAffectsRadius)
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args)))
 			rad *= power;
 
 		World locWorld = loc.getWorld();

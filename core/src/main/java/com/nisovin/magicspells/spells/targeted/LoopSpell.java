@@ -50,14 +50,14 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	private final double yOffset;
 
-	private final boolean targeted;
-	private final boolean pointBlank;
-	private final boolean stopOnFail;
-	private final boolean cancelOnDeath;
-	private final boolean passTargeting;
-	private final boolean stopOnSuccess;
-	private final boolean requireEntityTarget;
-	private final boolean castRandomSpellInstead;
+	private final ConfigData<Boolean> targeted;
+	private final ConfigData<Boolean> pointBlank;
+	private final ConfigData<Boolean> stopOnFail;
+	private final ConfigData<Boolean> cancelOnDeath;
+	private final ConfigData<Boolean> passTargeting;
+	private final ConfigData<Boolean> stopOnSuccess;
+	private final ConfigData<Boolean> requireEntityTarget;
+	private final ConfigData<Boolean> castRandomSpellInstead;
 	private final boolean skipFirstLoopModifiers;
 	private final boolean skipFirstVariableModsLoop;
 	private final boolean skipFirstLoopTargetModifiers;
@@ -98,14 +98,14 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		yOffset = getConfigDouble("y-offset", 0);
 
-		targeted = getConfigBoolean("targeted", true);
-		pointBlank = getConfigBoolean("point-blank", false);
-		stopOnFail = getConfigBoolean("stop-on-fail", false);
-		passTargeting = getConfigBoolean("pass-targeting", true);
-		cancelOnDeath = getConfigBoolean("cancel-on-death", false);
-		stopOnSuccess = getConfigBoolean("stop-on-success", false);
-		requireEntityTarget = getConfigBoolean("require-entity-target", false);
-		castRandomSpellInstead = getConfigBoolean("cast-random-spell-instead", false);
+		targeted = getConfigDataBoolean("targeted", true);
+		pointBlank = getConfigDataBoolean("point-blank", false);
+		stopOnFail = getConfigDataBoolean("stop-on-fail", false);
+		passTargeting = getConfigDataBoolean("pass-targeting", true);
+		cancelOnDeath = getConfigDataBoolean("cancel-on-death", false);
+		stopOnSuccess = getConfigDataBoolean("stop-on-success", false);
+		requireEntityTarget = getConfigDataBoolean("require-entity-target", false);
+		castRandomSpellInstead = getConfigDataBoolean("cast-random-spell-instead", false);
 
 		boolean skipFirst = getConfigBoolean("skip-first", false);
 		skipFirstLoopModifiers = getConfigBoolean("skip-first-loop-modifiers", skipFirst);
@@ -130,7 +130,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	public void initialize() {
 		super.initialize();
 
-		if (cancelOnDeath && !deathRegistered) {
+		if ((!cancelOnDeath.isConstant() || Boolean.TRUE.equals(cancelOnDeath.get(null, 1f, null))) && !deathRegistered) {
 			deathRegistered = true;
 			registerEvents(new DeathListener());
 		}
@@ -229,6 +229,10 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		if (state == SpellCastState.NORMAL) {
 			LivingEntity entityTarget = null;
 			Location locationTarget = null;
+
+			boolean targeted = Boolean.TRUE.equals(this.targeted.get(caster, power, args));
+			boolean requireEntityTarget = Boolean.TRUE.equals(this.requireEntityTarget.get(caster, power, args));
+			boolean pointBlank = Boolean.TRUE.equals(this.pointBlank.get(caster, power, args));
 
 			if (targeted) {
 				if (requireEntityTarget) {
@@ -417,6 +421,8 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		@Override
 		public void run() {
+			boolean cancelOnDeath = Boolean.TRUE.equals(LoopSpell.this.cancelOnDeath.get(data));
+
 			if (targetEntity != null && (cancelOnDeath || !(targetEntity instanceof Player))
 					&& !targetEntity.isValid()) {
 				cancel();
@@ -485,7 +491,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			}
 
 			if (spells != null) {
-				if (castRandomSpellInstead) {
+				if (Boolean.TRUE.equals(castRandomSpellInstead.get(data))) {
 					Subspell spell = spells.get(random.nextInt(spells.size()));
 					if (!cast(spell))
 						return;
@@ -517,6 +523,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		private boolean cast(Subspell spell) {
 			boolean success;
+			boolean passTargeting = Boolean.TRUE.equals(LoopSpell.this.passTargeting.get(data));
 
 			if (targetEntity != null)
 				success = spell.subcast(caster, targetEntity, data.power(), data.args(), passTargeting);
@@ -525,6 +532,8 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			else
 				success = spell.subcast(caster, data.power(), data.args());
 
+			boolean stopOnSuccess = Boolean.TRUE.equals(LoopSpell.this.stopOnSuccess.get(data));
+			boolean stopOnFail = Boolean.TRUE.equals(LoopSpell.this.stopOnFail.get(data));
 			if (stopOnSuccess && success || stopOnFail && !success) {
 				cancel();
 				return false;
@@ -580,6 +589,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			}
 
 			if (spellOnEnd != null) {
+				boolean passTargeting = Boolean.TRUE.equals(LoopSpell.this.passTargeting.get(data));
 				if (targetEntity != null)
 					spellOnEnd.subcast(caster, targetEntity, data.power(), data.args(), passTargeting);
 				else if (targetLocation != null)
@@ -595,11 +605,13 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 		public void onDeath(PlayerDeathEvent event) {
-			UUID uuid = event.getEntity().getUniqueId();
+			Player player = event.getEntity();
+			UUID uuid = player.getUniqueId();
 
 			List<Spell> spells = MagicSpells.getSpellsOrdered();
 			for (Spell spell : spells) {
-				if (!(spell instanceof LoopSpell loopSpell) || !loopSpell.cancelOnDeath)
+				if (!(spell instanceof LoopSpell loopSpell)
+						|| !Boolean.TRUE.equals(loopSpell.cancelOnDeath.get(player, player, 1f, null)))
 					continue;
 				loopSpell.cancelLoops(uuid);
 			}

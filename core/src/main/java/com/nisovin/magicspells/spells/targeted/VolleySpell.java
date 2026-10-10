@@ -48,8 +48,8 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 	private boolean gravity;
 	private boolean critical;
 	private boolean noTarget;
-	private boolean powerAffectsSpeed;
-	private boolean powerAffectsArrowCount;
+	private ConfigData<Boolean> powerAffectsSpeed;
+	private ConfigData<Boolean> powerAffectsArrowCount;
 	private float addPitch;
 
 	public VolleySpell(MagicConfig config, String spellName) {
@@ -70,8 +70,8 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 		gravity = getConfigBoolean("gravity", true);
 		critical = getConfigBoolean("critical", false);
 		noTarget = getConfigBoolean("no-target", false);
-		powerAffectsSpeed = getConfigBoolean("power-affects-speed", false);
-		powerAffectsArrowCount = getConfigBoolean("power-affects-arrow-count", true);
+		powerAffectsSpeed = getConfigDataBoolean("power-affects-speed", false);
+		powerAffectsArrowCount = getConfigDataBoolean("power-affects-arrow-count", true);
 
 		addPitch = getConfigFloat("add-pitch", 0);
 	}
@@ -163,10 +163,10 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 
 			int arrows = this.arrows.get(caster, target, power, args);
 			int removeDelay = this.removeDelay.get(caster, target, power, args);
-			int castingArrows = powerAffectsArrowCount ? Math.round(arrows * power) : arrows;
+			int castingArrows = Boolean.TRUE.equals(powerAffectsArrowCount.get(caster, target, power, args)) ? Math.round(arrows * power) : arrows;
 			for (int i = 0; i < castingArrows; i++) {
 				float speed = this.speed.get(caster, target, power, args) / 10f;
-				if (powerAffectsSpeed)
+				if (Boolean.TRUE.equals(powerAffectsSpeed.get(caster, target, power, args)))
 					speed *= power;
 
 				float spread = this.spread.get(caster, target, power, args) / 10f;
@@ -280,7 +280,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 			removeDelay = VolleySpell.this.removeDelay.get(caster, target, power, args);
 
 			int arrows = VolleySpell.this.arrows.get(caster, target, power, args);
-			if (powerAffectsArrowCount)
+			if (Boolean.TRUE.equals(powerAffectsArrowCount.get(caster, target, power, args)))
 				arrows = Math.round(arrows * power);
 			castingArrows = arrows;
 
@@ -298,7 +298,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 		public void run() {
 			if (count < castingArrows) {
 				float speed = VolleySpell.this.speed.get(caster, target, power, args) / 10f;
-				if (powerAffectsSpeed)
+				if (Boolean.TRUE.equals(powerAffectsSpeed.get(caster, target, power, args)))
 					speed *= power;
 
 				float spread = VolleySpell.this.spread.get(caster, target, power, args) / 10f;

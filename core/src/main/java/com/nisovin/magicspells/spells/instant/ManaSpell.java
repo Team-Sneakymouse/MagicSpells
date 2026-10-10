@@ -14,20 +14,20 @@ public class ManaSpell extends InstantSpell {
 
 	private ConfigData<Integer> mana;
 
-	private boolean powerAffectsMana;
+	private ConfigData<Boolean> powerAffectsMana;
 
 	public ManaSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
 		mana = getConfigDataInt("mana", 25);
-		powerAffectsMana = getConfigBoolean("power-affects-mana", true);
+		powerAffectsMana = getConfigDataBoolean("power-affects-mana", true);
 	}
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			int amount = mana.get(caster, null, power, args);
-			if (powerAffectsMana) amount = Math.round(amount * power);
+			if (Boolean.TRUE.equals(powerAffectsMana.get(caster, null, power, args))) amount = Math.round(amount * power);
 
 			boolean added = MagicSpells.getManaHandler().addMana(player, amount, ManaChangeReason.OTHER);
 			if (!added) return PostCastAction.ALREADY_HANDLED;

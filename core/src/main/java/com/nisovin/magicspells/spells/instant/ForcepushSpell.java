@@ -23,7 +23,7 @@ public class ForcepushSpell extends InstantSpell {
 	private ConfigData<Double> yForce;
 	private ConfigData<Double> maxYForce;
 
-	private boolean powerAffectsForce;
+	private ConfigData<Boolean> powerAffectsForce;
 	private boolean addVelocityInstead;
 
 	public ForcepushSpell(MagicConfig config, String spellName) {
@@ -34,7 +34,7 @@ public class ForcepushSpell extends InstantSpell {
 		yForce = getConfigDataDouble("additional-vertical-force", 15);
 		maxYForce = getConfigDataDouble("max-vertical-force", 20);
 
-		powerAffectsForce = getConfigBoolean("power-affects-force", true);
+		powerAffectsForce = getConfigDataBoolean("power-affects-force", true);
 		addVelocityInstead = getConfigBoolean("add-velocity-instead", false);
 	}
 
@@ -65,13 +65,13 @@ public class ForcepushSpell extends InstantSpell {
 			target = event.getTarget();
 
 			double force = this.force.get(caster, target, power, args) / 10;
-			if (powerAffectsForce) force *= power;
+			if (Boolean.TRUE.equals(powerAffectsForce.get(caster, target, basePower, args))) force *= power;
 
 			e = target.getLocation().toVector();
 			v = e.subtract(p).normalize().multiply(force);
 
 			double yForce = this.yForce.get(caster, target, power, args) / 10;
-			if (powerAffectsForce) yForce *= power;
+			if (Boolean.TRUE.equals(powerAffectsForce.get(caster, target, basePower, args))) yForce *= power;
 
 			v.setY(Math.min(v.getY() + yForce, maxYForce.get(caster, target, power, args) / 10));
 			v = Util.makeFinite(v);

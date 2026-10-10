@@ -22,8 +22,8 @@ public class SpellHasteSpell extends BuffSpell {
 	private ConfigData<Float> castTimeModAmt;
 	private ConfigData<Float> cooldownModAmt;
 
-	private boolean powerAffectsCastTimeModAmt;
-	private boolean powerAffectsCooldownModAmt;
+	private ConfigData<Boolean> powerAffectsCastTimeModAmt;
+	private ConfigData<Boolean> powerAffectsCooldownModAmt;
 
 	private SpellFilter filter;
 
@@ -33,8 +33,8 @@ public class SpellHasteSpell extends BuffSpell {
 		castTimeModAmt = getConfigDataFloat("cast-time-mod-amt", -25);
 		cooldownModAmt = getConfigDataFloat("cooldown-mod-amt", -25);
 
-		powerAffectsCastTimeModAmt = getConfigBoolean("power-affects-cast-time-mod-amt", true);
-		powerAffectsCooldownModAmt = getConfigBoolean("power-affects-cooldown-mod-amt", true);
+		powerAffectsCastTimeModAmt = getConfigDataBoolean("power-affects-cast-time-mod-amt", true);
+		powerAffectsCooldownModAmt = getConfigDataBoolean("power-affects-cooldown-mod-amt", true);
 
 		entities = new HashMap<>();
 
@@ -78,7 +78,7 @@ public class SpellHasteSpell extends BuffSpell {
 		if (castTimeModAmt != 0) {
 			int ct = event.getCastTime();
 
-			float newCT = ct + (powerAffectsCastTimeModAmt ? castTimeModAmt * ct * data.power() : castTimeModAmt * ct);
+			float newCT = ct + (Boolean.TRUE.equals(powerAffectsCastTimeModAmt.get(caster, null, data.power(), data.args())) ? castTimeModAmt * ct * data.power() : castTimeModAmt * ct);
 			if (newCT < 0) newCT = 0;
 
 			event.setCastTime(Math.round(newCT));
@@ -89,7 +89,7 @@ public class SpellHasteSpell extends BuffSpell {
 		if (cooldownModAmt != 0) {
 			float cd = event.getCooldown();
 
-			float newCD = cd + (powerAffectsCooldownModAmt ? cooldownModAmt * cd * data.power() : cooldownModAmt * cd);
+			float newCD = cd + (Boolean.TRUE.equals(powerAffectsCooldownModAmt.get(caster, null, data.power(), data.args())) ? cooldownModAmt * cd * data.power() : cooldownModAmt * cd);
 			if (newCD < 0) newCD = 0;
 
 			event.setCooldown(newCD);

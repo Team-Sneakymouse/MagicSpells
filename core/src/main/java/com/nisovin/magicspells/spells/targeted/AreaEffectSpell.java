@@ -36,13 +36,13 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 	private ConfigData<Double> vRadius;
 	private ConfigData<Double> hRadius;
 
-	private boolean pointBlank;
-	private boolean circleShape;
-	private boolean useProximity;
-	private boolean passTargeting;
-	private boolean failIfNoTargets;
-	private boolean reverseProximity;
-	private boolean spellSourceInCenter;
+	private ConfigData<Boolean> pointBlank;
+	private ConfigData<Boolean> circleShape;
+	private ConfigData<Boolean> useProximity;
+	private ConfigData<Boolean> passTargeting;
+	private ConfigData<Boolean> failIfNoTargets;
+	private ConfigData<Boolean> reverseProximity;
+	private ConfigData<Boolean> spellSourceInCenter;
 
 	public AreaEffectSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -57,13 +57,13 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		vRadius = getConfigDataDouble("vertical-radius", 5);
 		hRadius = getConfigDataDouble("horizontal-radius", 10);
 
-		pointBlank = getConfigBoolean("point-blank", true);
-		circleShape = getConfigBoolean("circle-shape", false);
-		useProximity = getConfigBoolean("use-proximity", false);
-		passTargeting = getConfigBoolean("pass-targeting", true);
-		failIfNoTargets = getConfigBoolean("fail-if-no-targets", true);
-		reverseProximity = getConfigBoolean("reverse-proximity", false);
-		spellSourceInCenter = getConfigBoolean("spell-source-in-center", false);
+		pointBlank = getConfigDataBoolean("point-blank", true);
+		circleShape = getConfigDataBoolean("circle-shape", false);
+		useProximity = getConfigDataBoolean("use-proximity", false);
+		passTargeting = getConfigDataBoolean("pass-targeting", true);
+		failIfNoTargets = getConfigDataBoolean("fail-if-no-targets", true);
+		reverseProximity = getConfigDataBoolean("reverse-proximity", false);
+		spellSourceInCenter = getConfigDataBoolean("spell-source-in-center", false);
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			Location loc = null;
-			if (pointBlank)
+			if (Boolean.TRUE.equals(pointBlank.get(caster, power, args)))
 				loc = caster.getLocation();
 			else {
 				try {
@@ -166,6 +166,13 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		double vRadiusSquared = vRadius * vRadius;
 		double hRadiusSquared = hRadius * hRadius;
 
+		boolean circleShape = Boolean.TRUE.equals(this.circleShape.get(caster, null, basePower, args));
+		boolean useProximity = Boolean.TRUE.equals(this.useProximity.get(caster, null, basePower, args));
+		boolean passTargeting = Boolean.TRUE.equals(this.passTargeting.get(caster, null, basePower, args));
+		boolean failIfNoTargets = Boolean.TRUE.equals(this.failIfNoTargets.get(caster, null, basePower, args));
+		boolean reverseProximity = Boolean.TRUE.equals(this.reverseProximity.get(caster, null, basePower, args));
+		boolean spellSourceInCenter = Boolean.TRUE.equals(this.spellSourceInCenter.get(caster, null, basePower, args));
+
 		SpellTargetEvent event;
 		SpellData data;
 
@@ -200,7 +207,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			target = event.getTarget();
 			power = event.getPower();
 
-			castSpells(caster, location, target, power, args);
+			castSpells(caster, location, target, power, args, spellSourceInCenter, passTargeting);
 
 			data = new SpellData(caster, target, location, power, args);
 
@@ -267,7 +274,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			target = event.getTarget();
 			power = event.getPower();
 
-			castSpells(caster, location, target, power, args);
+			castSpells(caster, location, target, power, args, spellSourceInCenter, passTargeting);
 
 			data = new SpellData(caster, target, location, power, args);
 			playSpellEffects(EffectPosition.TARGET, target, data);
@@ -294,7 +301,8 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		return success;
 	}
 
-	private void castSpells(LivingEntity caster, Location location, LivingEntity target, float power, String[] args) {
+	private void castSpells(LivingEntity caster, Location location, LivingEntity target, float power, String[] args,
+			boolean spellSourceInCenter, boolean passTargeting) {
 		Location source = spellSourceInCenter ? location : (caster == null ? null : caster.getLocation());
 		for (Subspell spell : spells) {
 			if (source != null)

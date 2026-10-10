@@ -21,7 +21,7 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private final boolean checkPlugins;
 	private final boolean cancelIfFull;
-	private final boolean powerAffectsHealAmount;
+	private final ConfigData<Boolean> powerAffectsHealAmount;
 
 	private final String strMaxHealth;
 
@@ -35,7 +35,7 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 
 		checkPlugins = getConfigBoolean("check-plugins", true);
 		cancelIfFull = getConfigBoolean("cancel-if-full", true);
-		powerAffectsHealAmount = getConfigBoolean("power-affects-heal-amount", true);
+		powerAffectsHealAmount = getConfigDataBoolean("power-affects-heal-amount", true);
 
 		strMaxHealth = getConfigString("str-max-health", "%t is already at max health.");
 
@@ -101,7 +101,7 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 		double healPercent = this.healPercent.get(caster, target, power, args);
 		if (healPercent == 0) {
 			amount = this.healAmount.get(caster, target, power, args);
-			if (powerAffectsHealAmount) amount *= power;
+			if (Boolean.TRUE.equals(powerAffectsHealAmount.get(caster, target, power, args))) amount *= power;
 		} else amount = (Util.getMaxHealth(caster) - health) * (healPercent / 100);
 
 		if (checkPlugins) {

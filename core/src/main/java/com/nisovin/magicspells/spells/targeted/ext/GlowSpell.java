@@ -37,7 +37,7 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private final ConfigData<Integer> duration;
 
-	private final boolean powerAffectsDuration;
+	private final ConfigData<Boolean> powerAffectsDuration;
 
 	public GlowSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -46,7 +46,7 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 
 		duration = getConfigDataInt("duration", 0);
 
-		powerAffectsDuration = getConfigBoolean("power-affects-duration", true);
+		powerAffectsDuration = getConfigDataBoolean("power-affects-duration", true);
 
 		String colorName = getConfigString("color", "");
 		try {
@@ -112,7 +112,7 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private void glow(Player caster, LivingEntity target, float power, String[] args) {
 		int duration = this.duration.get(caster, target, power, args);
-		if (powerAffectsDuration) duration = Math.round(duration * power);
+		if (Boolean.TRUE.equals(powerAffectsDuration.get(caster, target, power, args))) duration = Math.round(duration * power);
 
 		Collection<GlowData> glows = glowing.get(caster.getUniqueId());
 		for (GlowData glowData : glows) {

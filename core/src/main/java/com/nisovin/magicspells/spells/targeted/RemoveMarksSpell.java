@@ -25,7 +25,7 @@ public class RemoveMarksSpell extends TargetedSpell implements TargetedLocationS
 	private ConfigData<Float> radius;
 
 	private boolean pointBlank;
-	private boolean powerAffectsRadius;
+	private ConfigData<Boolean> powerAffectsRadius;
 
 	private MarkSpell markSpell;
 	private String markSpellName;
@@ -36,7 +36,7 @@ public class RemoveMarksSpell extends TargetedSpell implements TargetedLocationS
 		radius = getConfigDataFloat("radius", 10F);
 
 		pointBlank = getConfigBoolean("point-blank", false);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
 
 		markSpellName = getConfigString("mark-spell", "");
 	}
@@ -95,7 +95,7 @@ public class RemoveMarksSpell extends TargetedSpell implements TargetedLocationS
 
 	private void removeMarks(LivingEntity caster, Location loc, float power, String[] args) {
 		float radSq = radius.get(caster, null, power, args);
-		if (powerAffectsRadius) radSq *= power;
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) radSq *= power;
 
 		radSq *= radSq;
 

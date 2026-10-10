@@ -23,7 +23,7 @@ public class PhaseSpell extends InstantSpell {
 	private final List<Material> nonPhasableBlocks;
 
 	private ConfigData<Integer> maxDistance;
-	private boolean powerAffectsMaxDistance;
+	private ConfigData<Boolean> powerAffectsMaxDistance;
 	private String strCantPhase;
 
 	public PhaseSpell(MagicConfig config, String spellName) {
@@ -31,7 +31,7 @@ public class PhaseSpell extends InstantSpell {
 
 		maxDistance = getConfigDataInt("max-distance", 15);
 		strCantPhase = getConfigString("str-cant-phase", "Unable to find place to phase to.");
-		powerAffectsMaxDistance = getConfigBoolean("power-affects-max-distance", true);
+		powerAffectsMaxDistance = getConfigDataBoolean("power-affects-max-distance", true);
 
 		phasableBlocks = new ArrayList<>();
 		nonPhasableBlocks = new ArrayList<>();
@@ -59,7 +59,7 @@ public class PhaseSpell extends InstantSpell {
 			int r = getRange(caster, power, args);
 
 			int distance = maxDistance.get(caster, null, power, args);
-			if (powerAffectsMaxDistance) distance = Math.round(distance * power);
+			if (Boolean.TRUE.equals(powerAffectsMaxDistance.get(caster, null, power, args))) distance = Math.round(distance * power);
 
 			BlockIterator iter;
 			try {

@@ -20,13 +20,13 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 public class ConfusionSpell extends InstantSpell implements TargetedLocationSpell {
 
 	private final ConfigData<Double> radius;
-	private final boolean powerAffectsRadius;
+	private final ConfigData<Boolean> powerAffectsRadius;
 
 	public ConfusionSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
 		radius = getConfigDataDouble("radius", 10);
-		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
+		powerAffectsRadius = getConfigDataBoolean("power-affects-radius", true);
 	}
 
 	@Override
@@ -56,7 +56,7 @@ public class ConfusionSpell extends InstantSpell implements TargetedLocationSpel
 
 	private void confuse(LivingEntity caster, Location location, float power, String[] args) {
 		double castingRange = radius.get(caster, null, power, args);
-		if (powerAffectsRadius)
+		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args)))
 			castingRange = castingRange * power;
 
 		castingRange = Math.min(castingRange, MagicSpells.getGlobalRadius());

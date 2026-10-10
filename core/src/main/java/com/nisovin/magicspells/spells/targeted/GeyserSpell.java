@@ -34,7 +34,7 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private boolean ignoreArmor;
 	private boolean checkPlugins;
-	private boolean powerAffectsDamage;
+	private ConfigData<Boolean> powerAffectsDamage;
 	private boolean avoidDamageModification;
 
 	public GeyserSpell(MagicConfig config, String spellName) {
@@ -48,7 +48,7 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 
 		ignoreArmor = getConfigBoolean("ignore-armor", false);
 		checkPlugins = getConfigBoolean("check-plugins", true);
-		powerAffectsDamage = getConfigBoolean("power-affects-damage", true);
+		powerAffectsDamage = getConfigDataBoolean("power-affects-damage", true);
 		avoidDamageModification = getConfigBoolean("avoid-damage-modification", false);
 
 		geyserType = getConfigDataBlockData("geyser-type", Material.WATER.createBlockData());
@@ -73,7 +73,7 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private boolean geyser(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		double damage = this.damage.get(caster, target, power, args);
-		if (powerAffectsDamage) damage *= power;
+		if (Boolean.TRUE.equals(powerAffectsDamage.get(caster, target, power, args))) damage *= power;
 
 		if (caster != null && checkPlugins && damage > 0) {
 			MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, DamageCause.MAGIC, damage, this);

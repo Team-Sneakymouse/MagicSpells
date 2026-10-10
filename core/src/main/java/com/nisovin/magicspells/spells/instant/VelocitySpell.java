@@ -25,7 +25,7 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 	private final ConfigData<Double> speed;
 
 	private boolean cancelDamage;
-	private boolean powerAffectsSpeed;
+	private ConfigData<Boolean> powerAffectsSpeed;
 	private boolean addVelocityInstead;
 
 	public VelocitySpell(MagicConfig config, String spellName) {
@@ -37,7 +37,7 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 
 		cancelDamage = getConfigBoolean("cancel-damage", true);
 		addVelocityInstead = getConfigBoolean("add-velocity-instead", false);
-		powerAffectsSpeed = getConfigBoolean("power-affects-speed", true);
+		powerAffectsSpeed = getConfigDataBoolean("power-affects-speed", true);
 	}
 
 	public boolean isJumping(LivingEntity livingEntity) {
@@ -117,7 +117,7 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 			from = target.getLocation();
 
 		double speed = this.speed.get(caster, caster, power, args) / 10;
-		if (powerAffectsSpeed)
+		if (Boolean.TRUE.equals(powerAffectsSpeed.get(caster, target, power, args)))
 			speed *= power;
 
 		Vector velocity = from.getDirection().normalize().multiply(speed);
