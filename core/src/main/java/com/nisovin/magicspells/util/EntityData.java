@@ -147,7 +147,7 @@ public class EntityData {
 		addOptEnum(transformers, config, "type", Axolotl.class, Axolotl.Variant.class, Axolotl::setVariant);
 
 		// Cat
-		addOptRegistryEntry(transformers, config, "type", Cat.class, Registry.CAT_VARIANT, Cat::setCatType);
+		addOptRegistryEntry(transformers, config, "type", Cat.class, RegistryKey.CAT_VARIANT, Cat::setCatType);
 
 		// ChestedHorse
 		chested = addBoolean(transformers, config, "chested", false, ChestedHorse.class,
@@ -170,7 +170,7 @@ public class EntityData {
 		addOptEnum(transformers, config, "type", Fox.class, Fox.Type.class, Fox::setFoxType);
 
 		// Frog
-		addOptRegistryEntry(transformers, config, "type", Frog.class, Registry.FROG_VARIANT, Frog::setVariant);
+		addOptRegistryEntry(transformers, config, "type", Frog.class, RegistryKey.FROG_VARIANT, Frog::setVariant);
 
 		// Horse
 		horseColor = addOptEnum(transformers, config, "color", Horse.class, Horse.Color.class, Horse::setColor);
@@ -379,7 +379,7 @@ public class EntityData {
 					if (blockData == null)
 						yield null;
 
-					Entity e = startLoc.getWorld().spawnFallingBlock(startLoc, blockData);
+					Entity e = startLoc.getWorld().spawn(startLoc, FallingBlock.class, fb -> fb.setBlockData(blockData));
 					if (consumer != null)
 						consumer.accept(e);
 

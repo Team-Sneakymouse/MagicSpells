@@ -1,42 +1,47 @@
-# Manual tests — Xlint cluster cleanup
+# Manual tests — Xlint cluster cleanup (attr / swim / fall / tree / stew / registry)
 
-Covers bed/respawn recall, nova `sendMultiBlockChange`, potion registry names, and damage-event helpers after dropping `DamageModifier` usage.
+Wipe other `spells-*.yml` in the run config if you want a clean slate, then load this fixture.
 
 ## How to run
 
 ```bash
 ./gradlew runServer
+# with server stopped or after wipe:
 cp dev-fixtures/spells-xlint-smoke.yml core/run/plugins/MagicSpells/
 # /ms reload if already up
 ```
 
 Passive spells use `spell-class: ".PassiveSpell"` (package `spells`, **not** `.passive.PassiveSpell`).
-Confirm load with `/ms list` — `xlint_takedamage` / `xlint_blockdamage` must appear.
+Confirm load with `/ms list` — all `xlint_*` names below must appear with **no** “missing class” errors.
+
 ---
 
 ## Checklist
 
 | Check | How | Expect |
 |-------|-----|--------|
-| Bed recall | Sleep in a bed, walk away, `/c xlint_recall_bed` | Teleport to bed; `XLIN: recalled…` |
-| Nova fake blocks | Stand on flat ground, `/c xlint_nova` | Expanding fake fire ring, then clears; **no** real fire left |
-| Potion type | `/c xlint_potion` at a mob/player | Speed applied; `XLIN: applied speed` |
-| Potion passive | Have `xlint_potion_passive`; get Speed (or cast `xlint_potion` on self via caston) | `XLIN: potioneffect passive fired` |
-| Pain / damage event | `/c xlint_pain` at a mob | Damage lands; no console error |
-| Take damage | Have `xlint_takedamage`; take HP damage (not creative) | `XLIN: takedamage passive fired` |
-| Block damage | Shield in hand, hold right-click block, get hit by a mob | `XLIN: blockdamage passive fired` |
+| Attr sword | `/c xlint_give_attr`, hold sword, check attack damage | +8 attack damage on mainhand; no console error |
+| Suspicious stew | `/c xlint_give_stew`, eat | Night vision ~5s; no console error |
+| Tree | Look at dirt/grass, `/c xlint_tree` | Birch grows with animation; `XLIN: birch tree growing` |
+| Falling sand | Look at a block, `/c xlint_fall_sand` | Sand falling block from above target; `XLIN: sand falling…` |
+| Cat variant | Look at ground, `/c xlint_spawn_cat` | Black cat; despawns after ~5s |
+| Frog variant | Look at ground, `/c xlint_spawn_frog` | Warm frog; despawns after ~5s |
+| Start swim | Enter water and start swimming (sprint in water) | `XLIN: startswim` |
+| Stop swim | Stop swimming / leave swim state | `XLIN: stopswim` |
+| Summon sign | Place a sign, write a **online** player name on **line 1 (front)**, look at it, `/c xlint_summon` | Summon request to that player; or `/c xlint_summon <player>` |
 
 ---
 
 ## Sign-off
 
 ```text
-[x] xlint_recall_bed
-[x] xlint_nova
-[x] xlint_potion
-[x] xlint_potion_passive
-[x] xlint_pain
-[x] xlint_takedamage — fires on normal hits
-[x] xlint_blockdamage — fires when blocking and hit from the front
+[ ] xlint_give_attr
+[ ] xlint_give_stew
+[ ] xlint_tree
+[ ] xlint_fall_sand
+[ ] xlint_spawn_cat
+[ ] xlint_spawn_frog
+[ ] xlint_startswim
+[ ] xlint_stopswim
+[ ] xlint_summon
 ```
-(signed off 2026-10-10; PassiveSpell class was `.PassiveSpell`, not `.passive.PassiveSpell`)

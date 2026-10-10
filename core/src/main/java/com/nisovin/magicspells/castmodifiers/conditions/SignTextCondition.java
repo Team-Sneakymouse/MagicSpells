@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import org.bukkit.Location;
 import org.bukkit.block.Sign;
 import org.bukkit.block.Block;
+import org.bukkit.block.sign.Side;
 import org.bukkit.entity.LivingEntity;
 
 import net.kyori.adventure.text.Component;
@@ -59,8 +60,8 @@ public class SignTextCondition extends Condition {
 		if (!block.getType().name().contains("SIGN")) return false;
 
 		Sign sign = (Sign) block.getState();
-		List<Component> lines = sign.lines();
-		for (int i = 0; i < lines.size(); i++) {
+		List<Component> lines = sign.getSide(Side.FRONT).lines();
+		for (int i = 0; i < lines.size() && i < text.size(); i++) {
 			if (lines.get(i).equals(text.get(i))) continue;
 			return false;
 		}

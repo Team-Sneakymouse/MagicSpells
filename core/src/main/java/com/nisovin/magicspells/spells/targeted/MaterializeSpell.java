@@ -14,6 +14,8 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
@@ -374,10 +376,13 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 			} else {
 				block.setType(material, applyPhysics);
 			}
-		} else
-			block.getLocation().getWorld().spawnFallingBlock(
+		} else {
+			BlockData fallData = material.createBlockData();
+			block.getLocation().getWorld().spawn(
 					block.getLocation().add(0.5, fallHeight.get(player, null, power, args), 0.5),
-					material.createBlockData());
+					FallingBlock.class,
+					fb -> fb.setBlockData(fallData));
+		}
 
 		Location loc = block.getLocation().add(0.5, 0.5, 0.5);
 		SpellData data = new SpellData(player, loc, power, args);

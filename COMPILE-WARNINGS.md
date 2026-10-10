@@ -52,6 +52,14 @@ How to refresh:
 | **Citizens `IsNPCCondition`** | `@SuppressWarnings` on `hasMetadata("NPC")` | External Citizens convention |
 | **Vendored bStats `Metrics`** | Class-level `@SuppressWarnings` | Not worth rewriting |
 | **`MagicSpellsEntityDamageByEntityEvent`** | `@SuppressWarnings("deprecation")` for `DamageModifier` maps | Paper's only non-`forRemoval` ctor still requires them |
+| **`AttributeModifier.getSlot`** | `getSlotGroup` | MagicItemData serialize / apply |
+| **Swim `EntityToggleSwimEvent#setCancelled`** | `@SuppressWarnings` + start-swim sprint clear | Paper documents cancel as no-op |
+| **`InventoryView` title (Util mock)** | `@SuppressWarnings` on stub | Dummy inventory only |
+| **FallingBlock `setBlockData` after spawn** | `world.spawn(loc, FallingBlock.class, fb -> …)` | MaterializeSpell / EntityData |
+| **`World.generateTree` legacy** | `generateTree(…, Random[, Predicate])` | TreeSpell; TreeWatch removed |
+| **Suspicious stew effects** | `SuspiciousEffectEntry` | SuspiciousStewHandler |
+| **Sign `getLine` / legacy side** | `Side.FRONT` Adventure lines | SummonSpell / SignTextCondition |
+| **Cat / frog type enums** | `RegistryKey.CAT_VARIANT` / `FROG_VARIANT` | EntityData |
 
 **Current `[removal]` count on `:core:compileJava`:** **0**.
 
@@ -71,16 +79,14 @@ Tracked fixtures under `dev-fixtures/` (copy into `core/run/plugins/MagicSpells/
 
 ## Remaining `-Xlint` clusters (next passes)
 
-**Current total: 34**. Refresh with the command above.
+**Current total: 17**. Refresh with the command above.
 
-| Cluster | Notes |
-|---------|-------|
-| **`AttributeModifier.getSlot`** | Prefer `getSlotGroup` |
-| **Swim toggle `setCancelled`** | `EntityToggleSwimEvent` |
-| **InventoryView title** | Adventure title APIs |
-| **Falling block / SuspiciousStew / tree gen** | Spawn & item meta leftovers |
-| **Unchecked casts / raw types** | Outside Metrics |
-| **Odds and ends** | TippedArrow, Sign, ItemMeta lore/CMD, WE edit session, recipes, URL, Scoreboard, … |
+| Cluster | Count (approx) | Notes |
+|---------|----------------|-------|
+| **Unchecked casts / raw types** | ~5 | Transformer, RegisteredCommand, etc. |
+| **ItemMeta lore / custom model data** | 2 | Adventure / DataComponentPath leftovers |
+| **Recipes** | 2 | SmithingRecipe ctor, StonecuttingRecipe.setGroup |
+| **Odds** | ~8 | TippedArrow, URL, JsonReader.setLenient, Scoreboard objective, openWorkbench, Enchantment.getByKey, WorldEdit getEditSessionFactory |
 
 ---
 

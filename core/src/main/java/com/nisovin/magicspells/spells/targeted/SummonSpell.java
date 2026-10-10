@@ -7,6 +7,7 @@ import java.util.HashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Sign;
+import org.bukkit.block.sign.Side;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -70,7 +71,7 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 				Block block = getTargetedBlock(caster, 10, args);
 				if (block != null && (block.getType().name().contains("SIGN"))) {
 					Sign sign = (Sign) block.getState();
-					targetName = Util.getStringFromComponent(sign.line(0));
+					targetName = Util.getStringFromComponent(sign.getSide(Side.FRONT).line(0));
 					landLoc = block.getLocation().add(.5, .25, .5);
 				}
 			}

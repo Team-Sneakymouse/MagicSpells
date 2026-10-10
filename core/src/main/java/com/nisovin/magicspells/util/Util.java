@@ -925,16 +925,19 @@ public class Util {
 			}
 
 			@Override
+			@SuppressWarnings("deprecation") // Mock stub; InventoryView title mutation unsupported
 			public @NotNull String getTitle() {
 				return "";
 			}
 
 			@Override
+			@SuppressWarnings("deprecation")
 			public @NotNull String getOriginalTitle() {
 				return "";
 			}
 
 			@Override
+			@SuppressWarnings("deprecation")
 			public void setTitle(@NotNull String title) {
 
 			}

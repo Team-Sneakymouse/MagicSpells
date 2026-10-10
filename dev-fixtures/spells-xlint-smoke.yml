@@ -1,109 +1,130 @@
-# Live fixtures for Xlint cleanup (bed recall, nova fake blocks, potion registry, damage passives).
-# Copy: cp dev-fixtures/spells-xlint-smoke.yml core/run/plugins/MagicSpells/
-# Cast: /c <spell>
+# Fresh Xlint smoke set (wipe other spells-*.yml in run if you want a clean slate).
+# Copy: cp MagicSpells/dev-fixtures/spells-xlint-smoke.yml MagicSpells/core/run/plugins/MagicSpells/
+# Then /ms reload. Cast: /c <spell>
+# Checklist: MANUAL-TEST-XLINT.md
 
-# --- Bed / respawn recall ---
-
-xlint_mark:
-  spell-class: ".instant.MarkSpell"
-  helper-spell: true
-  name: xlint_mark
-
-xlint_recall_bed:
-  spell-class: ".instant.RecallSpell"
-  name: xlint_recall_bed
-  always-granted: true
-  use-bed-location: true
-  allow-cross-world: true
-  max-range: 0
-  mark-spell: xlint_mark
-  str-cast-self: "XLIN: recalled to bed/respawn"
-  str-no-mark: "XLIN: no bed/respawn set — sleep in a bed first"
-  str-other-world: "XLIN: bed is in another world"
-  str-too-far: "XLIN: bed too far"
-  str-recall-failed: "XLIN: recall failed"
-
-# --- Nova effect (sendMultiBlockChange without suppressLightUpdates) ---
-
-xlint_nova:
-  spell-class: ".instant.DummySpell"
-  name: xlint_nova
-  always-granted: true
-  str-cast-self: "XLIN: nova (fake fire ring should expand then clear — no real fire)"
-  effects:
-    ring:
-      position: caster
-      effect: nova
-      type: fire
-      radius: 4
-      expand-interval: 2
-      circle-shape: true
-      remove-previous-blocks: true
-
-# --- PotionEffectType registry (type name resolution) ---
-
-xlint_potion:
-  spell-class: ".targeted.PotionEffectSpell"
-  name: xlint_potion
-  always-granted: true
-  range: 20
-  type: speed
-  duration: 60
-  strength: 1
-  targeted: true
-  can-target: players,monsters,animals
-  str-cast-self: "XLIN: applied speed (registry name)"
-  str-no-target: "XLIN: need a living target"
-
-xlint_potion_passive:
-  spell-class: ".PassiveSpell"
-  name: xlint_potion_passive
-  always-granted: true
-  cast-without-target: true
-  triggers:
-    - potioneffect speed ADDED *
-  spells:
-    - xlint_noop
-  str-cast-self: "XLIN: potioneffect passive fired"
-
-# --- Damage event helpers (MagicSpellsEntityDamageByEntityEvent + passives) ---
-
-xlint_pain:
-  spell-class: ".targeted.PainSpell"
-  name: xlint_pain
-  always-granted: true
-  range: 20
-  damage: 1
-  ignore-armor: true
-  check-plugins: true
-  can-target: players,monsters,animals
-  str-cast-self: "XLIN: pain hit (compat damage event OK)"
-  str-no-target: "XLIN: no target"
+magic-items:
+  xlint_attr_sword:
+    type: diamond_sword
+    name: "&bXLIN Attr Sword"
+    attributes:
+      - "generic.attack_damage 8 add_number mainhand"
+  xlint_stew:
+    type: suspicious_stew
+    name: "&eXLIN Stew"
+    potion-effects:
+      - "night_vision 100"
 
 xlint_noop:
   spell-class: ".instant.DummySpell"
   helper-spell: true
 
-# cast-without-target: attacker as SpellTarget often fails (mobs).
-# str-cast-self on the PassiveSpell — PARTIAL subcasts do not send helper messages.
-xlint_takedamage:
-  spell-class: ".PassiveSpell"
-  name: xlint_takedamage
-  always-granted: true
-  cast-without-target: true
-  triggers:
-    - takedamage
-  spells:
-    - xlint_noop
-  str-cast-self: "XLIN: takedamage passive fired"
+# --- AttributeModifier slot group (magic item) ---
 
-xlint_blockdamage:
+xlint_give_attr:
+  spell-class: ".instant.ConjureSpell"
+  name: xlint_give_attr
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - xlint_attr_sword 1
+  str-cast-self: "XLIN: gave attr sword (mainhand attack_damage)"
+
+# --- Suspicious stew (SuspiciousEffectEntry) ---
+
+xlint_give_stew:
+  spell-class: ".instant.ConjureSpell"
+  name: xlint_give_stew
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - xlint_stew 1
+  str-cast-self: "XLIN: gave suspicious stew (eat for night vision)"
+
+# --- Tree (generateTree + Random) ---
+
+xlint_tree:
+  spell-class: ".targeted.TreeSpell"
+  name: xlint_tree
+  always-granted: true
+  range: 20
+  tree-type: birch
+  animation-speed: 40
+  str-cast-self: "XLIN: birch tree growing"
+  str-no-target: "XLIN: look at a solid block"
+
+# --- Falling block spawn ---
+
+xlint_fall_sand:
+  spell-class: ".targeted.MaterializeSpell"
+  name: xlint_fall_sand
+  always-granted: true
+  range: 20
+  block-type: sand
+  falling: true
+  fall-height: 3
+  temporary: false
+  str-cast-self: "XLIN: sand falling block spawned"
+  str-no-target: "XLIN: look at a block"
+
+# --- Cat / frog registry variants ---
+
+xlint_spawn_cat:
+  spell-class: ".targeted.SpawnEntitySpell"
+  name: xlint_spawn_cat
+  always-granted: true
+  range: 20
+  duration: 100
+  entity:
+    entity: cat
+    type: black
+  str-cast-self: "XLIN: spawned black cat"
+  str-no-target: "XLIN: look at ground"
+
+xlint_spawn_frog:
+  spell-class: ".targeted.SpawnEntitySpell"
+  name: xlint_spawn_frog
+  always-granted: true
+  range: 20
+  duration: 100
+  entity:
+    entity: frog
+    type: warm
+  str-cast-self: "XLIN: spawned warm frog"
+  str-no-target: "XLIN: look at ground"
+
+# --- Swim passives ---
+
+xlint_startswim:
   spell-class: ".PassiveSpell"
-  name: xlint_blockdamage
+  name: xlint_startswim
   always-granted: true
   cast-without-target: true
   triggers:
-    - blockdamage
+    - startswim
   spells:
     - xlint_noop
-  str-cast-self: "XLIN: blockdamage passive fired"
+  str-cast-self: "XLIN: startswim"
+
+xlint_stopswim:
+  spell-class: ".PassiveSpell"
+  name: xlint_stopswim
+  always-granted: true
+  cast-without-target: true
+  triggers:
+    - stopswim
+  spells:
+    - xlint_noop
+  str-cast-self: "XLIN: stopswim"
+
+# --- Summon from sign (FRONT side line 0) ---
+
+xlint_summon:
+  spell-class: ".targeted.SummonSpell"
+  name: xlint_summon
+  always-granted: true
+  range: 10
+  max-accept-delay: 200
+  str-usage: "XLIN: look at a sign with a player name on line 1, or /c xlint_summon <player>"
+  str-cast-self: "XLIN: summon request sent"
+  str-no-target: "XLIN: need a sign or player arg"

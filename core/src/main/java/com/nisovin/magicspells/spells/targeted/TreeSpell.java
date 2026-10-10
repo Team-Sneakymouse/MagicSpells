@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Location;
 import org.bukkit.TreeType;
@@ -9,10 +10,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.BlockChangeDelegate;
-import org.bukkit.block.data.BlockData;
-
-import org.jetbrains.annotations.NotNull;
 
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -67,21 +64,25 @@ public class TreeSpell extends TargetedSpell implements TargetedLocationSpell {
 	private boolean growTree(LivingEntity caster, Block target, float power, String[] args) {
 		target = target.getRelative(BlockFace.UP);
 		if (!BlockUtils.isAir(target.getType())) return false;
-		
+
 		Location loc = target.getLocation();
 
 		int speed = this.speed.get(caster, null, power, args);
 		if (speed > 0) {
 			List<BlockState> blockStates = new ArrayList<>();
-			target.getWorld().generateTree(loc, treeType, new TreeWatch(loc, blockStates));
-			if (!blockStates.isEmpty()) {
+			// Predicate false = defer placement for GrowAnimation; capture intended states.
+			boolean grown = target.getWorld().generateTree(loc, ThreadLocalRandom.current(), treeType, state -> {
+				blockStates.add(state);
+				return false;
+			});
+			if (grown && !blockStates.isEmpty()) {
 				new GrowAnimation(loc.getBlockX(), loc.getBlockZ(), blockStates, speed);
 				return true;
 			}
 			return false;
 		}
 
-		return target.getWorld().generateTree(loc, treeType);
+		return target.getWorld().generateTree(loc, ThreadLocalRandom.current(), treeType);
 	}
 	
 	@Override
@@ -131,40 +132,4 @@ public class TreeSpell extends TargetedSpell implements TargetedLocationSpell {
 		
 	}
 	
-	private static class TreeWatch implements BlockChangeDelegate {
-
-		private Location loc;
-		private List<BlockState> blockStates;
-
-		private TreeWatch(Location loc, List<BlockState> blockStates) {
-			this.loc = loc;
-			this.blockStates = blockStates;
-		}
-		
-		@Override
-		public int getHeight() {
-			return loc.getWorld().getMaxHeight();
-		}
-
-		@Override
-		public boolean isEmpty(int x, int y, int z) {
-			return BlockUtils.isAir(loc.getWorld().getBlockAt(x, y, z).getType());
-		}
-
-		@Override
-		public boolean setBlockData(int x, int y, int z, @NotNull BlockData data) {
-			BlockState state = loc.getWorld().getBlockAt(x, y, z).getState();
-			state.setBlockData(data);
-			blockStates.add(state);
-			return true;
-		}
-		
-		@Override
-		@NotNull
-		public BlockData getBlockData(int x, int y, int z) {
-			return loc.getWorld().getBlockAt(x, y, z).getBlockData();
-		}
-		
-	}
-
 }

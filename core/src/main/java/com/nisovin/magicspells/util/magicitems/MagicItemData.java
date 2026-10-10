@@ -22,7 +22,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.attribute.AttributeModifier;
@@ -117,10 +117,10 @@ public class MagicItemData {
 		Set<Attribute> keysOther = attrOther.keySet();
 		if (!keysSelf.equals(keysOther)) return false;
 
-		record AttributeModifierData(String name, double amt, AttributeModifier.Operation op, EquipmentSlot slot) {
+		record AttributeModifierData(String name, double amt, AttributeModifier.Operation op, EquipmentSlotGroup slot) {
 
 			public AttributeModifierData(AttributeModifier mod) {
-				this(mod.getName(), mod.getAmount(), mod.getOperation(), mod.getSlot());
+				this(mod.getName(), mod.getAmount(), mod.getOperation(), mod.getSlotGroup());
 			}
 
 		}
@@ -828,11 +828,11 @@ public class MagicItemData {
 					.append(' ')
 					.append(modifier.getOperation().name().toLowerCase());
 
-				EquipmentSlot slot = modifier.getSlot();
-				if (slot != null) {
+				EquipmentSlotGroup slot = modifier.getSlotGroup();
+				if (slot != null && slot != EquipmentSlotGroup.ANY) {
 					output
 						.append(' ')
-						.append(slot.name().toLowerCase());
+						.append(slot.toString());
 				}
 
 				output.append('"');

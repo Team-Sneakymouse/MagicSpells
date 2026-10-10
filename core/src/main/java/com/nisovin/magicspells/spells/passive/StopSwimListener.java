@@ -22,8 +22,18 @@ public class StopSwimListener extends PassiveListener {
 		if (!isCancelStateOk(event.isCancelled())) return;
 		if (event.isSwimming()) return;
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
+
 		boolean casted = passiveSpell.activate(caster);
-		if (cancelDefaultAction(casted)) event.setCancelled(true);
+		if (cancelDefaultAction(casted)) {
+			@SuppressWarnings("deprecation")
+			boolean ignored = cancelSwim(event);
+		}
+	}
+
+	@SuppressWarnings("deprecation") // EntityToggleSwimEvent#setCancelled is a documented no-op
+	private static boolean cancelSwim(EntityToggleSwimEvent event) {
+		event.setCancelled(true);
+		return true;
 	}
 
 }

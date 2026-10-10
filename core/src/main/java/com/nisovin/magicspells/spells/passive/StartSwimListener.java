@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityToggleSwimEvent;
@@ -24,7 +25,18 @@ public class StartSwimListener extends PassiveListener {
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
 		boolean casted = passiveSpell.activate(caster);
-		if (cancelDefaultAction(casted)) event.setCancelled(true);
+		if (cancelDefaultAction(casted)) {
+			// setCancelled is a no-op on modern Paper; sprinting clear is the supported workaround.
+			@SuppressWarnings("deprecation")
+			boolean ignored = cancelSwim(event, caster);
+		}
+	}
+
+	@SuppressWarnings("deprecation") // EntityToggleSwimEvent#setCancelled is a documented no-op
+	private static boolean cancelSwim(EntityToggleSwimEvent event, LivingEntity caster) {
+		event.setCancelled(true);
+		if (caster instanceof Player player) player.setSprinting(false);
+		return true;
 	}
 
 }
