@@ -23,6 +23,7 @@ import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -215,58 +216,58 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			if (capPerPlayer > 0) {
-				int count = 0;
-				for (Totem pulser : totems) {
-					if (!pulser.caster.equals(caster))
-						continue;
+	public CastResult cast(SpellData data) {
+		if (capPerPlayer > 0) {
+			int count = 0;
+			for (Totem pulser : totems) {
+				if (!pulser.caster.equals(data.caster()))
+					continue;
 
-					count++;
-					if (count >= capPerPlayer) {
-						sendMessage(strAtCap, caster, args);
-						return PostCastAction.ALREADY_HANDLED;
-					}
+				count++;
+				if (count >= capPerPlayer) {
+					sendMessage(strAtCap, data.caster(), data.args());
+					return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 				}
 			}
-
-			List<Block> lastTwo = getLastTwoTargetedBlocks(caster, power, args);
-			Block target = null;
-
-			if (lastTwo != null && lastTwo.size() == 2)
-				target = lastTwo.get(0);
-			if (target == null)
-				return noTarget(caster, args);
-
-			int yOffset = this.yOffset.get(caster, null, power, args);
-			if (yOffset > 0)
-				target = target.getRelative(BlockFace.UP, yOffset);
-			else if (yOffset < 0)
-				target = target.getRelative(BlockFace.DOWN, yOffset);
-			if (!BlockUtils.isAir(target.getType()) && target.getType() != Material.SNOW
-					&& target.getType() != Material.TALL_GRASS)
-				return noTarget(caster, args);
-
-			if (target != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(),
-						power);
-				EventUtil.call(event);
-				if (event.isCancelled())
-					return noTarget(caster, args);
-				target = event.getTargetLocation().getBlock();
-				power = event.getPower();
-			}
-			createTotem(caster, target.getLocation(), power, args);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		List<Block> lastTwo = getLastTwoTargetedBlocks(data.caster(), data.power(), data.args());
+		Block target = null;
+
+		if (lastTwo != null && lastTwo.size() == 2)
+			target = lastTwo.get(0);
+		if (target == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		int yOffset = this.yOffset.get(data.caster(), null, data.power(), data.args());
+		if (yOffset > 0)
+			target = target.getRelative(BlockFace.UP, yOffset);
+		else if (yOffset < 0)
+			target = target.getRelative(BlockFace.DOWN, yOffset);
+		if (!BlockUtils.isAir(target.getType()) && target.getType() != Material.SNOW
+				&& target.getType() != Material.TALL_GRASS)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(target.getLocation()));
+		EventUtil.call(event);
+		if (event.isCancelled())
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return castAtLocation(event.getSpellData());
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Block block = target.getBlock();
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-		int yOffset = this.yOffset.get(caster, null, power, args);
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		Block block = data.location().getBlock();
+
+		int yOffset = this.yOffset.get(data.caster(), null, data.power(), data.args());
 		if (yOffset > 0)
 			block = block.getRelative(BlockFace.UP, yOffset);
 		else if (yOffset < 0)
@@ -274,29 +275,32 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		if (BlockUtils.isAir(block.getType()) || block.getType() == Material.SNOW
 				|| block.getType() == Material.TALL_GRASS) {
-			if (!centerStand) {
-				Location loc = target.clone();
-				createTotem(caster, loc, power, args);
-			} else
-				createTotem(caster, block.getLocation(), power, args);
-			return true;
+			if (!centerStand)
+				createTotem(data.caster(), data.location().clone(), data.power(), data.args());
+			else
+				createTotem(data.caster(), block.getLocation(), data.power(), data.args());
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
 		block = block.getRelative(BlockFace.UP);
 		if (BlockUtils.isAir(block.getType()) || block.getType() == Material.SNOW
 				|| block.getType() == Material.TALL_GRASS) {
-			if (!centerStand) {
-				Location loc = target.clone();
-				createTotem(caster, loc, power, args);
-			} else
-				createTotem(caster, block.getLocation(), power, args);
-			return true;
+			if (!centerStand)
+				createTotem(data.caster(), data.location().clone(), data.power(), data.args());
+			else
+				createTotem(data.caster(), block.getLocation(), data.power(), data.args());
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
-		return false;
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+	}
+
+	@Override
+	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void createTotem(LivingEntity caster, Location loc, float power, String[] args) {

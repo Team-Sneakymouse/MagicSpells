@@ -16,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -75,67 +76,78 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			Block target;
-			try {
-				target = getTargetedBlock(caster, power, args);
-			} catch (IllegalStateException e) {
-				target = null;
-			}
-			if (target != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(),
-						power);
-				EventUtil.call(event);
-				if (event.isCancelled())
-					target = null;
-				else
-					target = event.getTargetLocation().getBlock();
-			}
-			if (target == null)
-				return noTarget(caster, args);
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			if (!canZap(target))
-				return noTarget(caster, strCantZap, args);
-			boolean ok = zap(target, (Player) caster, power, args);
-			if (!ok)
-				return noTarget(caster, strCantZap, args);
-
+		Block target;
+		try {
+			target = getTargetedBlock(data.caster(), data.power(), data.args());
+		} catch (IllegalStateException e) {
+			target = null;
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (target != null) {
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(target.getLocation()));
+			EventUtil.call(event);
+			if (event.isCancelled())
+				target = null;
+			else {
+				data = event.getSpellData();
+				target = data.location().getBlock();
+			}
+		}
+		if (target == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		if (!canZap(target))
+			return new CastResult(noTarget(data.caster(), strCantZap, data.args()), data);
+
+		CastResult result = castAtLocation(data.location(target.getLocation()));
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return new CastResult(noTarget(data.caster(), strCantZap, data.args()), data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (data.hasCaster() && !(data.caster() instanceof Player))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+
+		Player player = data.caster() instanceof Player p ? p : null;
+		Block block = data.location().getBlock();
+		if (canZap(block)) {
+			if (zap(block, player, data))
+				return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+
+		Vector v = data.location().getDirection();
+		block = data.location().clone().add(v).getBlock();
+
+		if (canZap(block) && zap(block, player, data))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player))
-			return false;
-		Block block = target.getBlock();
-		if (canZap(block)) {
-			zap(block, (Player) caster, power, args);
-			return true;
-		}
-
-		Vector v = target.getDirection();
-		block = target.clone().add(v).getBlock();
-
-		if (canZap(block)) {
-			zap(block, (Player) caster, power, args);
-			return true;
-		}
-		return false;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		Block block = target.getBlock();
-		if (canZap(block)) {
-			zap(block, null, power, args);
-			return true;
-		}
-		return false;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	private boolean zap(Block target, Player player, float power, String[] args) {
+	private boolean zap(Block target, Player player, SpellData data) {
 		boolean playerNull = player == null;
 
 		if (checkPlugins && !playerNull) {
@@ -155,12 +167,12 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 		if (playBreakEffect)
 			target.getWorld().playEffect(target.getLocation(), Effect.DESTROY_BLOCK, target.getBlockData());
 
-		SpellData data = new SpellData(player, target.getLocation(), power, args);
+		SpellData effectData = data.location(target.getLocation());
 		if (!playerNull)
-			playSpellEffects(EffectPosition.CASTER, player, data);
-		playSpellEffects(EffectPosition.TARGET, target.getLocation(), data);
+			playSpellEffects(EffectPosition.CASTER, player, effectData);
+		playSpellEffects(EffectPosition.TARGET, target.getLocation(), effectData);
 		if (!playerNull)
-			playSpellEffectsTrail(player.getLocation(), target.getLocation(), data);
+			playSpellEffectsTrail(player.getLocation(), target.getLocation(), effectData);
 
 		target.setType(Material.AIR);
 		return true;

@@ -12,6 +12,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MobUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -51,26 +52,37 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		if (!purge(data.caster(), data.caster().getLocation(), data.power(), data.args()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			boolean killed = purge(caster, caster.getLocation(), power, args);
-			if (!killed)
-				return PostCastAction.ALREADY_HANDLED;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		boolean killed = purge(data.caster(), data.location(), data.power(), data.args());
+		if (killed && data.hasCaster())
+			playSpellEffects(EffectPosition.CASTER, data.caster(), data);
+		return new CastResult(killed ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		boolean killed = purge(caster, target, power, args);
-		if (killed && caster != null)
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
-		return killed;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	private boolean purge(LivingEntity caster, Location loc, float power, String[] args) {

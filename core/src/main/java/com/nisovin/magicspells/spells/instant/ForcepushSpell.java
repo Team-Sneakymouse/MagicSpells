@@ -8,6 +8,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -39,11 +40,16 @@ public class ForcepushSpell extends InstantSpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		knockback(data.caster(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			knockback(caster, power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	private void knockback(LivingEntity caster, float basePower, String[] args) {

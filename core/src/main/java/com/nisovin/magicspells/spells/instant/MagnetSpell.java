@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.InventoryUtil;
@@ -47,25 +48,32 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		Location location = data.caster().getLocation();
+		List<Item> items = getNearbyItems(data.caster(), location, data.power(), data.args());
+		magnet(data.caster(), location, items, data.power(), data.args());
+		playSpellEffects(EffectPosition.CASTER, data.caster(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Location location = caster.getLocation();
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			List<Item> items = getNearbyItems(caster, location, power, args);
-			magnet(caster, location, items, power, args);
-
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
-		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		Collection<Item> targetItems = getNearbyItems(data.caster(), data.location(), data.power(), data.args());
+		magnet(data.caster(), data.location(), targetItems, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Collection<Item> targetItems = getNearbyItems(caster, target, power, args);
-		magnet(caster, target, targetItems, power, args);
-
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	private List<Item> getNearbyItems(LivingEntity caster, Location center, float power, String[] args) {

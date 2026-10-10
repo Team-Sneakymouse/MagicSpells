@@ -134,53 +134,71 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			if (requireEntityTarget) {
-				TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-				if (target.noTarget()) return noTarget(caster, args, target);
+	public CastResult cast(SpellData data) {
+		if (requireEntityTarget) {
+			TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), data.args());
+			if (target.noTarget())
+				return new CastResult(noTarget(data.caster(), data.args(), target), data);
 
-				new OrbitTracker(caster, target.target(), target.power(), args);
-				playSpellEffects(caster, target.target(), target.power(), args);
-				sendMessages(caster, target.target(), args);
+			data = data.target(target.target()).power(target.power());
+			CastResult result = castAtEntity(data);
+			if (result.action() == PostCastAction.ALREADY_HANDLED)
+				return result;
 
-				return PostCastAction.NO_MESSAGES;
-			}
-
-			Block block = getTargetedBlock(caster, power, args);
-			if (block != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this,
-						new SpellData(caster, block.getLocation(), power, args));
-				EventUtil.call(event);
-				if (event.isCancelled()) block = null;
-				else {
-					block = event.getTargetLocation().getBlock();
-					power = event.getPower();
-				}
-			}
-
-			if (block == null) return noTarget(caster, args);
-
-			new OrbitTracker(caster, block.getLocation().add(0.5, 0, 0.5), power, args);
-			return PostCastAction.HANDLE_NORMALLY;
+			sendMessages(data.caster(), data.target(), data.args());
+			return new CastResult(PostCastAction.NO_MESSAGES, data);
 		}
 
-		return PostCastAction.HANDLE_NORMALLY;
+		Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+		if (block != null) {
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(block.getLocation()));
+			EventUtil.call(event);
+			if (event.isCancelled())
+				block = null;
+			else {
+				data = event.getSpellData();
+				block = data.location().getBlock();
+			}
+		}
+
+		if (block == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return castAtLocation(data.location(block.getLocation().add(0.5, 0, 0.5)));
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		new OrbitTracker(data.caster(), data.target(), data.power(), data.args());
+		playSpellEffects(data.caster(), data.target(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		new OrbitTracker(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		new OrbitTracker(data.caster(), data.location(), data.power(), data.args());
+		if (data.hasCaster())
+			playSpellEffects(data.caster(), data.location(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		new OrbitTracker(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	public boolean hasOrbit(LivingEntity target) {

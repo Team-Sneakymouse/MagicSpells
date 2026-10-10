@@ -98,28 +98,39 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), data.args());
+		if (target.noTarget())
+			return new CastResult(noTarget(data.caster(), data.args(), target), data);
+
+		data = data.target(target.target()).power(target.power());
+		CastResult result = castAtEntity(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		sendMessages(data.caster(), data.target(), data.args());
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget())
-				return noTarget(caster, args, target);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			boolean drained = drain(caster, target.target(), target.power(), args);
-			if (!drained)
-				return noTarget(caster, args);
-
-			sendMessages(caster, target.target(), args);
-			return PostCastAction.NO_MESSAGES;
-		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!drain(data.caster(), data.target(), data.power(), data.args()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		return drain(caster, target, power, args);
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override

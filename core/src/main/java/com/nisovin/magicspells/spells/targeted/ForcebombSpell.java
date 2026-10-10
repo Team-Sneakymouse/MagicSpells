@@ -8,6 +8,7 @@ import org.bukkit.util.Vector;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -48,38 +49,46 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Block block = getTargetedBlock(caster, power, args);
-			if (block != null && !BlockUtils.isAir(block.getType())) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, block.getLocation(), power,
-						args);
-				EventUtil.call(event);
-				if (event.isCancelled())
-					block = null;
-				else {
-					block = event.getTargetLocation().getBlock();
-					power = event.getPower();
-				}
+	public CastResult cast(SpellData data) {
+		Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+		if (block != null && !BlockUtils.isAir(block.getType())) {
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(block.getLocation()));
+			EventUtil.call(event);
+			if (event.isCancelled())
+				block = null;
+			else {
+				data = event.getSpellData();
+				block = data.location().getBlock();
 			}
-
-			if (block == null || BlockUtils.isAir(block.getType()))
-				return noTarget(caster, args);
-			knockback(caster, block.getLocation().add(0.5, 0, 0.5), power, args);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		if (block == null || BlockUtils.isAir(block.getType()))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return castAtLocation(data.location(block.getLocation().add(0.5, 0, 0.5)));
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		knockback(data.caster(), data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		knockback(caster, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		knockback(null, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void knockback(LivingEntity caster, Location location, float basePower, String[] args) {

@@ -18,6 +18,7 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -150,47 +151,66 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Block b = getTargetedBlock(caster, power, args);
-			if (b != null && !BlockUtils.isAir(b.getType())) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, b.getLocation(), power,
-						args);
-				EventUtil.call(event);
-				if (event.isCancelled())
-					b = null;
-				else
-					b = event.getTargetLocation().getBlock();
-			}
-			if (b != null && !BlockUtils.isAir(b.getType())) {
-				Location loc = b.getLocation().add(0.5, 0.5, 0.5);
-				doIt(caster, null, caster.getLocation(), loc, power, args);
-				playSpellEffects(caster, loc, power, args);
+	public CastResult cast(SpellData data) {
+		Block b = getTargetedBlock(data.caster(), data.power(), data.args());
+		if (b != null && !BlockUtils.isAir(b.getType())) {
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(b.getLocation()));
+			EventUtil.call(event);
+			if (event.isCancelled())
+				b = null;
+			else {
+				data = event.getSpellData();
+				b = data.location().getBlock();
 			}
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (b == null || BlockUtils.isAir(b.getType()))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return castAtLocation(data.location(b.getLocation().add(0.5, 0.5, 0.5)));
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		Location from = data.hasCaster() ? data.caster().getLocation() : data.location();
+		doIt(data.caster(), null, from, data.location(), data.power(), data.args());
+		if (data.hasCaster())
+			playSpellEffects(data.caster(), data.location(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		doIt(caster, null, caster.getLocation(), target, power, args);
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		doIt(data.caster(), data.target(), data.location(), data.target().getLocation(), data.power(), data.args());
+		if (data.hasCaster())
+			playSpellEffects(data.caster(), data.location(), data.target(), data);
+		else
+			playSpellEffects(data.location(), data.target(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
-		doIt(caster, target, from, target.getLocation(), power, args);
-		playSpellEffects(caster, from, target, new SpellData(caster, target, from, power, args));
-		return true;
+		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		doIt(null, target, from, target.getLocation(), power, args);
-		playSpellEffects(from, target, new SpellData(null, target, power, args));
-		return true;
+		return castAtEntityFromLocation(new SpellData(null, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void doIt(LivingEntity caster, LivingEntity target, Location source, Location targetLocation, float power,

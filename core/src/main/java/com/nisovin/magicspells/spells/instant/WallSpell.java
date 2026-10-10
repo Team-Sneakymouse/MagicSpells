@@ -20,6 +20,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
@@ -121,26 +122,42 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			if (materials == null || materials.isEmpty()) return PostCastAction.ALREADY_HANDLED;
+	public CastResult cast(SpellData data) {
+		if (materials == null || materials.isEmpty())
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 
-			int distance = this.distance.get(caster, null, power, args);
-			Block target = getTargetedBlock(caster, distance > 0 && distance < 15 ? distance : 3, args);
-			if (target == null || !BlockUtils.isAir(target.getType())) {
-				sendMessage(strNoTarget, caster, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
+		LivingEntity caster = data.caster();
+		float power = data.power();
+		String[] args = data.args();
 
-			makeWall(caster, target.getLocation(), caster.getLocation().getDirection(), power, args);
+		int distance = this.distance.get(caster, null, power, args);
+		Block target = getTargetedBlock(caster, distance > 0 && distance < 15 ? distance : 3, args);
+		if (target == null || !BlockUtils.isAir(target.getType())) {
+			sendMessage(strNoTarget, caster, args);
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		makeWall(caster, target.getLocation(), caster.getLocation().getDirection(), power, args);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		makeWall(data.caster(), data.location(), data.location().getDirection(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		makeWall(caster, target, target.getDirection(), power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void makeWall(LivingEntity caster, Location location, Vector direction, float power, String[] args) {

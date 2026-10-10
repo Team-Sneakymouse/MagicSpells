@@ -360,80 +360,113 @@ public class ParticleProjectileSpell extends InstantSpell
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		ParticleProjectileTracker tracker = new ParticleProjectileTracker(data.caster(), data.power(), data.args());
+		setupTracker(tracker, data.caster(), null, data.power(), data.args());
+		tracker.start(data.caster().getLocation());
+		playSpellEffects(EffectPosition.CASTER, data.caster(), tracker.getSpellData());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			ParticleProjectileTracker tracker = new ParticleProjectileTracker(caster, power, args);
-			setupTracker(tracker, caster, null, power, args);
-			tracker.start(caster.getLocation());
-			playSpellEffects(EffectPosition.CASTER, caster, tracker.getSpellData());
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (data.hasCaster()) {
+			ParticleProjectileTracker tracker = new ParticleProjectileTracker(data.caster(), data.power(), data.args());
+			setupTracker(tracker, data.caster(), null, data.power(), data.args());
+			tracker.start(data.location());
+			playSpellEffects(EffectPosition.CASTER, data.caster(), tracker.getSpellData());
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		Location targetLoc = data.location().clone();
+		if (Float.isNaN(targetLoc.getPitch()))
+			targetLoc.setPitch(0);
+		ParticleProjectileTracker tracker = new ParticleProjectileTracker(null, data.power(), data.args());
+		setupTracker(tracker, null, null, data.power(), data.args());
+		tracker.start(data.location());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		ParticleProjectileTracker tracker = new ParticleProjectileTracker(caster, power, args);
-		setupTracker(tracker, caster, null, power, args);
-		tracker.start(target);
-		playSpellEffects(EffectPosition.CASTER, caster, tracker.getSpellData());
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		Location targetLoc = target.clone();
-		if (Float.isNaN(targetLoc.getPitch()))
-			targetLoc.setPitch(0);
-		ParticleProjectileTracker tracker = new ParticleProjectileTracker(null, power, args);
-		setupTracker(tracker, null, null, power, args);
-		tracker.start(target);
-		return true;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			if (!data.caster().getLocation().getWorld().equals(data.target().getLocation().getWorld()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			Location from = data.location().clone();
+			if (Float.isNaN(from.getPitch()))
+				from.setPitch(0);
+			ParticleProjectileTracker tracker = new ParticleProjectileTracker(data.caster(), data.power(), data.args());
+			setupTracker(tracker, data.caster(), data.target(), data.power(), data.args());
+			tracker.startTarget(data.location(), data.target());
+			playSpellEffects(data.caster(), data.location(), data.target(), tracker.getSpellData());
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+		if (!validTargetList.canTarget(data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!data.location().getWorld().equals(data.target().getLocation().getWorld()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		Location from = data.location().clone();
+		if (Float.isNaN(from.getPitch()))
+			from.setPitch(0);
+		ParticleProjectileTracker tracker = new ParticleProjectileTracker(null, data.power(), data.args());
+		setupTracker(tracker, null, data.target(), data.power(), data.args());
+		tracker.startTarget(data.location(), data.target());
+		playSpellEffects(data.location(), data.target(), tracker.getSpellData());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		if (!caster.getLocation().getWorld().equals(target.getLocation().getWorld()))
-			return false;
-		Location targetLoc = from.clone();
-		if (Float.isNaN(targetLoc.getPitch()))
-			targetLoc.setPitch(0);
-		ParticleProjectileTracker tracker = new ParticleProjectileTracker(caster, power, args);
-		setupTracker(tracker, caster, target, power, args);
-		tracker.startTarget(from, target);
-		playSpellEffects(caster, from, target, tracker.getSpellData());
-		return true;
+		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		if (!from.getWorld().equals(target.getLocation().getWorld()))
-			return false;
-		Location targetLoc = from.clone();
-		if (Float.isNaN(targetLoc.getPitch()))
-			targetLoc.setPitch(0);
-		ParticleProjectileTracker tracker = new ParticleProjectileTracker(null, power, args);
-		setupTracker(tracker, null, target, power, args);
-		tracker.startTarget(from, target);
-		playSpellEffects(from, target, tracker.getSpellData());
-		return true;
+		return castAtEntityFromLocation(new SpellData(null, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			if (!data.caster().getLocation().getWorld().equals(data.target().getLocation().getWorld()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			ParticleProjectileTracker tracker = new ParticleProjectileTracker(data.caster(), data.power(), data.args());
+			setupTracker(tracker, data.caster(), data.target(), data.power(), data.args());
+			tracker.startTarget(data.caster().getLocation(), data.target());
+			playSpellEffects(data.caster(), data.target(), tracker.getSpellData());
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		if (!caster.getLocation().getWorld().equals(target.getLocation().getWorld()))
-			return false;
-		ParticleProjectileTracker tracker = new ParticleProjectileTracker(caster, power, args);
-		setupTracker(tracker, caster, target, power, args);
-		tracker.startTarget(caster.getLocation(), target);
-		playSpellEffects(caster, target, tracker.getSpellData());
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	public static Set<ParticleProjectileTracker> getProjectileTrackers() {

@@ -17,6 +17,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
@@ -69,48 +70,66 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data.caster(), data.power(), data.args());
+		if (targetInfo.noTarget())
+			return new CastResult(noTarget(data.caster(), data.args(), targetInfo), data);
+
+		data = data.target(targetInfo.target()).power(targetInfo.power());
+		CastResult result = castAtEntity(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return result;
+
+		sendMessages(data.caster(), data.target(), data.args());
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			LivingEntity target = targetInfo.target();
-			power = targetInfo.power();
-
-			stunLivingEntity(caster, target, power, args);
-			sendMessages(caster, target, args);
-
-			return PostCastAction.NO_MESSAGES;
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			stunLivingEntity(data);
+		} else {
+			if (!validTargetList.canTarget(data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			stunLivingEntity(data);
 		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		stunLivingEntity(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		stunLivingEntity(null, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	private void stunLivingEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void stunLivingEntity(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+		float power = data.power();
+		String[] args = data.args();
 		long duration = this.duration.get(caster, target, power, args) * TimeUtil.MILLISECONDS_PER_SECOND / 20;
 		if (Boolean.TRUE.equals(powerAffectsDuration.get(caster, target, power, args))) duration = Math.round(duration * power);
 
 		StunnedInfo info = new StunnedInfo(caster, target, System.currentTimeMillis() + duration, target.getLocation());
 		stunnedLivingEntities.put(target.getUniqueId(), info);
 
-		SpellData data = new SpellData(caster, target, power, args);
-
-		if (caster != null) playSpellEffects(caster, target, data);
-		else playSpellEffects(EffectPosition.TARGET, target, data);
+		if (caster != null)
+			playSpellEffects(caster, target, data);
+		else
+			playSpellEffects(EffectPosition.TARGET, target, data);
 
 		playSpellEffectsBuff(target, entity -> {
 			if (!(entity instanceof LivingEntity)) return false;

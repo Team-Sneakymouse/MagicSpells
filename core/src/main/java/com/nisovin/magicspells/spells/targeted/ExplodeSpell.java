@@ -17,7 +17,9 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.handlers.DebugHandler;
@@ -65,31 +67,41 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Block target;
-			try {
-				target = getTargetedBlock(caster, power, args);
-			} catch (IllegalStateException e) {
-				DebugHandler.debugIllegalState(e);
-				target = null;
-			}
-
-			if (target != null && !BlockUtils.isAir(target.getType())) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power, args);
-				EventUtil.call(event);
-				if (event.isCancelled()) target = null;
-				else {
-					target = event.getTargetLocation().getBlock();
-					power = event.getPower();
-				}
-			}
-
-			if (target == null || BlockUtils.isAir(target.getType())) return noTarget(caster, args);
-			boolean exploded = explode(caster, target.getLocation(), power, args);
-			if (!exploded && !ignoreCanceled) return noTarget(caster, args);
+	public CastResult cast(SpellData data) {
+		Block target;
+		try {
+			target = getTargetedBlock(data.caster(), data.power(), data.args());
+		} catch (IllegalStateException e) {
+			DebugHandler.debugIllegalState(e);
+			target = null;
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		if (target != null && !BlockUtils.isAir(target.getType())) {
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(target.getLocation()));
+			EventUtil.call(event);
+			if (event.isCancelled())
+				target = null;
+			else {
+				data = event.getSpellData();
+				target = data.location().getBlock();
+			}
+		}
+
+		if (target == null || BlockUtils.isAir(target.getType()))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		CastResult result = castAtLocation(data.location(target.getLocation()));
+		if (result.action() == PostCastAction.ALREADY_HANDLED && !ignoreCanceled)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 	
 	private boolean explode(LivingEntity caster, Location target, float power, String[] args) {
@@ -113,14 +125,22 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		currentArgs = args;
 
 		boolean ret = target.getWorld().createExplosion(target, explosionSize, addFire, !preventBlockDamage, caster);
-		if (ret) playSpellEffects(caster, target, power, args);
+		if (ret)
+			playSpellEffects(caster, target, power, args);
 
 		return ret;
 	}
 
 	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (!explode(data.caster(), data.location(), data.power(), data.args()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return explode(caster, target, power, args);
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@EventHandler(priority=EventPriority.HIGH, ignoreCancelled = true)

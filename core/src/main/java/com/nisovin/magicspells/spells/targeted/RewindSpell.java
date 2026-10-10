@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.mana.ManaHandler;
@@ -72,37 +73,51 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		TargetInfo<LivingEntity> info = getTargetedEntity(data.caster(), data.power(), data.args());
+		if (info.noTarget())
+			return new CastResult(noTarget(data.caster(), data.args(), info), data);
+
+		data = data.target(info.target()).power(info.power());
+		CastResult result = castAtEntity(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return result;
+
+		sendMessages(data.caster(), data.target(), data.args());
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-			if (info.noTarget())
-				return noTarget(caster, args, info);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			LivingEntity target = info.target();
-			power = info.power();
-
-			new Rewinder(caster, target, power, args);
-			playSpellEffects(caster, target, power, args);
-			sendMessages(caster, target, args);
-
-			return PostCastAction.NO_MESSAGES;
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			new Rewinder(data.caster(), data.target(), data.power(), data.args());
+			playSpellEffects(data.caster(), data.target(), data);
+		} else {
+			if (!validTargetList.canTarget(data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			new Rewinder(null, data.target(), data.power(), data.args());
+			playSpellEffects(EffectPosition.TARGET, data.target(), data);
 		}
-
-		return PostCastAction.HANDLE_NORMALLY;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		new Rewinder(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		new Rewinder(null, target, power, args);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@EventHandler(ignoreCancelled = true)

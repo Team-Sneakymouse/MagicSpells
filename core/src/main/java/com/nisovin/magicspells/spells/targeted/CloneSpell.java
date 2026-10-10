@@ -7,6 +7,8 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
 
 import java.util.HashMap;
@@ -52,44 +54,58 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 		temporaryCloneMap.clear();
 	}
 
-    @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-        if(!(caster instanceof Player)) return PostCastAction.NO_MESSAGES;
+	@Override
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player))
+			return new CastResult(PostCastAction.NO_MESSAGES, data);
 
-        if(state == SpellCastState.NORMAL) {
-			Location loc = null;
-			if (pointBlank) loc = caster.getLocation();
-			else {
-				try {
-					Block block = getTargetedBlock(caster, power, args);
-					if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation().add(0.5, 1, 0.5);
-				}
-				catch (IllegalStateException ignored) {}
+		Location loc = null;
+		if (pointBlank)
+			loc = data.caster().getLocation();
+		else {
+			try {
+				Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+				if (block != null && !BlockUtils.isAir(block.getType()))
+					loc = block.getLocation().add(0.5, 1, 0.5);
+			} catch (IllegalStateException ignored) {
 			}
+		}
 
-			if (loc == null) return noTarget(caster, args);
+		if (loc == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
 
-			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, loc, power, args);
-			EventUtil.call(event);
-			if (event.isCancelled()) loc = null;
-			else {
-				loc = event.getTargetLocation();
-				power = event.getPower();
-			}
+		SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(loc));
+		EventUtil.call(event);
+		if (event.isCancelled())
+			return new CastResult(noTarget(data.caster(), data.args()), data);
 
-			if (loc == null) return noTarget(caster, args);
+		data = event.getSpellData();
+		CastResult result = castAtLocation(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
 
-			boolean done = createFalsePlayer(caster, loc, power, args);
-			if (!done) return noTarget(caster, args);
-        }
-        return PostCastAction.HANDLE_NORMALLY;
-    }
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		Location loc = data.location().clone();
+		loc.setY(data.location().getY() + 1);
+		if (!createFalsePlayer(data.caster(), loc, data.power(), data.args()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Location loc = target.clone();
-		loc.setY(target.getY() + 1);
-		return createFalsePlayer(caster, loc, power, args);
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
     private boolean createFalsePlayer(LivingEntity caster, Location loc, float basePower, String[] args) {

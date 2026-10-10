@@ -9,6 +9,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 
@@ -56,27 +57,35 @@ public class RandomSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			RandomOptionSet set = options;
-			if (checkIndividualCooldowns || checkIndividualModifiers) {
-				set = new RandomOptionSet();
-				for (SpellOption o : options.randomOptionSetOptions) {
-					if (checkIndividualCooldowns && o.spell.getSpell().onCooldown(caster)) continue;
-					if (checkIndividualModifiers) {
-						ModifierSet modifiers = o.spell.getSpell().getModifiers();
-						if (modifiers != null && caster instanceof Player && !modifiers.check(caster)) continue;
-					}
-					set.add(o);
+	public CastResult cast(SpellData data) {
+		LivingEntity caster = data.caster();
+		RandomOptionSet set = options;
+		if (checkIndividualCooldowns || checkIndividualModifiers) {
+			set = new RandomOptionSet();
+			for (SpellOption o : options.randomOptionSetOptions) {
+				if (checkIndividualCooldowns && o.spell.getSpell().onCooldown(caster))
+					continue;
+				if (checkIndividualModifiers) {
+					ModifierSet modifiers = o.spell.getSpell().getModifiers();
+					if (modifiers != null && caster instanceof Player && !modifiers.check(caster))
+						continue;
 				}
+				set.add(o);
 			}
-			if (!set.randomOptionSetOptions.isEmpty()) {
-				Subspell spell = set.choose();
-				return spell != null && spell.subcast(new SpellData(caster, power, args)) ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED;
-			}
-			return PostCastAction.ALREADY_HANDLED;
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (set.randomOptionSetOptions.isEmpty())
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		Subspell spell = set.choose();
+		PostCastAction action = spell != null && spell.subcast(data) ? PostCastAction.HANDLE_NORMALLY
+				: PostCastAction.ALREADY_HANDLED;
+		return new CastResult(action, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	private static class SpellOption {

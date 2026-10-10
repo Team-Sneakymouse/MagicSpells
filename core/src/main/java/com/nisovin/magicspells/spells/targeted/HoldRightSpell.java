@@ -14,6 +14,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -65,62 +66,83 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			CastData data = casting.get(caster.getUniqueId());
-			if (data != null && data.isValid(caster)) {
-				data.cast(caster);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (targetEntity) {
-				TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-				if (target.noTarget()) return noTarget(caster, args, target);
-
-				data = new CastData(caster, target.target(), target.power(), args);
-			} else if (targetLocation) {
-				Block block = getTargetedBlock(caster, power, args);
-				if (block == null || block.getType().isAir()) return noTarget(caster, args);
-
-				data = new CastData(caster, block.getLocation().add(0.5, 0.5, 0.5), power, args);
-			} else data = new CastData(caster, power, args);
-
-			data.cast(caster);
-			casting.put(caster.getUniqueId(), data);
+	public CastResult cast(SpellData data) {
+		LivingEntity caster = data.caster();
+		CastData castData = casting.get(caster.getUniqueId());
+		if (castData != null && castData.isValid(caster)) {
+			castData.cast(caster);
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		if (targetEntity) {
+			TargetInfo<LivingEntity> target = getTargetedEntity(caster, data.power(), data.args());
+			if (target.noTarget())
+				return new CastResult(noTarget(caster, data.args(), target), data);
+
+			castData = new CastData(caster, target.target(), target.power(), data.args());
+		} else if (targetLocation) {
+			Block block = getTargetedBlock(caster, data.power(), data.args());
+			if (block == null || block.getType().isAir())
+				return new CastResult(noTarget(caster, data.args()), data);
+
+			castData = new CastData(caster, block.getLocation().add(0.5, 0.5, 0.5), data.power(), data.args());
+		} else
+			castData = new CastData(caster, data.power(), data.args());
+
+		castData.cast(caster);
+		casting.put(caster.getUniqueId(), castData);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (!targetLocation)
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		LivingEntity caster = data.caster();
+		CastData castData = casting.get(caster.getUniqueId());
+		if (castData != null && castData.isValid(caster)) {
+			castData.cast(caster);
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+
+		castData = new CastData(caster, data.location(), data.power(), data.args());
+		castData.cast(caster);
+		casting.put(caster.getUniqueId(), castData);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!targetLocation) return false;
-		CastData data = casting.get(caster.getUniqueId());
-		if (data != null && data.isValid(caster)) {
-			data.cast(caster);
-			return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (!targetEntity || !validTargetList.canTarget(data.caster(), data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		LivingEntity caster = data.caster();
+		CastData castData = casting.get(caster.getUniqueId());
+		if (castData != null && castData.isValid(caster)) {
+			castData.cast(caster);
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
 
-		data = new CastData(caster, target, power, args);
-		data.cast(caster);
-		casting.put(caster.getUniqueId(), data);
-
-		return true;
+		castData = new CastData(caster, data.target(), data.power(), data.args());
+		castData.cast(caster);
+		casting.put(caster.getUniqueId(), castData);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!targetEntity || !validTargetList.canTarget(caster, target)) return false;
-		CastData data = casting.get(caster.getUniqueId());
-		if (data != null && data.isValid(caster)) {
-			data.cast(caster);
-			return true;
-		}
-
-		data = new CastData(caster, target, power, args);
-		data.cast(caster);
-		casting.put(caster.getUniqueId(), data);
-
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private class CastData {

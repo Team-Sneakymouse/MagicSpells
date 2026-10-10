@@ -15,6 +15,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -97,40 +98,56 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			Location loc = null;
-			if (targetSelf)
-				loc = player.getLocation();
-			else {
-				Block b = getTargetedBlock(player, power, args);
-				if (b != null && b.getType() != Material.AIR)
-					loc = b.getLocation();
-			}
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 
-			if (loc == null)
-				return noTarget(player, args);
-
-			layCarpet(player, loc, power, args);
+		Location loc = null;
+		if (targetSelf)
+			loc = player.getLocation();
+		else {
+			Block b = getTargetedBlock(player, data.power(), data.args());
+			if (b != null && b.getType() != Material.AIR)
+				loc = b.getLocation();
 		}
-		return PostCastAction.ALREADY_HANDLED;
+
+		if (loc == null)
+			return new CastResult(noTarget(player, data.args()), data);
+
+		layCarpet(player, loc, data.power(), data.args());
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (data.hasCaster() && !(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (data.hasCaster()) {
+			Player player = (Player) data.caster();
+			if (targetSelf)
+				layCarpet(player, player.getLocation(), data.power(), data.args());
+			else
+				layCarpet(player, data.location(), data.power(), data.args());
+		} else
+			layCarpet(null, data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player))
-			return false;
-		if (targetSelf)
-			layCarpet((Player) caster, caster.getLocation(), power, args);
-		else
-			layCarpet((Player) caster, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		layCarpet(null, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void layCarpet(Player player, Location loc, float power, String[] args) {

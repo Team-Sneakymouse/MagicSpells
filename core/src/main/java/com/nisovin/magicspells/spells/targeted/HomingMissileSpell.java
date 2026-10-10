@@ -186,52 +186,77 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		ValidTargetChecker checker = hitSpell != null ? hitSpell.getSpell().getValidTargetChecker() : null;
+		TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), checker, data.args());
+		if (target.noTarget())
+			return new CastResult(noTarget(data.caster(), data.args(), target), data);
+
+		data = data.target(target.target()).power(target.power());
+		CastResult result = castAtEntity(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return result;
+
+		sendMessages(data.caster(), data.target(), data.args());
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			ValidTargetChecker checker = hitSpell != null ? hitSpell.getSpell().getValidTargetChecker() : null;
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, checker, args);
-			if (target.noTarget())
-				return noTarget(caster, args, target);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			new MissileTracker(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
-
-			return PostCastAction.NO_MESSAGES;
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			new MissileTracker(data.caster(), data.target(), data.power(), data.args());
+		} else {
+			if (!validTargetList.canTarget(data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			new MissileTracker(null, data.target(), data.power(), data.args());
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		new MissileTracker(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		new MissileTracker(null, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			new MissileTracker(data.caster(), data.location(), data.target(), data.power(), data.args());
+		} else {
+			if (!validTargetList.canTarget(data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			new MissileTracker(null, data.location(), data.target(), data.power(), data.args());
+		}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		new MissileTracker(caster, from, target, power, args);
-		return true;
+		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		new MissileTracker(null, from, target, power, args);
-		return true;
+		return castAtEntityFromLocation(new SpellData(null, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	private class MissileTracker implements Runnable {

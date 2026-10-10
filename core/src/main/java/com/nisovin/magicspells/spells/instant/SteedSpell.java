@@ -28,6 +28,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MobUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -130,49 +131,66 @@ public class SteedSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			if (caster.getVehicle() != null) {
-				sendMessage(strAlreadyMounted, caster, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
+	public CastResult cast(SpellData data) {
+		LivingEntity caster = data.caster();
+		float power = data.power();
+		String[] args = data.args();
 
-			Class<? extends Entity> entityClass = type == null ? null : type.getEntityClass();
-			if (entityClass == null) {
-				sendMessage(strInvalidType, caster, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			Entity entity = caster.getWorld().spawn(caster.getLocation(), entityClass, e -> {
-				e.setGravity(gravity);
-
-				if (e instanceof AbstractHorse abstractHorse) {
-					abstractHorse.setAdult();
-					abstractHorse.setTamed(true);
-					if (caster instanceof AnimalTamer tamer) abstractHorse.setOwner(tamer);
-					abstractHorse.setJumpStrength(jumpStrength.get(caster, null, power, args));
-					abstractHorse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
-
-					if (abstractHorse instanceof Horse horse) {
-						if (color != null) horse.setColor(color);
-						else horse.setColor(Horse.Color.values()[random.nextInt(Horse.Color.values().length)]);
-						if (style != null) horse.setStyle(style);
-						else horse.setStyle(Horse.Style.values()[random.nextInt(Horse.Style.values().length)]);
-						if (armor != null) horse.getInventory().setArmor(armor);
-					} else if (abstractHorse instanceof ChestedHorse chestedHorse) {
-						chestedHorse.setCarryingChest(hasChest);
-					}
-				}
-			});
-			entity.addPassenger(caster);
-
-			if (entity instanceof LivingEntity le) spellOnSpawn.subcast(new SpellData(caster, le, power, args));
-			else spellOnSpawn.subcast(new SpellData(caster, entity.getLocation(), power, args));
-
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
-			mounted.put(caster.getUniqueId(), entity.getEntityId());
+		if (caster.getVehicle() != null) {
+			sendMessage(strAlreadyMounted, caster, args);
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		Class<? extends Entity> entityClass = type == null ? null : type.getEntityClass();
+		if (entityClass == null) {
+			sendMessage(strInvalidType, caster, args);
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		}
+
+		Entity entity = caster.getWorld().spawn(caster.getLocation(), entityClass, e -> {
+			e.setGravity(gravity);
+
+			if (e instanceof AbstractHorse abstractHorse) {
+				abstractHorse.setAdult();
+				abstractHorse.setTamed(true);
+				if (caster instanceof AnimalTamer tamer)
+					abstractHorse.setOwner(tamer);
+				abstractHorse.setJumpStrength(jumpStrength.get(caster, null, power, args));
+				abstractHorse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
+
+				if (abstractHorse instanceof Horse horse) {
+					if (color != null)
+						horse.setColor(color);
+					else
+						horse.setColor(Horse.Color.values()[random.nextInt(Horse.Color.values().length)]);
+					if (style != null)
+						horse.setStyle(style);
+					else
+						horse.setStyle(Horse.Style.values()[random.nextInt(Horse.Style.values().length)]);
+					if (armor != null)
+						horse.getInventory().setArmor(armor);
+				} else if (abstractHorse instanceof ChestedHorse chestedHorse) {
+					chestedHorse.setCarryingChest(hasChest);
+				}
+			}
+		});
+		entity.addPassenger(caster);
+
+		if (entity instanceof LivingEntity le)
+			spellOnSpawn.subcast(new SpellData(caster, le, power, args));
+		else
+			spellOnSpawn.subcast(new SpellData(caster, entity.getLocation(), power, args));
+
+		playSpellEffects(EffectPosition.CASTER, caster, data);
+		mounted.put(caster.getUniqueId(), entity.getEntityId());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 	
 	@EventHandler

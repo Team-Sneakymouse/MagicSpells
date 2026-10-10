@@ -16,7 +16,9 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MobUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.PlayerNameUtils;
 import com.nisovin.magicspells.util.compat.EventUtil;
@@ -72,8 +74,15 @@ public class DowseSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+	public CastResult cast(SpellData data) {
+		LivingEntity caster = data.caster();
+		float power = data.power();
+		String[] args = data.args();
+
+		if (!(caster instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		{
 			double radius = this.radius.get(caster, null, power, args);
 			if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) radius *= power;
 
@@ -109,7 +118,7 @@ public class DowseSpell extends InstantSpell {
 							
 				if (foundBlock == null) {
 					sendMessage(strNotFound, player, args);
-					return PostCastAction.ALREADY_HANDLED;
+					return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 				} 
 				
 				if (rotatePlayer) {
@@ -159,7 +168,7 @@ public class DowseSpell extends InstantSpell {
 
 				if (foundEntity == null) {
 					sendMessage(strNotFound, player, args);
-					return PostCastAction.ALREADY_HANDLED;
+					return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 				}
 
 				if (rotatePlayer) {
@@ -171,15 +180,22 @@ public class DowseSpell extends InstantSpell {
 				if (getDistance) distance = (int) Math.round(player.getLocation().distance(foundEntity.getLocation()));
 			}
 			
-			playSpellEffects(EffectPosition.CASTER, player, power, args);
+			playSpellEffects(EffectPosition.CASTER, player, data);
 			if (getDistance) {
 				sendMessage(strCastSelf, player, args, "%d", distance + "");
 				sendMessageNear(player, strCastOthers, args, "%d", String.valueOf(distance));
-				return PostCastAction.NO_MESSAGES;
+				return new CastResult(PostCastAction.NO_MESSAGES, data);
 			}
 		}
-		
-		return PostCastAction.HANDLE_NORMALLY;
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	public Material getMaterial() {

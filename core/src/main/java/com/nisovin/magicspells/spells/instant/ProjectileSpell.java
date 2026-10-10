@@ -24,6 +24,7 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -205,22 +206,34 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		ProjectileTracker tracker = new ProjectileTracker(data.caster(), data.caster().getLocation(), data.power(),
+				data.args());
+		setupTracker(tracker, data.caster(), data.power(), data.args());
+		tracker.start();
+		playSpellEffects(EffectPosition.CASTER, data.caster(), tracker.getSpellData());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			ProjectileTracker tracker = new ProjectileTracker(caster, caster.getLocation(), power, args);
-			setupTracker(tracker, caster, power, args);
-			tracker.start();
-			playSpellEffects(EffectPosition.CASTER, caster, tracker.getSpellData());
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		ProjectileTracker tracker = new ProjectileTracker(data.caster(), data.location(), data.power(), data.args());
+		setupTracker(tracker, data.caster(), data.power(), data.args());
+		tracker.start();
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity livingEntity, Location target, float power, String[] args) {
-		ProjectileTracker tracker = new ProjectileTracker(livingEntity, target, power, args);
-		setupTracker(tracker, livingEntity, power, args);
-		tracker.start();
-		return true;
+		return castAtLocation(new SpellData(livingEntity, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void setupTracker(ProjectileTracker tracker, LivingEntity caster, float power, String[] args) {

@@ -10,6 +10,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MobUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -30,17 +31,28 @@ public class ConfusionSpell extends InstantSpell implements TargetedLocationSpel
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		confuse(data.caster(), data.caster().getLocation(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			confuse(caster, caster.getLocation(), power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		confuse(data.caster(), data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		confuse(caster, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void confuse(LivingEntity caster, Location location, float power, String[] args) {

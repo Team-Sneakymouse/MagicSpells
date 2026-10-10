@@ -267,8 +267,15 @@ public class PassiveSpell extends Spell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		return PostCastAction.ALREADY_HANDLED;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	public boolean activate(LivingEntity caster) {

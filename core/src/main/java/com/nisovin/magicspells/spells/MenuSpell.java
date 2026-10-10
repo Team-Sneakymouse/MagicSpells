@@ -236,85 +236,112 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			LivingEntity target = null;
-			Location locTarget = null;
-			Player opener = player;
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-			boolean requireEntity = Boolean.TRUE.equals(requireEntityTarget.get(caster, power, args));
-			boolean requireLocation = Boolean.TRUE.equals(requireLocationTarget.get(caster, power, args));
-			boolean targetOpens = Boolean.TRUE.equals(targetOpensMenuInstead.get(caster, power, args));
+		LivingEntity target = null;
+		Location locTarget = null;
+		Player opener = player;
+		float power = data.power();
+		String[] args = data.args();
+		LivingEntity caster = data.caster();
 
-			if (requireEntity) {
-				if (targetOpens) {
-					TargetInfo<Player> info = getTargetedPlayer(player, power, args);
-					if (info.noTarget())
-						return noTarget(caster, args, info);
+		boolean requireEntity = Boolean.TRUE.equals(requireEntityTarget.get(caster, power, args));
+		boolean requireLocation = Boolean.TRUE.equals(requireLocationTarget.get(caster, power, args));
+		boolean targetOpens = Boolean.TRUE.equals(targetOpensMenuInstead.get(caster, power, args));
 
-					opener = info.target();
-					power = info.power();
-				} else {
-					TargetInfo<LivingEntity> info = getTargetedEntity(player, power, args);
-					if (info.noTarget())
-						return noTarget(caster, args, info);
+		if (requireEntity) {
+			if (targetOpens) {
+				TargetInfo<Player> info = getTargetedPlayer(player, power, args);
+				if (info.noTarget())
+					return new CastResult(noTarget(caster, args, info), data);
 
-					target = info.target();
-					power = info.power();
-				}
-			} else if (requireLocation) {
-				Block block = getTargetedBlock(player, power, args);
-				if (block == null || BlockUtils.isAir(block.getType()))
-					return noTarget(caster, args);
+				opener = info.target();
+				power = info.power();
+			} else {
+				TargetInfo<LivingEntity> info = getTargetedEntity(player, power, args);
+				if (info.noTarget())
+					return new CastResult(noTarget(caster, args, info), data);
 
-				locTarget = block.getLocation();
+				target = info.target();
+				power = info.power();
 			}
+		} else if (requireLocation) {
+			Block block = getTargetedBlock(player, power, args);
+			if (block == null || BlockUtils.isAir(block.getType()))
+				return new CastResult(noTarget(caster, args), data);
 
-			open(player, opener, target, locTarget, power, args);
-
-			if (requireEntity) {
-				sendMessages(caster, targetOpens ? opener : target, args);
-				return PostCastAction.NO_MESSAGES;
-			}
+			locTarget = block.getLocation();
 		}
 
-		return PostCastAction.HANDLE_NORMALLY;
+		open(player, opener, target, locTarget, power, args);
+
+		if (requireEntity) {
+			sendMessages(caster, targetOpens ? opener : target, args);
+			return new CastResult(PostCastAction.NO_MESSAGES, data);
+		}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			if (!(data.caster() instanceof Player casterPlayer))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			Player opener = casterPlayer;
+			LivingEntity target = data.target();
+			if (Boolean.TRUE.equals(targetOpensMenuInstead.get(data.caster(), data.target(), data.power(),
+					data.args()))) {
+				if (!(data.target() instanceof Player player))
+					return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+				opener = player;
+				target = null;
+			}
+			open(casterPlayer, opener, target, null, data.power(), data.args());
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+		if (!Boolean.TRUE.equals(targetOpensMenuInstead.get(null, data.target(), data.power(), data.args())))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!validTargetList.canTarget(data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!(data.target() instanceof Player player))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		open(null, player, null, null, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		if (!(caster instanceof Player opener))
-			return false;
-		if (Boolean.TRUE.equals(targetOpensMenuInstead.get(caster, target, power, args))) {
-			if (!(target instanceof Player player))
-				return false;
-			opener = player;
-			target = null;
-		}
-		open((Player) caster, opener, target, null, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!Boolean.TRUE.equals(targetOpensMenuInstead.get(null, target, power, args)))
-			return false;
-		if (!validTargetList.canTarget(target))
-			return false;
-		if (!(target instanceof Player player))
-			return false;
-		open(null, player, null, null, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		open(player, player, null, data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player player))
-			return false;
-		open(player, player, null, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override

@@ -27,6 +27,7 @@ import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.EntityPdc;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.ValidTargetList;
@@ -189,8 +190,15 @@ public class BowSpell extends Spell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		return PostCastAction.ALREADY_HANDLED;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	@Override

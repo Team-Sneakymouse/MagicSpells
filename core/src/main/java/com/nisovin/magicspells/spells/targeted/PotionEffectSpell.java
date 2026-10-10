@@ -12,6 +12,8 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -173,55 +175,68 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			LivingEntity target;
-			if (targeted) {
-				TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-				if (targetInfo.noTarget())
-					return noTarget(caster, args, targetInfo);
+	public CastResult cast(SpellData data) {
+		LivingEntity target;
+		if (targeted) {
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data.caster(), data.power(), data.args());
+			if (targetInfo.noTarget())
+				return new CastResult(noTarget(data.caster(), data.args(), targetInfo), data);
 
-				target = targetInfo.target();
-				power = targetInfo.power();
-			} else {
-				SpellTargetEvent targetEvent = new SpellTargetEvent(this, caster, caster, power, args);
-				targetEvent.callEvent();
+			data = data.target(targetInfo.target()).power(targetInfo.power());
+			target = data.target();
+		} else {
+			SpellTargetEvent targetEvent = new SpellTargetEvent(this, data.caster(), data.caster(), data.power(),
+					data.args());
+			targetEvent.callEvent();
 
-				if (targetEvent.isCastCancelled())
-					return PostCastAction.ALREADY_HANDLED;
-				else if (targetEvent.isCancelled())
-					return noTarget(caster, args);
+			if (targetEvent.isCastCancelled())
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			if (targetEvent.isCancelled())
+				return new CastResult(noTarget(data.caster(), data.args()), data);
 
-				target = targetEvent.getTarget();
-				power = targetEvent.getPower();
-			}
-
-			handlePotionEffects(caster, target, power, args);
-			playSpellEffects(caster, target, power, args);
-			sendMessages(caster, target, args);
-
-			return PostCastAction.NO_MESSAGES;
+			target = targetEvent.getTarget();
+			data = data.target(target).power(targetEvent.getPower());
 		}
 
-		return PostCastAction.HANDLE_NORMALLY;
+		CastResult result = castAtEntity(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return result;
+
+		sendMessages(data.caster(), data.target(), data.args());
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			handlePotionEffects(data.caster(), data.target(), data.power(), data.args());
+			playSpellEffects(data.caster(), data.target(), data);
+		} else {
+			if (!validTargetList.canTarget(data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			handlePotionEffects(null, data.target(), data.power(), data.args());
+			playSpellEffects(EffectPosition.TARGET, data.target(), data);
+		}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		handlePotionEffects(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		handlePotionEffects(null, target, power, args);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	public void handlePotionEffects(LivingEntity caster, LivingEntity target, float power, String[] args) {

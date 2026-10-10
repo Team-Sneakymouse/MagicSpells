@@ -5,6 +5,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -32,22 +33,27 @@ public class CreatureTargetSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			castSpells(caster, power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
-	}
-
-	private void castSpells(LivingEntity caster, float power, String[] args) {
-		if (!(caster instanceof Creature creature)) return;
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Creature creature))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
 		LivingEntity target = creature.getTarget();
-		if (target == null || !target.isValid()) return;
+		if (target == null || !target.isValid())
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data.caster(), target, data);
 
-		if (targetSpell != null) targetSpell.subcast(new SpellData(caster, target, caster.getLocation(), power, args));
+		if (targetSpell != null)
+			targetSpell.subcast(data.target(target).location(data.caster().getLocation()));
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 }

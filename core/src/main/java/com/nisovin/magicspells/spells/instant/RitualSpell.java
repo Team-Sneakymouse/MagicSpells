@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -82,19 +83,29 @@ public class RitualSpell extends InstantSpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		Player player = (Player) data.caster();
+		activeRituals.put(player, new ActiveRitual(player, data.power(), data.args()));
+		if (!chargeReagentsImmediately && !setCooldownImmediately)
+			return new CastResult(PostCastAction.MESSAGES_ONLY, data);
+		if (!chargeReagentsImmediately)
+			return new CastResult(PostCastAction.NO_REAGENTS, data);
+		if (!setCooldownImmediately)
+			return new CastResult(PostCastAction.NO_COOLDOWN, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (spellToCast == null || !(caster instanceof Player player)) return PostCastAction.ALREADY_HANDLED;
+		if (spellToCast == null || !(caster instanceof Player player))
+			return PostCastAction.ALREADY_HANDLED;
 		if (activeRituals.containsKey(player)) {
 			ActiveRitual channel = activeRituals.remove(player);
 			channel.stop(strRitualInterrupted);
 		}
-		if (state == SpellCastState.NORMAL) {
-			activeRituals.put(player, new ActiveRitual(player, power, args));
-			if (!chargeReagentsImmediately && !setCooldownImmediately) return PostCastAction.MESSAGES_ONLY;
-			if (!chargeReagentsImmediately) return PostCastAction.NO_REAGENTS;
-			if (!setCooldownImmediately) return PostCastAction.NO_COOLDOWN;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

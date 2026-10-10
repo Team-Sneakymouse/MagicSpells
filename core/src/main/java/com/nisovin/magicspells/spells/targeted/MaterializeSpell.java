@@ -20,6 +20,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -283,27 +284,36 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 	}
 
 	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (data.hasCaster()) {
+			if (!(data.caster() instanceof Player player))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			Block block = data.location().getBlock();
+			Block against = data.location().clone().add(data.location().getDirection()).getBlock();
+			if (block.equals(against))
+				against = block.getRelative(BlockFace.DOWN);
+			if (block.getType() == Material.AIR && materialize(player, block, against, data.power(), data.args()))
+				return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		}
+
+		Block block = data.location().getBlock();
+		if (block.getType() == Material.AIR && materialize(null, block, block, data.power(), data.args()))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		Block block2 = block.getRelative(BlockFace.UP);
+		if (block2.getType() == Material.AIR && materialize(null, block2, block, data.power(), data.args()))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+	}
+
+	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player player))
-			return false;
-		Block block = target.getBlock();
-		Block against = target.clone().add(target.getDirection()).getBlock();
-		if (block.equals(against))
-			against = block.getRelative(BlockFace.DOWN);
-		if (block.getType() == Material.AIR)
-			return materialize(player, block, against, power, args);
-		return false;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		Block block = target.getBlock();
-		if (block.getType() == Material.AIR)
-			return materialize(null, block, block, power, args);
-		Block block2 = block.getRelative(BlockFace.UP);
-		if (block2.getType() == Material.AIR)
-			return materialize(null, block2, block, power, args);
-		return false;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private int getRowLength(int patternPosition) {

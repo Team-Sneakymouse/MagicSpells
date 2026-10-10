@@ -47,6 +47,7 @@ import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.EntityData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -362,8 +363,11 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
+	public CastResult cast(SpellData data) {
+		LivingEntity caster = data.caster();
+		float power = data.power();
+		String[] args = data.args();
+		{
 			// Handle toggle mode
 			if (toggle.get(caster, null, power, args) && caster instanceof Player player) {
 				UUID playerId = player.getUniqueId();
@@ -401,7 +405,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 							}
 						}
 						toggledEntities.remove(playerId);
-						return PostCastAction.HANDLE_NORMALLY;
+						return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 					} else {
 						// Clean up invalid entities
 						toggledEntities.remove(playerId);
@@ -417,7 +421,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					loc = getRandomLocationFrom(caster.getLocation(), 3);
 					TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
 					if (info.noTarget())
-						return noTarget(caster, args, info);
+						return new CastResult(noTarget(caster, args, info), data);
 					target = info.target();
 					power = info.power();
 				}
@@ -441,74 +445,82 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 
 			if (loc == null)
-				return noTarget(caster, args);
+				return new CastResult(noTarget(caster, args), data);
 			spawnMob(caster, caster.getLocation(), loc, target, power, args);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		LivingEntity caster = data.caster();
+		Location target = data.location();
+		float power = data.power();
+		String[] args = data.args();
+		switch (location.toLowerCase()) {
+			case "target" -> spawnMob(caster, caster != null ? caster.getLocation() : target, target, null, power, args);
+			case "caster" -> spawnMob(caster, caster != null ? caster.getLocation() : target,
+					caster != null ? caster.getLocation() : target, null, power, args);
+			case "random" -> {
+				Location loc = getRandomLocationFrom(target, getRange(power));
+				if (loc != null)
+					spawnMob(caster, caster != null ? caster.getLocation() : target, loc, null, power, args);
+			}
+			case "offset" -> {
+				String[] split = location.split(":");
+				float y = Float.parseFloat(split[1]);
+				Location loc = target.clone().add(0, y, 0);
+				loc.setPitch(0);
+				spawnMob(caster, caster != null ? caster.getLocation() : target, loc, null, power, args);
+			}
+		}
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		switch (location.toLowerCase()) {
-			case "target" -> spawnMob(caster, caster.getLocation(), target, null, power, args);
-			case "caster" -> spawnMob(caster, caster.getLocation(), caster.getLocation(), null, power, args);
-			case "random" -> {
-				Location loc = getRandomLocationFrom(target, getRange(power));
-				if (loc != null)
-					spawnMob(caster, caster.getLocation(), loc, null, power, args);
-			}
-			case "offset" -> {
-				String[] split = location.split(":");
-				float y = Float.parseFloat(split[1]);
-				Location loc = target.clone().add(0, y, 0);
-				loc.setPitch(0);
-				spawnMob(caster, caster.getLocation(), loc, null, power, args);
-			}
-		}
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		switch (location.toLowerCase()) {
-			case "target", "caster" -> spawnMob(null, target, target, null, power, args);
-			case "random" -> {
-				Location loc = getRandomLocationFrom(target, getRange(power));
-				if (loc != null)
-					spawnMob(null, target, loc, null, power, args);
-			}
-			case "offset" -> {
-				String[] split = location.split(":");
-				float y = Float.parseFloat(split[1]);
-				Location loc = target.clone().add(0, y, 0);
-				loc.setPitch(0);
-				spawnMob(null, target, loc, null, power, args);
-			}
-		}
-		return true;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		} else if (!validTargetList.canTarget(data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+
+		if (location.equals("focus"))
+			spawnMob(data.caster(), data.location(), data.location(), data.target(), data.power(), data.args());
+		else
+			castAtLocation(data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		if (location.equals("focus"))
-			spawnMob(caster, from, from, target, power, args);
-		else
-			castAtLocation(caster, from, power, args);
-		return true;
+		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		if (location.equals("focus"))
-			spawnMob(null, from, from, target, power, args);
-		else
-			castAtLocation(from, power, args);
-		return true;
+		return castAtEntityFromLocation(new SpellData(null, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	private Location getRandomLocationFrom(Location location, int range) {

@@ -21,6 +21,7 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.EntityPdc;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -173,33 +174,56 @@ public class BlockBeamSpell extends InstantSpell
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		shootBeam(data.caster(), null, data.caster().getLocation(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL)
-			shootBeam(caster, null, caster.getLocation(), power, args);
-		return PostCastAction.HANDLE_NORMALLY;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		shootBeam(data.caster(), data.target(), data.caster().getLocation(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		shootBeam(caster, target, caster.getLocation(), power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		shootBeam(data.caster(), null, data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		shootBeam(caster, null, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		shootBeam(data.caster(), data.target(), data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		shootBeam(caster, target, from, power, args);
-		return true;
+		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@EventHandler(ignoreCancelled = true)

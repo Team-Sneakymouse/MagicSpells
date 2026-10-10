@@ -29,6 +29,7 @@ import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -260,19 +261,29 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-
+	public CastResult cast(SpellData data) {
 		if (itemListData == null)
-			return PostCastAction.ALREADY_HANDLED;
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			int delayVal = delay.get(caster, power, args);
-			if (delayVal >= 0)
-				MagicSpells.scheduleDelayedTask(() -> conjureItems((Player) caster, power, args), delayVal);
-			else if (!conjureItems((Player) caster, power, args))
-				return PostCastAction.ALREADY_HANDLED;
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 
+		float power = data.power();
+		String[] args = data.args();
+		int delayVal = delay.get(player, power, args);
+		if (delayVal >= 0) {
+			MagicSpells.scheduleDelayedTask(() -> conjureItems(player, power, args), delayVal);
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+		if (!conjureItems(player, power, args))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	private boolean conjureItems(Player player, float power, String[] args) {
@@ -611,39 +622,47 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
+	public CastResult castAtLocation(SpellData data) {
+		boolean ok = conjureItemsAtLocation(data.location(), data.power(), data.caster(), null);
+		return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
+	}
+
+	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return conjureItemsAtLocation(target, power, caster, null);
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return conjureItemsAtLocation(target, power, null, null);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		} else if (!validTargetList.canTarget(data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+
+		if (data.target() instanceof Player player) {
+			conjureItems(player, data.power(), data.args());
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+		boolean ok = conjureItemsAtLocation(data.target().getLocation(), data.power(), data.caster(), data.target());
+		return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-
-		if (target instanceof Player player)
-			conjureItems(player, power, args);
-		else
-			return conjureItemsAtLocation(target.getLocation(), power, caster, target);
-
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-
-		if (target instanceof Player player)
-			conjureItems(player, power, args);
-		else
-			return conjureItemsAtLocation(target.getLocation(), power, null, target);
-
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	/** Only meaningful when {@code delay} is a constant expression. */

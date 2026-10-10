@@ -11,7 +11,9 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -46,52 +48,67 @@ public class TransmuteSpell extends TargetedSpell implements TargetedLocationSpe
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Block block = getTargetedBlock(caster, power, args);
-			if (block == null) return noTarget(caster, args);
-			
-			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, block.getLocation(), power);
-			EventUtil.call(event);
-			if (event.isCancelled()) return noTarget(caster, args);
-			block = event.getTargetLocation().getBlock();
-			
-			if (!canTransmute(block)) return noTarget(caster, args);
+	public CastResult cast(SpellData data) {
+		Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+		if (block == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
 
+		SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(block.getLocation()));
+		EventUtil.call(event);
+		if (event.isCancelled())
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		data = event.getSpellData();
+		block = data.location().getBlock();
+
+		if (!canTransmute(block))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return castAtLocation(data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		Block block = data.location().getBlock();
+		if (canTransmute(block)) {
 			block.setType(transmuteType);
-			playSpellEffects(caster, block.getLocation().add(0.5, 0.5, 0.5), power, args);
+			Location effectLoc = block.getLocation().add(0.5, 0.5, 0.5);
+			if (data.hasCaster())
+				playSpellEffects(data.caster(), effectLoc, data);
+			else
+				playSpellEffects(EffectPosition.TARGET, effectLoc, data);
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		Vector v = data.location().getDirection();
+		block = data.location().clone().add(v).getBlock();
+		if (canTransmute(block)) {
+			block.setType(transmuteType);
+			Location effectLoc = block.getLocation().add(0.5, 0.5, 0.5);
+			if (data.hasCaster())
+				playSpellEffects(data.caster(), effectLoc, data);
+			else
+				playSpellEffects(EffectPosition.TARGET, effectLoc, data);
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		}
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Block block = target.getBlock();
-		if (canTransmute(block)) {
-			block.setType(transmuteType);
-			playSpellEffects(caster, block.getLocation().add(0.5, 0.5, 0.5), power, args);
-			return true;
-		}
-
-		Vector v = target.getDirection();
-		block = target.clone().add(v).getBlock();
-		if (canTransmute(block)) {
-			block.setType(transmuteType);
-			playSpellEffects(caster, block.getLocation().add(0.5, 0.5, 0.5), power, args);
-			return true;
-		}
-		return false;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		Block block = target.getBlock();
-		if (canTransmute(block)) {
-			block.setType(transmuteType);
-			playSpellEffects(EffectPosition.TARGET, block.getLocation().add(0.5, 0.5, 0.5), power, args);
-			return true;
-		}
-		return false;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private boolean canTransmute(Block block) {

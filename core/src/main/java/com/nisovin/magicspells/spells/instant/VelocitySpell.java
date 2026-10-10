@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageEvent;
 
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -45,46 +46,76 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		LivingEntity caster = data.caster();
+		launch(data.target(caster));
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			launch(caster, caster, null, power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtEntityFromLocation(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		} else if (!validTargetList.canTarget(data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!launch(data))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		return launch(caster, target, from, power, args);
+		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		return launch(null, target, from, power, args);
+		return castAtEntityFromLocation(new SpellData(null, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		} else if (!validTargetList.canTarget(data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!launch(data.location(null)))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		return launch(caster, target, null, power, args);
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		return launch(null, target, null, power, args);
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	private boolean launch(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
+	private boolean launch(SpellData data) {
+		LivingEntity target = data.target();
 		if (target == null)
 			return false;
 
+		LivingEntity caster = data.caster();
+		float power = data.power();
+		String[] args = data.args();
+
+		Location from = data.location();
 		if (from == null)
 			from = target.getLocation();
 
@@ -101,9 +132,9 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		jumping.add(target.getUniqueId());
 
 		if (caster != null)
-			playSpellEffects(caster, target, power, args);
+			playSpellEffects(caster, target, data);
 		else
-			playSpellEffects(EffectPosition.TARGET, target, power, args);
+			playSpellEffects(EffectPosition.TARGET, target, data);
 
 		return true;
 	}

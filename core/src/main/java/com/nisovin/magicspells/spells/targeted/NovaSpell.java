@@ -16,7 +16,9 @@ import org.bukkit.block.data.BlockData;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
+import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -101,31 +103,50 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState spellCastState, float power, String[] strings) {
-		if (spellCastState == SpellCastState.NORMAL) {
-			Location loc;
-			if (pointBlank)
-				loc = caster.getLocation();
-			else
-				loc = getTargetedBlock(caster, power, strings).getLocation();
-
-			createNova(caster, null, loc, power, strings);
+	public CastResult cast(SpellData data) {
+		Location loc;
+		if (pointBlank)
+			loc = data.caster().getLocation();
+		else {
+			Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+			if (block == null)
+				return new CastResult(noTarget(data.caster(), data.args()), data);
+			loc = block.getLocation();
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		createNova(data.caster(), null, loc, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState spellCastState, float power, String[] strings) {
+		if (spellCastState != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, strings)).action();
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		createNova(data.caster(), data.target(), data.target().getLocation(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		createNova(caster, target, target.getLocation(), power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		createNova(data.caster(), null, data.location(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity livingEntity, Location location, float v, String[] args) {
-		createNova(livingEntity, null, location, v, args);
-		return true;
+		return castAtLocation(new SpellData(livingEntity, null, location, v, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void createNova(LivingEntity caster, LivingEntity target, Location loc, float power, String[] args) {

@@ -28,7 +28,9 @@ import org.joml.Vector3f;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.events.MagicSpellsBlockBreakEvent;
 import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -274,35 +276,50 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
+	public CastResult cast(SpellData data) {
+		Block target = pasteAtCaster ? data.caster().getLocation().getBlock()
+				: getTargetedBlock(data.caster(), data.power(), data.args());
+		if (target == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		CastResult result = castAtLocation(data.location(target.getLocation()));
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Block target = pasteAtCaster ? caster.getLocation().getBlock() : getTargetedBlock(caster, power, args);
-			if (target == null) return noTarget(caster, args);
-			Location loc = target.getLocation();
-			boolean ok = castAtLocation(caster, loc, power, args);
-			if (!ok) return noTarget(caster, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		boolean ok;
+		if (buildInterval < 1)
+			ok = pasteInstant(data.caster(), data.location(), data.power(), data.args());
+		else
+			ok = pasteOverTime(data.caster(), data.location(), data.power(), data.args());
+		if (!ok)
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (data.hasCaster())
+			playSpellEffects(data.caster(), data.location(), data);
+		else
+			playSpellEffects(EffectPosition.TARGET, data.location(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		boolean ok;
-
-		if (buildInterval < 1) {
-			ok = pasteInstant(caster, target, power, args);
-		} else {
-			ok = pasteOverTime(caster, target, power, args);
-		}
-		if (!ok) return false;
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, null);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private boolean pasteInstant(LivingEntity caster, Location target, float power, String[] args) {

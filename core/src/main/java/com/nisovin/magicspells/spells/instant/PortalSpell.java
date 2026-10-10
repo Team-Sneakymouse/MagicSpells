@@ -15,6 +15,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.SpellUtil;
 import com.nisovin.magicspells.util.BoundingBox;
@@ -116,68 +117,74 @@ public class PortalSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
+	public CastResult cast(SpellData data) {
+		LivingEntity caster = data.caster();
+		String[] args = data.args();
+		float power = data.power();
 
-			SpellData data = new SpellData(caster, power, args);
-			Location loc = startMark.getEffectiveMark(caster);
+		Location loc = startMark.getEffectiveMark(caster);
 
-			Location locSecond;
-			if (loc == null) {
-				sendMessage(strNoMark, caster, args);
-				return PostCastAction.ALREADY_HANDLED;
-			}
-
-			if (usingSecondMarkSpell) {
-				locSecond = endMark.getEffectiveMark(caster);
-				if (locSecond == null) {
-					sendMessage(strNoMark, caster, args);
-					return PostCastAction.ALREADY_HANDLED;
-				}
-			} else
-				locSecond = caster.getLocation();
-
-			double distanceSq = 0;
-
-			float maxDistanceSq = maxDistance.get(data);
-			maxDistanceSq *= maxDistanceSq;
-
-			if (maxDistanceSq > 0) {
-				if (!loc.getWorld().equals(locSecond.getWorld())) {
-					sendMessage(strTooFar, caster, args);
-					return PostCastAction.ALREADY_HANDLED;
-				}
-
-				distanceSq = locSecond.distanceSquared(loc);
-				if (distanceSq > maxDistanceSq) {
-					sendMessage(strTooFar, caster, args);
-					return PostCastAction.ALREADY_HANDLED;
-				}
-			}
-
-			float minDistanceSq = minDistance.get(data);
-			minDistanceSq *= minDistanceSq;
-
-			if (minDistanceSq > 0 && loc.getWorld().equals(locSecond.getWorld())) {
-				if (distanceSq == 0)
-					distanceSq = locSecond.distanceSquared(loc);
-				if (distanceSq < minDistanceSq) {
-					sendMessage(strTooClose, caster, args);
-					return PostCastAction.ALREADY_HANDLED;
-				}
-			}
-
-			Portal startPortal = new Portal(loc, teleportReagents,
-					new BoundingBox(loc, hRadiusStart.get(data), vRadiusStart.get(data)));
-			Portal endPortal = new Portal(locSecond, teleportReagents,
-					new BoundingBox(locSecond, hRadiusEnd.get(data), vRadiusEnd.get(data)));
-
-			new PortalLink(caster, startPortal, endPortal, power, data);
-
-			playSpellEffects(EffectPosition.CASTER, caster, data);
-
+		Location locSecond;
+		if (loc == null) {
+			sendMessage(strNoMark, caster, args);
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		if (usingSecondMarkSpell) {
+			locSecond = endMark.getEffectiveMark(caster);
+			if (locSecond == null) {
+				sendMessage(strNoMark, caster, args);
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			}
+		} else
+			locSecond = caster.getLocation();
+
+		double distanceSq = 0;
+
+		float maxDistanceSq = maxDistance.get(data);
+		maxDistanceSq *= maxDistanceSq;
+
+		if (maxDistanceSq > 0) {
+			if (!loc.getWorld().equals(locSecond.getWorld())) {
+				sendMessage(strTooFar, caster, args);
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			}
+
+			distanceSq = locSecond.distanceSquared(loc);
+			if (distanceSq > maxDistanceSq) {
+				sendMessage(strTooFar, caster, args);
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			}
+		}
+
+		float minDistanceSq = minDistance.get(data);
+		minDistanceSq *= minDistanceSq;
+
+		if (minDistanceSq > 0 && loc.getWorld().equals(locSecond.getWorld())) {
+			if (distanceSq == 0)
+				distanceSq = locSecond.distanceSquared(loc);
+			if (distanceSq < minDistanceSq) {
+				sendMessage(strTooClose, caster, args);
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			}
+		}
+
+		Portal startPortal = new Portal(loc, teleportReagents,
+				new BoundingBox(loc, hRadiusStart.get(data), vRadiusStart.get(data)));
+		Portal endPortal = new Portal(locSecond, teleportReagents,
+				new BoundingBox(locSecond, hRadiusEnd.get(data), vRadiusEnd.get(data)));
+
+		new PortalLink(caster, startPortal, endPortal, power, data);
+
+		playSpellEffects(EffectPosition.CASTER, caster, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	public ConfigData<Integer> getEffectInterval() {

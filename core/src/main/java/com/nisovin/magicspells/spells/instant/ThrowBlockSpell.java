@@ -25,6 +25,7 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -150,33 +151,48 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Vector v = getVector(caster, caster.getLocation(), power, args);
-			Location l = caster.getEyeLocation().add(v);
-			l.add(0, yOffset.get(caster, null, power, args), 0);
-			ThrownBlock info = spawnFallingBlock(caster, l, v, power, args);
-			playSpellEffects(EffectPosition.CASTER, caster, info.data);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	public CastResult cast(SpellData data) {
+		LivingEntity caster = data.caster();
+		float power = data.power();
+		String[] args = data.args();
+		Vector v = getVector(caster, caster.getLocation(), power, args);
+		Location l = caster.getEyeLocation().add(v);
+		l.add(0, yOffset.get(caster, null, power, args), 0);
+		ThrownBlock info = spawnFallingBlock(caster, l, v, power, args);
+		playSpellEffects(EffectPosition.CASTER, caster, info.data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		LivingEntity caster = data.caster();
+		float power = data.power();
+		String[] args = data.args();
+		Location target = data.location();
 		Vector v = getVector(caster, target, power, args);
 		ThrownBlock info = spawnFallingBlock(caster,
 				target.clone().add(0, yOffset.get(caster, null, power, args), 0), v, power, args);
 		playSpellEffects(EffectPosition.CASTER, target, info.data);
-		return true;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		Vector v = getVector(null, target, power, args);
-		ThrownBlock info = spawnFallingBlock(null, target.clone().add(0, yOffset.get(null, null, power, args), 0),
-				v, power, args);
-		playSpellEffects(EffectPosition.CASTER, target, info.data);
-		return true;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	private Vector getVector(LivingEntity caster, Location loc, float power, String[] args) {

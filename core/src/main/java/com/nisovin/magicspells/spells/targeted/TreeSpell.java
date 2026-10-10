@@ -12,11 +12,14 @@ import org.bukkit.block.BlockState;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.BlockUtils;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.SpellAnimation;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
@@ -40,25 +43,35 @@ public class TreeSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Block target = getTargetedBlock(caster, power, args);
+	public CastResult cast(SpellData data) {
+		Block target = getTargetedBlock(data.caster(), data.power(), data.args());
 
-			if (target != null && !BlockUtils.isAir(target.getType())) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power);
-				EventUtil.call(event);
-				if (event.isCancelled()) target = null;
-				else target = event.getTargetLocation().getBlock();
+		if (target != null && !BlockUtils.isAir(target.getType())) {
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(target.getLocation()));
+			EventUtil.call(event);
+			if (event.isCancelled())
+				target = null;
+			else {
+				data = event.getSpellData();
+				target = data.location().getBlock();
 			}
-			
-			if (target == null || BlockUtils.isAir(target.getType())) return noTarget(caster, args);
-			
-			boolean grown = growTree(caster, target, power, args);
-			if (!grown) return noTarget(caster, args);
-
-			playSpellEffects(caster, target.getLocation(), power, args);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		if (target == null || BlockUtils.isAir(target.getType()))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		CastResult result = castAtLocation(data.location(target.getLocation()));
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	private boolean growTree(LivingEntity caster, Block target, float power, String[] args) {
@@ -86,15 +99,25 @@ public class TreeSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 	
 	@Override
+	public CastResult castAtLocation(SpellData data) {
+		boolean ret = growTree(data.caster(), data.location().getBlock(), data.power(), data.args());
+		if (!ret)
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (data.hasCaster())
+			playSpellEffects(data.caster(), data.location(), data);
+		else
+			playSpellEffects(EffectPosition.TARGET, data.location(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		boolean ret = growTree(caster, target.getBlock(), power, args);
-		if (ret) playSpellEffects(caster, target, power, args);
-		return ret;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return growTree(null, target.getBlock(), power, args);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private static class GrowAnimation extends SpellAnimation {

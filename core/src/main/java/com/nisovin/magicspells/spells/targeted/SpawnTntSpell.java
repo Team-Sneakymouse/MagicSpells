@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -68,27 +69,40 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			List<Block> blocks = getLastTwoTargetedBlocks(caster, power, args);
-			if (blocks.size() == 2 && !blocks.get(0).getType().isSolid() && blocks.get(0).getType().isSolid()) {
-				Location loc = blocks.get(0).getLocation().add(0.5, 0.5, 0.5);
-				loc.setDirection(caster.getLocation().getDirection());
-			}
+	public CastResult cast(SpellData data) {
+		List<Block> blocks = getLastTwoTargetedBlocks(data.caster(), data.power(), data.args());
+		if (blocks.size() == 2 && !blocks.get(0).getType().isSolid() && blocks.get(0).getType().isSolid()) {
+			Location loc = blocks.get(0).getLocation().add(0.5, 0.5, 0.5);
+			loc.setDirection(data.caster().getLocation().getDirection());
+			return castAtLocation(data.location(loc));
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		return new CastResult(noTarget(data.caster(), data.args()), data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		Location loc = data.location().clone().add(0.5, 0.5, 0.5);
+		if (data.hasCaster())
+			loc.setDirection(data.caster().getLocation().getDirection());
+		spawnTnt(data.caster(), loc, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		spawnTnt(caster, target.clone().add(0.5, 0.5, 0.5), power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		spawnTnt(null, target.clone().add(0.5, 0.5, 0.5), power, args);
-		return true;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void spawnTnt(LivingEntity caster, Location loc, float power, String[] args) {

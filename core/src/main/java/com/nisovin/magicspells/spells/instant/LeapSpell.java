@@ -13,6 +13,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -70,38 +71,47 @@ public class LeapSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Vector v = caster.getLocation().getDirection();
+	public CastResult cast(SpellData data) {
+		LivingEntity caster = data.caster();
+		float power = data.power();
+		String[] args = data.args();
 
-			float forwardVelocity = this.forwardVelocity.get(caster, null, power, args) / 10;
-			if (Boolean.TRUE.equals(powerAffectsVelocity.get(caster, null, power, args)))
-				forwardVelocity *= power;
+		Vector v = caster.getLocation().getDirection();
 
-			float upwardVelocity = this.upwardVelocity.get(caster, null, power, args) / 10;
-			if (Boolean.TRUE.equals(powerAffectsVelocity.get(caster, null, power, args)))
-				upwardVelocity *= power;
+		float forwardVelocity = this.forwardVelocity.get(caster, null, power, args) / 10;
+		if (Boolean.TRUE.equals(powerAffectsVelocity.get(caster, null, power, args)))
+			forwardVelocity *= power;
 
-			float rotation = this.rotation.get(caster, null, power, args);
+		float upwardVelocity = this.upwardVelocity.get(caster, null, power, args) / 10;
+		if (Boolean.TRUE.equals(powerAffectsVelocity.get(caster, null, power, args)))
+			upwardVelocity *= power;
 
-			v.setY(0).normalize().multiply(forwardVelocity).setY(upwardVelocity);
-			if (rotation != 0)
-				Util.rotateVector(v, rotation);
-			v = Util.makeFinite(v);
+		float rotation = this.rotation.get(caster, null, power, args);
 
-			if (clientOnly && caster instanceof Player)
-				MagicSpells.getVolatileCodeHandler().setClientVelocity((Player) caster, v);
-			else {
-				if (addVelocityInstead)
-					caster.setVelocity(caster.getVelocity().add(v));
-				else
-					caster.setVelocity(v);
-			}
+		v.setY(0).normalize().multiply(forwardVelocity).setY(upwardVelocity);
+		if (rotation != 0)
+			Util.rotateVector(v, rotation);
+		v = Util.makeFinite(v);
 
-			jumping.add(caster.getUniqueId());
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+		if (clientOnly && caster instanceof Player)
+			MagicSpells.getVolatileCodeHandler().setClientVelocity((Player) caster, v);
+		else {
+			if (addVelocityInstead)
+				caster.setVelocity(caster.getVelocity().add(v));
+			else
+				caster.setVelocity(v);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		jumping.add(caster.getUniqueId());
+		playSpellEffects(EffectPosition.CASTER, caster, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	@EventHandler

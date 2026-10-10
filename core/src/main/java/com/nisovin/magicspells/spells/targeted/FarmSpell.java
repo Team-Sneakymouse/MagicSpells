@@ -14,6 +14,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -66,43 +67,60 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Block block;
-			if (targeted) block = getTargetedBlock(caster, power, args);
-			else block = caster.getLocation().subtract(0, 1, 0).getBlock();
+	public CastResult cast(SpellData data) {
+		Block block;
+		if (targeted)
+			block = getTargetedBlock(data.caster(), data.power(), data.args());
+		else
+			block = data.caster().getLocation().subtract(0, 1, 0).getBlock();
 
-			if (block != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, block.getLocation(), power, args);
-				EventUtil.call(event);
-				if (event.isCancelled()) block = null;
-				else {
-					block = event.getTargetLocation().getBlock();
-					power = event.getPower();
-				}
+		if (block != null) {
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(block.getLocation()));
+			EventUtil.call(event);
+			if (event.isCancelled())
+				block = null;
+			else {
+				data = event.getSpellData();
+				block = data.location().getBlock();
 			}
-
-			if (block != null) {
-				boolean farmed = farm(caster, block, power, args);
-				if (!farmed) return noTarget(caster, args);
-
-				SpellData data = new SpellData(caster, power, args);
-				playSpellEffects(EffectPosition.CASTER, caster, data);
-				if (targeted) playSpellEffects(EffectPosition.TARGET, block.getLocation(), data);
-			} else return noTarget(caster, args);
-
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+
+		if (block == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		if (!farm(data.caster(), block, data.power(), data.args()))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		playSpellEffects(EffectPosition.CASTER, data.caster(), data);
+		if (targeted)
+			playSpellEffects(EffectPosition.TARGET, block.getLocation(), data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		Block block = data.location().clone().subtract(0, 1, 0).getBlock();
+		if (!farm(data.caster(), block, data.power(), data.args()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return farm(caster, target.subtract(0, 1, 0).getBlock(), power, args);
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return farm(null, target.getBlock(), power, args);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private boolean farm(LivingEntity caster, Block center, float power, String[] args) {

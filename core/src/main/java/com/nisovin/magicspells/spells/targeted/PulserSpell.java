@@ -147,92 +147,99 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			if (capPerPlayer > 0) {
-				int count = 0;
-				for (Pulser pulser : pulsers.values()) {
-					if (!pulser.caster.equals(caster))
-						continue;
-
-					count++;
-					if (count >= capPerPlayer) {
-						sendMessage(strAtCap, caster, args);
-						return PostCastAction.ALREADY_HANDLED;
-					}
-				}
-			}
-			List<Block> lastTwo = getLastTwoTargetedBlocks(caster, power, args);
-			Block target = null;
-
-			if (lastTwo != null && lastTwo.size() == 2)
-				target = lastTwo.get(0);
-			if (target == null)
-				return noTarget(caster, args);
-
-			int yOffset = this.yOffset.get(caster, null, power, args);
-			if (yOffset > 0)
-				target = target.getRelative(BlockFace.UP, yOffset);
-			else if (yOffset < 0)
-				target = target.getRelative(BlockFace.DOWN, yOffset);
-			if (!BlockUtils.isAir(target.getType()))
-				return noTarget(caster, args);
-
-			if (target != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power,
-						args);
-				EventUtil.call(event);
-				if (event.isCancelled())
-					return noTarget(caster, args);
-				target = event.getTargetLocation().getBlock();
-				power = event.getPower();
-			}
-			createPulser(caster, target, caster.getLocation(), power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public CastResult cast(SpellData data) {
 		if (capPerPlayer > 0) {
 			int count = 0;
 			for (Pulser pulser : pulsers.values()) {
-				if (!pulser.caster.equals(caster))
+				if (!pulser.caster.equals(data.caster()))
 					continue;
 
 				count++;
 				if (count >= capPerPlayer) {
-					sendMessage(strAtCap, caster);
-					return false;
+					sendMessage(strAtCap, data.caster(), data.args());
+					return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+				}
+			}
+		}
+		List<Block> lastTwo = getLastTwoTargetedBlocks(data.caster(), data.power(), data.args());
+		Block target = null;
+
+		if (lastTwo != null && lastTwo.size() == 2)
+			target = lastTwo.get(0);
+		if (target == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		int yOffset = this.yOffset.get(data.caster(), null, data.power(), data.args());
+		if (yOffset > 0)
+			target = target.getRelative(BlockFace.UP, yOffset);
+		else if (yOffset < 0)
+			target = target.getRelative(BlockFace.DOWN, yOffset);
+		if (!BlockUtils.isAir(target.getType()))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(target.getLocation()));
+		EventUtil.call(event);
+		if (event.isCancelled())
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		data = event.getSpellData();
+		createPulser(data.caster(), data.location().getBlock(), data.caster().getLocation(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (data.hasCaster() && capPerPlayer > 0) {
+			int count = 0;
+			for (Pulser pulser : pulsers.values()) {
+				if (!pulser.caster.equals(data.caster()))
+					continue;
+
+				count++;
+				if (count >= capPerPlayer) {
+					sendMessage(strAtCap, data.caster());
+					return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 				}
 			}
 		}
 
-		Block block = target.getBlock();
-		int yOffset = this.yOffset.get(caster, null, power, args);
+		Block block = data.location().getBlock();
+		int yOffset = this.yOffset.get(data.caster(), null, data.power(), data.args());
 		if (yOffset > 0)
 			block = block.getRelative(BlockFace.UP, yOffset);
 		else if (yOffset < 0)
 			block = block.getRelative(BlockFace.DOWN, yOffset);
 
 		if (BlockUtils.isAir(block.getType())) {
-			createPulser(caster, block, target, power, args);
-			return true;
+			createPulser(data.caster(), block, data.location(), data.power(), data.args());
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
 
 		if (checkFace) {
 			block = block.getRelative(BlockFace.UP);
 			if (BlockUtils.isAir(block.getType())) {
-				createPulser(caster, block, target, power, args);
-				return true;
+				createPulser(data.caster(), block, data.location(), data.power(), data.args());
+				return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 			}
 		}
-		return false;
+		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+	}
+
+	@Override
+	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, null);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private void createPulser(LivingEntity caster, Block block, Location from, float power, String[] args) {

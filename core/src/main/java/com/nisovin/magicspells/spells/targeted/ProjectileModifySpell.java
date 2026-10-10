@@ -15,6 +15,7 @@ import org.apache.commons.math4.core.jdkmath.AccurateMath;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -258,35 +259,50 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Location loc = null;
-			if (pointBlank)
-				loc = caster.getLocation();
-			else {
-				try {
-					Block block = getTargetedBlock(caster, power, args);
-					if (block != null && !BlockUtils.isAir(block.getType()))
-						loc = block.getLocation();
-				} catch (IllegalStateException ignored) {
-				}
+	public CastResult cast(SpellData data) {
+		Location loc = null;
+		if (pointBlank)
+			loc = data.caster().getLocation();
+		else {
+			try {
+				Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+				if (block != null && !BlockUtils.isAir(block.getType()))
+					loc = block.getLocation();
+			} catch (IllegalStateException ignored) {
 			}
-			if (loc == null)
-				return noTarget(caster, args);
-
-			modify(caster, loc, power, args);
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		if (loc == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		CastResult result = castAtLocation(data.location(loc));
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (!modify(data.caster(), data.location(), data.power(), data.args()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return modify(caster, target, power, args);
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return modify(null, target, power, args);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private boolean modify(LivingEntity caster, Location location, float power, String[] args) {

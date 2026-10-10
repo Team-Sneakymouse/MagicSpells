@@ -12,7 +12,9 @@ import org.bukkit.event.block.Action;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.BlockUtils;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
@@ -39,30 +41,48 @@ public class TelekinesisSpell extends TargetedSpell implements TargetedLocationS
 	}
 	
 	@Override
+	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof Player))
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+
+		Block target = getTargetedBlock(data.caster(), data.power(), data.args());
+		if (target == null)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(target.getLocation()));
+		if (!event.callEvent())
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		data = event.getSpellData();
+		target = data.location().getBlock();
+
+		CastResult result = castAtLocation(data);
+		if (result.action() == PostCastAction.ALREADY_HANDLED)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			Block target = getTargetedBlock(caster, power, args);
-			if (target == null) return noTarget(caster, args);
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
 
-			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power, args);
-			if (!event.callEvent()) return noTarget(caster, args);
-			
-			target = event.getTargetLocation().getBlock();
-
-			boolean activated = activate((Player) caster, target);
-			if (!activated) return noTarget(caster, args);
-
-			playSpellEffects(caster, target.getLocation(), power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (!(data.caster() instanceof Player player))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!activate(player, data.location().getBlock()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		playSpellEffects(data.caster(), data.location(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player)) return false;
-		boolean activated = activate((Player) caster, target.getBlock());
-		if (activated) playSpellEffects(caster, target, power, args);
-		return activated;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	private boolean checkPlugins(Player caster, Block target) {
