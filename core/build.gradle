@@ -52,6 +52,9 @@ dependencies {
 
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    // Index + YAML fixtures for SpellSnippetValidator (no Paper on the test classpath).
+    testImplementation("com.google.code.gson:gson:2.11.0")
+    testImplementation("org.yaml:snakeyaml:2.3")
     // Gradle 9 no longer provides the launcher transitively.
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 

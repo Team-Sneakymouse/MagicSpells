@@ -97,8 +97,8 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
 
             replaceLocations = new ArrayList<>();
 
-            int lowestY = region.getMinimumPoint().getY();
-            lowestCenter = BlockVector3.at(centerPoint.getX(), lowestY, centerPoint.getZ());
+            int lowestY = region.getMinimumPoint().y();
+            lowestCenter = BlockVector3.at(centerPoint.x(), lowestY, centerPoint.z());
 
             randomizer = new Random();
             loadBlock(lowestCenter, 0);
@@ -111,13 +111,13 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
             Iterable<BlockVector2> layerZone = cuboidRegion.asFlatRegion();
 
             for(BlockVector2 vec2 : layerZone){
-                BlockVector3 pos = BlockVector3.at(vec2.getX(), point.getY(), vec2.getZ());
+                BlockVector3 pos = BlockVector3.at(vec2.x(), point.y(), vec2.z());
                 if(region.contains(pos))
                     replaceLocations.add(pos);
             }
 
             if(layer < region.getHeight()){
-                if(!fullSphere && point.add(0,1,0).getY() >= startLocation.getY()) {
+                if(!fullSphere && point.add(0,1,0).y() >= startLocation.getY()) {
                     return;
                 }
                 loadBlock(point.add(0, 1, 0), layer+1);
@@ -135,8 +135,8 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
             BlockVector3 current = null;
             List<BlockVector3> cleanup = new ArrayList<>();
             for(BlockVector3 pos : replaceLocations){
-                if(pos.getY() > centerPoint.getY()) break;
-                if(toReplace.stream().noneMatch(e -> e.equalsIgnoreCase(bWorld.getBlockAt(pos.getX(), pos.getY(), pos.getZ()).getType().toString()))){
+                if(pos.y() > centerPoint.y()) break;
+                if(toReplace.stream().noneMatch(e -> e.equalsIgnoreCase(bWorld.getBlockAt(pos.x(), pos.y(), pos.z()).getType().toString()))){
                     cleanup.add(pos);
                     continue;
                 }
@@ -163,7 +163,7 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
 
             Material toPlace = Material.valueOf(replaceWith.get(randomizer.nextInt(0, replaceWith.size())).toUpperCase());
 
-            bWorld.getBlockAt(pos.getX(), pos.getY(), pos.getZ()).setType(toPlace);
+            bWorld.getBlockAt(pos.x(), pos.y(), pos.z()).setType(toPlace);
             totalPlaced++;
 
             replaceLocations.remove(pos);

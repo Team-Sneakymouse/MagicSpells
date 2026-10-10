@@ -65,12 +65,12 @@ public class LocationMatchesSchematicCondition extends Condition {
 		BlockVector3 origin = this.clipboard.getOrigin();
 
 		for (BlockVector3 pos : this.clipboard.getRegion()) {
-			BlockVector3 pos_ = BlockVector3.at(pos.getX(), pos.getY(), pos.getZ());
+			BlockVector3 pos_ = BlockVector3.at(pos.x(), pos.y(), pos.z());
 
 			BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos_));
 
-			Block bl = location.getBlock().getRelative(pos_.getX() - origin.getX(), pos_.getY() - origin.getY(),
-					pos_.getZ() - origin.getZ());
+			Block bl = location.getBlock().getRelative(pos_.x() - origin.x(), pos_.y() - origin.y(),
+					pos_.z() - origin.z());
 
 			if (!matchAir && data.getMaterial().isAir())
 				continue;

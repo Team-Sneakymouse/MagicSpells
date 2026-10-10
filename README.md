@@ -61,6 +61,8 @@ The move to Gradle has made building much easier. After cloning and navigating t
 ```
 Simple right?
 
+Unit tests (no live server): `./gradlew :core:test`. Agent testing policy and spell YAML snippet checks (`SpellSnippetValidator`) are documented in [AGENTS.md](AGENTS.md).
+
 ---
 ## Maven publication 📦
 
@@ -112,6 +114,10 @@ Publish a single module:
 ```bash
 ./gradlew :core:publishMavenPublicationToSneakyrpRepository
 ```
+
+### Compile warnings
+
+See [COMPILE-WARNINGS.md](COMPILE-WARNINGS.md) for the for-removal / deprecation backlog (what was fixed mechanically vs what needs a real migration).
 
 ### CI
 

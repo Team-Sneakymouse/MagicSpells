@@ -25,7 +25,7 @@ import net.kyori.adventure.text.Component;
 
 import org.bukkit.entity.*;
 import org.bukkit.util.Vector;
-import org.bukkit.util.Consumer;
+import java.util.function.Consumer;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
