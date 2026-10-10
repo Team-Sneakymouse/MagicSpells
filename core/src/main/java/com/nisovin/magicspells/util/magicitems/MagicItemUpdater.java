@@ -89,62 +89,24 @@ public class MagicItemUpdater {
         }
 
         public void joinOrLoadCharacter(Player player) {
-            if (!MagicSpells.enableUpdateItemData())
+            if (!shouldProcessItems())
                 return;
+            processInventory(player.getInventory(), player);
             PlayerInventory inv = player.getInventory();
-            updateInventory(inv, player);
             ItemStack[] armor = inv.getArmorContents();
-            updateInventory(armor, player);
+            processItemStacks(armor, player);
             inv.setArmorContents(armor);
-            updateInventory(player.getEnderChest(), player);
+            processInventory(player.getEnderChest(), player);
         }
 
         @EventHandler(priority = EventPriority.LOWEST)
         public void onInvOpen(InventoryOpenEvent event) {
-            if (!MagicSpells.enableUpdateItemData())
+            if (!shouldProcessItems())
                 return;
             if (isBagOfHoldingGui(event.getInventory()))
                 return;
             Player player = event.getPlayer() instanceof Player p ? p : null;
-            updateInventory(event.getInventory(), player);
-        }
-
-        private static boolean isBagOfHoldingGui(Inventory inventory) {
-            if (inventory == null)
-                return false;
-            var holder = inventory.getHolder();
-            if (holder == null)
-                return false;
-            return holder.getClass().getName().startsWith("com.sneakybagofholding.gui.BagInventoryHolder");
-        }
-
-        private void updateInventory(Inventory inv, @Nullable Player player) {
-            if (isBagOfHoldingGui(inv))
-                return;
-            ItemStack[] contents = inv.getContents();
-            updateInventory(contents, player);
-            inv.setContents(contents);
-        }
-
-        private static void updateInventory(ItemStack[] items, @Nullable Player player) {
-            if (items == null)
-                return;
-            for (int i = 0; i < items.length; i++) {
-                ItemStack itemStack = items[i];
-                if (itemStack == null)
-                    continue;
-
-                ItemStack updated = updateMagicItemItemStackIfNeeded(itemStack);
-                if (updated != itemStack)
-                    items[i] = updated;
-
-                ItemStack stack = items[i];
-                if (player != null) {
-                    ExpirationResult result = MagicItemBehaviors.updateExpiresLineIfNeeded(stack, player);
-                    if (result == ExpirationResult.EXPIRED)
-                        items[i] = null;
-                }
-            }
+            processInventory(event.getInventory(), player);
         }
     }
 
@@ -152,7 +114,7 @@ public class MagicItemUpdater {
 
         @EventHandler(ignoreCancelled = true)
         public void onMagicSpellsLoaded(MagicSpellsLoadedEvent event) {
-            if (!MagicSpells.enableUpdateItemData())
+            if (!shouldProcessItems())
                 return;
 
             final ArrayDeque<Chunk> chunks = new ArrayDeque<>();
@@ -174,7 +136,7 @@ public class MagicItemUpdater {
                             continue;
 
                         for (Entity entity : chunk.getEntities()) {
-                            updateGroundEntityIfNeeded(entity);
+                            processGroundEntityIfNeeded(entity);
                         }
                     }
 
@@ -186,45 +148,45 @@ public class MagicItemUpdater {
 
         @EventHandler(ignoreCancelled = true)
         public void onChunkLoad(ChunkLoadEvent event) {
-            if (!MagicSpells.enableUpdateItemData())
+            if (!shouldProcessItems())
                 return;
 
             for (Entity entity : event.getChunk().getEntities()) {
-                updateGroundEntityIfNeeded(entity);
+                processGroundEntityIfNeeded(entity);
             }
         }
 
         /**
-         * Updates magic items that appear in the world (chest spills, explosions, etc.).
-         * Skips player inventory drops: those already ran through inventory update paths,
+         * Tags then updates magic items that appear in the world (chest spills, explosions, etc.).
+         * Skips player inventory drops: those already ran through inventory paths,
          * and Item.getThrower() is set for Q/death drops from a player.
          */
         @EventHandler(ignoreCancelled = true)
         public void onItemSpawn(ItemSpawnEvent event) {
-            if (!MagicSpells.enableUpdateItemData())
+            if (!shouldProcessItems())
                 return;
 
             Item item = event.getEntity();
             if (item.getThrower() != null)
                 return;
 
-            updateItemEntityIfNeeded(item);
+            processItemEntityIfNeeded(item);
         }
 
-        private static void updateGroundEntityIfNeeded(Entity entity) {
+        private static void processGroundEntityIfNeeded(Entity entity) {
             if (entity instanceof Item item) {
-                updateItemEntityIfNeeded(item);
+                processItemEntityIfNeeded(item);
             } else if (entity instanceof ItemDisplay itemDisplay) {
                 ItemStack stack = itemDisplay.getItemStack();
-                ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
+                ItemStack updated = processItemStack(stack, null);
                 if (updated != stack)
                     itemDisplay.setItemStack(updated);
             }
         }
 
-        private static void updateItemEntityIfNeeded(Item item) {
+        private static void processItemEntityIfNeeded(Item item) {
             ItemStack stack = item.getItemStack();
-            ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
+            ItemStack updated = processItemStack(stack, null);
             if (updated != stack)
                 item.setItemStack(updated);
         }
@@ -240,6 +202,94 @@ public class MagicItemUpdater {
                 }, 1);
             }
         }
+    }
+
+    private static boolean shouldProcessItems() {
+        return MagicSpells.enableUpdateItemData() || MagicItemTagging.hasMappings();
+    }
+
+    private static boolean isBagOfHoldingGui(Inventory inventory) {
+        if (inventory == null)
+            return false;
+        var holder = inventory.getHolder();
+        if (holder == null)
+            return false;
+        return holder.getClass().getName().startsWith("com.sneakybagofholding.gui.BagInventoryHolder");
+    }
+
+    /** Tag (if mappings exist) then update a player's inventories. Used by ItemTagSpell cast. */
+    public static void processPlayerInventories(Player player) {
+        if (player == null)
+            return;
+        processInventory(player.getInventory(), player);
+        PlayerInventory inv = player.getInventory();
+        ItemStack[] armor = inv.getArmorContents();
+        processItemStacks(armor, player);
+        inv.setArmorContents(armor);
+        processInventory(player.getEnderChest(), player);
+    }
+
+    public static void processInventory(Inventory inv, @Nullable Player player) {
+        if (inv == null || isBagOfHoldingGui(inv))
+            return;
+        ItemStack[] contents = inv.getContents();
+        processItemStacks(contents, player);
+        inv.setContents(contents);
+    }
+
+    public static void processItemStacks(ItemStack[] items, @Nullable Player player) {
+        if (items == null)
+            return;
+        for (int i = 0; i < items.length; i++) {
+            ItemStack itemStack = items[i];
+            if (itemStack == null)
+                continue;
+            items[i] = processItemStack(itemStack, player);
+        }
+    }
+
+    /**
+     * Applies ItemTagSpell mappings first (PDC name), then rebuilds from the magic-item definition
+     * when updates are enabled or a tag was just applied.
+     */
+    public static ItemStack processItemStack(ItemStack itemStack, @Nullable Player player) {
+        if (itemStack == null)
+            return null;
+
+        MagicItemTagging.TagResult tagResult = MagicItemTagging.applyTagIfNeeded(itemStack);
+        ItemStack stack = tagResult.stack();
+        boolean tagged = tagResult.tagged();
+
+        if (tagged || MagicSpells.enableUpdateItemData()) {
+            ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
+            if (updated != stack)
+                stack = updated;
+        }
+
+        if (tagged) {
+            String internalName = tagResult.internalName();
+            MagicItem updateSource = MagicItems.getMagicItemByInternalName(internalName);
+            if (updateSource == null)
+                updateSource = tagResult.magicItem();
+
+            ItemMeta meta = stack.getItemMeta();
+            if (meta != null && internalName != null) {
+                meta.getPersistentDataContainer().set(NAME_KEY, PersistentDataType.STRING, internalName);
+                stack.setItemMeta(meta);
+            }
+
+            if (updateSource != null) {
+                MagicItemBehaviors.applyFromData(stack, updateSource.getMagicItemData(), player);
+                if (player != null)
+                    MagicItemExpirationScheduler.scheduleFromItem(player, stack);
+            }
+        } else if (player != null && MagicSpells.enableUpdateItemData()) {
+            ExpirationResult result = MagicItemBehaviors.updateExpiresLineIfNeeded(stack, player);
+            if (result == ExpirationResult.EXPIRED)
+                return null;
+        }
+
+        return stack;
     }
 
     /**
@@ -388,7 +438,7 @@ public class MagicItemUpdater {
 
         if (meta instanceof BlockStateMeta updatedBlockStateMeta && blockInventory != null) {
             ItemStack[] contents = blockInventory.getContents();
-            PersistentDataUpdater.updateInventory(contents, null);
+            processItemStacks(contents, null);
             Container updatedContainer = (Container) updatedBlockStateMeta.getBlockState();
             updatedContainer.getInventory().setContents(contents);
             updatedBlockStateMeta.setBlockState(updatedContainer);
