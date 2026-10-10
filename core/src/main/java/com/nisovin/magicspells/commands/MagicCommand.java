@@ -940,10 +940,9 @@ public class MagicCommand extends BaseCommand {
 				throw new ConditionFailedException("Spell is not a targeted entity spell.");
 			}
 
-			boolean casted;
-			// Handle with or without caster.
-			if (issuer.getIssuer() instanceof LivingEntity) casted = newSpell.castAtEntity(issuer.getIssuer(), target, 1F, null);
-			else casted = newSpell.castAtEntity(target, 1F, null);
+			LivingEntity caster = issuer.getIssuer() instanceof LivingEntity living ? living : null;
+			boolean casted = newSpell.castAtEntity(new SpellData(caster, target, 1F, null)).action()
+					!= Spell.PostCastAction.ALREADY_HANDLED;
 			if (!casted) throw new ConditionFailedException("Spell probably cannot be cast from console.");
 		}
 
@@ -1002,10 +1001,9 @@ public class MagicCommand extends BaseCommand {
 			}
 			Location location = new Location(world, x, y, z, pitch, yaw);
 
-			boolean casted;
-			// Handle with or without caster.
-			if (issuer.getIssuer() instanceof LivingEntity) casted = newSpell.castAtLocation(issuer.getIssuer(), location, 1F, null);
-			else casted = newSpell.castAtLocation(location, 1F, null);
+			LivingEntity caster = issuer.getIssuer() instanceof LivingEntity living ? living : null;
+			boolean casted = newSpell.castAtLocation(new SpellData(caster, null, location, 1F, null)).action()
+					!= Spell.PostCastAction.ALREADY_HANDLED;
 			if (!casted) throw new ConditionFailedException("Spell probably cannot be cast from console.");
 		}
 

@@ -307,68 +307,6 @@ public class Subspell {
 		};
 	}
 
-	/**
-	 * @deprecated use {@link #subcast(SpellData)}
-	 */
-	@Deprecated
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target,
-			float power, @Nullable String[] args) {
-		return subcast(new SpellData(caster, target, location, power, args), passTargeting, true);
-	}
-
-	/**
-	 * @deprecated use {@link #subcast(SpellData, boolean)}
-	 */
-	@Deprecated
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target,
-			float power, @Nullable String[] args, boolean passTargeting) {
-		return subcast(new SpellData(caster, target, location, power, args), passTargeting, true);
-	}
-
-	/**
-	 * @deprecated use {@link #subcast(SpellData, boolean, boolean)}
-	 */
-	@Deprecated
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target,
-			float power, @Nullable String[] args, boolean passTargeting, boolean useTargetForLocation) {
-		return subcast(new SpellData(caster, target, location, power, args), passTargeting, useTargetForLocation);
-	}
-
-	/**
-	 * @deprecated use {@link #subcast(SpellData)}
-	 */
-	@Deprecated
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull LivingEntity target, float power,
-			@Nullable String[] args) {
-		return subcast(new SpellData(caster, target, power, args), passTargeting, true);
-	}
-
-	/**
-	 * @deprecated use {@link #subcast(SpellData, boolean)}
-	 */
-	@Deprecated
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull LivingEntity target, float power,
-			@Nullable String[] args, boolean passTargeting) {
-		return subcast(new SpellData(caster, target, power, args), passTargeting, true);
-	}
-
-	/**
-	 * @deprecated use {@link #subcast(SpellData)}
-	 */
-	@Deprecated
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location target, float power,
-			@Nullable String[] args) {
-		return subcast(new SpellData(caster, null, target, power, args), passTargeting, false);
-	}
-
-	/**
-	 * @deprecated use {@link #subcast(SpellData)}
-	 */
-	@Deprecated
-	public boolean subcast(@NotNull LivingEntity caster, float power, @Nullable String[] args) {
-		return subcast(new SpellData(caster, power, args), passTargeting, true);
-	}
-
 	public PostCastAction cast(LivingEntity caster, float power) {
 		return cast(caster, power, null);
 	}
@@ -481,8 +419,8 @@ public class Subspell {
 						yield passTargetingEntity(caster, target, power, args);
 					else {
 						TargetedEntitySpell targetedSpell = (TargetedEntitySpell) spell;
-						yield caster != null ? targetedSpell.castAtEntity(caster, target, power, args)
-								: targetedSpell.castAtEntity(target, power, args);
+						yield targetedSpell.castAtEntity(new SpellData(caster, target, power, args)).action()
+								!= PostCastAction.ALREADY_HANDLED;
 					}
 				}
 				case PARTIAL -> {
@@ -503,8 +441,8 @@ public class Subspell {
 						success = passTargetingEntity(caster, target, power, args);
 					else {
 						TargetedEntitySpell targetedEntitySpell = (TargetedEntitySpell) spell;
-						success = caster != null ? targetedEntitySpell.castAtEntity(caster, target, power, args)
-								: targetedEntitySpell.castAtEntity(target, power, args);
+						success = targetedEntitySpell.castAtEntity(new SpellData(caster, target, power, args)).action()
+								!= PostCastAction.ALREADY_HANDLED;
 					}
 
 					if (success)
@@ -534,7 +472,9 @@ public class Subspell {
 							if (passTargeting)
 								success = passTargetingEntity(caster, target, power, args);
 							else
-								((TargetedEntitySpell) spell).castAtEntity(caster, target, power, args);
+								success = ((TargetedEntitySpell) spell)
+										.castAtEntity(new SpellData(caster, target, power, args)).action()
+										!= PostCastAction.ALREADY_HANDLED;
 						}
 					}
 
@@ -564,8 +504,8 @@ public class Subspell {
 			spell.setValidTargetList(list);
 		}
 
-		boolean success = caster != null ? ((TargetedEntitySpell) spell).castAtEntity(caster, target, power, args)
-				: ((TargetedEntitySpell) spell).castAtEntity(target, power, args);
+		boolean success = ((TargetedEntitySpell) spell).castAtEntity(new SpellData(caster, target, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 		spell.setValidTargetList(originalList);
 		return success;
 	}
@@ -618,8 +558,8 @@ public class Subspell {
 				}
 				case DIRECT -> {
 					TargetedLocationSpell targetedSpell = (TargetedLocationSpell) spell;
-					yield caster != null ? targetedSpell.castAtLocation(caster, target, power, args)
-							: targetedSpell.castAtLocation(target, power, args);
+					yield targetedSpell.castAtLocation(new SpellData(caster, null, target, power, args)).action()
+							!= PostCastAction.ALREADY_HANDLED;
 				}
 				case PARTIAL -> {
 					SpellData data = new SpellData(caster, null, target, power, args);
@@ -636,8 +576,8 @@ public class Subspell {
 					power = targetEvent.getPower();
 
 					TargetedLocationSpell targetedSpell = (TargetedLocationSpell) spell;
-					boolean success = caster != null ? targetedSpell.castAtLocation(caster, target, power, args)
-							: targetedSpell.castAtLocation(target, power, args);
+					boolean success = targetedSpell.castAtLocation(new SpellData(caster, null, target, power, args)).action()
+							!= PostCastAction.ALREADY_HANDLED;
 
 					if (success)
 						new SpellCastedEvent(spell, caster, SpellCastState.NORMAL, power, args, 0, null,
@@ -662,7 +602,9 @@ public class Subspell {
 							target = targetEvent.getTargetLocation();
 							power = targetEvent.getPower();
 
-							success = ((TargetedLocationSpell) spell).castAtLocation(caster, target, power, args);
+							success = ((TargetedLocationSpell) spell)
+									.castAtLocation(new SpellData(caster, null, target, power, args)).action()
+									!= PostCastAction.ALREADY_HANDLED;
 						}
 					}
 
@@ -736,8 +678,8 @@ public class Subspell {
 						yield passTargetingEntityFromLocation(caster, from, target, power, args);
 					else {
 						TargetedEntityFromLocationSpell targetedSpell = (TargetedEntityFromLocationSpell) spell;
-						yield caster != null ? targetedSpell.castAtEntityFromLocation(caster, from, target, power, args)
-								: targetedSpell.castAtEntityFromLocation(from, target, power, args);
+						yield targetedSpell.castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+								!= PostCastAction.ALREADY_HANDLED;
 					}
 				}
 				case PARTIAL -> {
@@ -765,8 +707,8 @@ public class Subspell {
 						success = passTargetingEntityFromLocation(caster, from, target, power, args);
 					else {
 						TargetedEntityFromLocationSpell targetedSpell = (TargetedEntityFromLocationSpell) spell;
-						success = caster != null ? targetedSpell.castAtEntityFromLocation(caster, from, target, power, args)
-								: targetedSpell.castAtEntityFromLocation(from, target, power, args);
+						success = targetedSpell.castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+								!= PostCastAction.ALREADY_HANDLED;
 					}
 
 					if (success)
@@ -801,8 +743,9 @@ public class Subspell {
 								if (passTargeting)
 									success = passTargetingEntityFromLocation(caster, from, target, power, args);
 								else
-									success = ((TargetedEntityFromLocationSpell) spell).castAtEntityFromLocation(caster,
-											from, target, power, args);
+									success = ((TargetedEntityFromLocationSpell) spell)
+											.castAtEntityFromLocation(new SpellData(caster, target, from, power, args))
+											.action() != PostCastAction.ALREADY_HANDLED;
 							}
 						}
 					}
@@ -834,9 +777,9 @@ public class Subspell {
 			spell.setValidTargetList(list);
 		}
 
-		boolean success = caster != null
-				? ((TargetedEntityFromLocationSpell) spell).castAtEntityFromLocation(caster, from, target, power, args)
-				: ((TargetedEntityFromLocationSpell) spell).castAtEntityFromLocation(from, target, power, args);
+		boolean success = ((TargetedEntityFromLocationSpell) spell)
+				.castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
+				!= PostCastAction.ALREADY_HANDLED;
 		spell.setValidTargetList(originalList);
 		return success;
 	}

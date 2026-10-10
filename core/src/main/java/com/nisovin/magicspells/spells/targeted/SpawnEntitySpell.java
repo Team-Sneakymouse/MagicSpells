@@ -1109,19 +1109,19 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 			if (intervalSpell.isTargetedEntityFromLocationSpell()) {
 				if (target != null)
-					intervalSpell.castAtEntityFromLocation(caster, entity.getLocation(), target, power, null, true);
+					intervalSpell.subcast(new SpellData(caster, target, entity.getLocation(), power, null), true);
 			} else if (intervalSpell.isTargetedEntitySpell()) {
 				if (target != null)
-					intervalSpell.castAtEntity(caster, (LivingEntity) target, power, null, true);
+					intervalSpell.subcast(new SpellData(caster, target, power, null), true);
 			} else if (intervalSpell.isTargetedLocationSpell()) {
 				Location location = entity.getLocation();
 				if (target != null && !(intervalSpell.getSpell() instanceof InstantSpell)) {
 					location = target.getLocation();
 				}
 
-				intervalSpell.castAtLocation(caster, location, null, power);
+				intervalSpell.subcast(new SpellData(caster, null, location, power, null));
 			} else {
-				intervalSpell.cast(entity, power);
+				intervalSpell.subcast(new SpellData(entity, power, null));
 			}
 		}
 	}
