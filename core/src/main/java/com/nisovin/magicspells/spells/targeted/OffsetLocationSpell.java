@@ -9,9 +9,11 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class OffsetLocationSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -49,52 +51,66 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 		}
 	}
 
+	private Location applyOffsetLocation(Location base) {
+		if (forcePitch)
+			return Util.applyOffsets(base.clone(), relativeOffset, absoluteOffset, forcedPitch);
+		return Util.applyOffsets(base.clone(), relativeOffset, absoluteOffset);
+	}
+
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Location baseTargetLocation;
-			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-			if (info.cancelled()) return PostCastAction.ALREADY_HANDLED;
+	public CastResult cast(SpellData data) {
+		Location baseTargetLocation;
+		TargetInfo<LivingEntity> info = getTargetedEntity(data.caster(), data.power(), data.args());
+		if (info.cancelled())
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 
-			if (!info.empty()) baseTargetLocation = info.target().getLocation();
-			else baseTargetLocation = getTargetedBlock(caster, power, args).getLocation();
+		if (!info.empty())
+			baseTargetLocation = info.target().getLocation();
+		else
+			baseTargetLocation = getTargetedBlock(data.caster(), data.power(), data.args()).getLocation();
 
-			Location loc = null;
+		Location loc = applyOffsetLocation(baseTargetLocation);
+		data = data.location(loc);
 
-			if (forcePitch) {
-				loc = Util.applyOffsets(baseTargetLocation.clone(), relativeOffset, absoluteOffset, forcedPitch);
-			} else {
-				loc = Util.applyOffsets(baseTargetLocation.clone(), relativeOffset, absoluteOffset);
-			}
+		if (spellToCast != null)
+			spellToCast.subcast(data);
+		playSpellEffects(data.caster(), data.location(), data);
 
-			if (spellToCast != null) spellToCast.subcast(new SpellData(caster, loc, power, args));
-			playSpellEffects(caster, loc, power, args);
-
-			if (!info.empty()) {
-				sendMessages(caster, info.target(), args);
-				return PostCastAction.NO_MESSAGES;
-			}
+		if (!info.empty()) {
+			data = data.target(info.target());
+			sendMessages(data.caster(), data.target(), data.args());
+			return new CastResult(PostCastAction.NO_MESSAGES, data);
 		}
 
-		return PostCastAction.HANDLE_NORMALLY;
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (spellToCast != null)
+			spellToCast.subcast(data.location(applyOffsetLocation(data.location())));
+		if (data.hasCaster())
+			playSpellEffects(data.caster(), data.location(), data);
+		else
+			playSpellEffects(EffectPosition.TARGET, data.location(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (spellToCast != null) {
-			if (forcePitch) {
-				spellToCast.subcast(new SpellData(caster, Util.applyOffsets(target.clone(), relativeOffset, absoluteOffset, forcedPitch), power, args));
-			} else {
-				spellToCast.subcast(new SpellData(caster, Util.applyOffsets(target.clone(), relativeOffset, absoluteOffset), power, args));
-			}
-		}
-		playSpellEffects(caster, target, power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 }

@@ -16,6 +16,7 @@ import de.slikey.effectlib.util.VectorUtils;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -147,37 +148,53 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Location origin;
-			if (pointBlank)
-				origin = caster.getLocation();
-			else {
-				Block target = getTargetedBlock(caster, power, args);
-				if (target == null)
-					return noTarget(caster, args);
+	public CastResult cast(SpellData data) {
+		Location origin;
+		if (pointBlank)
+			origin = data.caster().getLocation();
+		else {
+			Block target = getTargetedBlock(data.caster(), data.power(), data.args());
+			if (target == null)
+				return new CastResult(noTarget(data.caster(), data.args()), data);
 
-				origin = target.getLocation();
-			}
-
-			if (!scan(caster, origin, power, args))
-				return noTarget(caster, args);
+			origin = target.getLocation();
 		}
 
-		return PostCastAction.HANDLE_NORMALLY;
+		if (!scan(data.location(origin)))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (!scan(data.location(data.location().clone())))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return scan(caster, target.clone(), power, args);
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return scan(null, target.clone(), power, args);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	private boolean scan(LivingEntity caster, Location origin, float power, String[] args) {
+	private boolean scan(SpellData data) {
+		LivingEntity caster = data.caster();
+		Location origin = data.location().clone();
+		float power = data.power();
+		String[] args = data.args();
 		if (blockCoords)
 			origin.set(origin.getBlockX(), origin.getBlockY(), origin.getBlockZ());
 
@@ -218,7 +235,7 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		if (Boolean.TRUE.equals(powerAffectsMaxBlocks.get(caster, null, power, args)))
 			count = Math.round(count * power);
 
-		SpellData data = new SpellData(caster, origin, power, args);
+		data = data.location(origin);
 
 		Shape shape = this.shape.get(caster, null, power, args);
 		float xRadiusInv = shape == Shape.X_CYLINDER || xRadius == 0 ? 0 : 1f / (xRadius * xRadius);

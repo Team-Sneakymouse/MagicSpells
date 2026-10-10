@@ -22,6 +22,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -225,83 +226,98 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			LivingEntity entityTarget = null;
-			Location locationTarget = null;
+	public CastResult cast(SpellData data) {
+		LivingEntity entityTarget = null;
+		Location locationTarget = null;
 
-			boolean targeted = Boolean.TRUE.equals(this.targeted.get(caster, power, args));
-			boolean requireEntityTarget = Boolean.TRUE.equals(this.requireEntityTarget.get(caster, power, args));
-			boolean pointBlank = Boolean.TRUE.equals(this.pointBlank.get(caster, power, args));
+		boolean targeted = Boolean.TRUE.equals(this.targeted.get(data));
+		boolean requireEntityTarget = Boolean.TRUE.equals(this.requireEntityTarget.get(data));
+		boolean pointBlank = Boolean.TRUE.equals(this.pointBlank.get(data));
 
-			if (targeted) {
-				if (requireEntityTarget) {
-					TargetInfo<LivingEntity> info = getTargetedEntity(caster, power);
-					if (info.noTarget())
-						return noTarget(caster, args, info);
+		if (targeted) {
+			if (requireEntityTarget) {
+				TargetInfo<LivingEntity> info = getTargetedEntity(data.caster(), data.power());
+				if (info.noTarget())
+					return new CastResult(noTarget(data.caster(), data.args(), info), data);
 
-					entityTarget = info.target();
-					power = info.power();
-				} else if (pointBlank) {
-					locationTarget = caster.getLocation();
-				} else {
-					Block block = getTargetedBlock(caster, power, args);
+				entityTarget = info.target();
+				data = data.target(entityTarget).power(info.power());
+			} else if (pointBlank) {
+				locationTarget = data.caster().getLocation();
+			} else {
+				Block block = getTargetedBlock(data.caster(), data.power(), data.args());
 
-					if (block != null) {
-						locationTarget = block.getLocation();
-						locationTarget.add(0.5, yOffset + 0.5, 0.5);
+				if (block != null) {
+					locationTarget = block.getLocation();
+					locationTarget.add(0.5, yOffset + 0.5, 0.5);
 
-						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this,
-								new SpellData(caster, locationTarget, power, args));
-						if (!event.callEvent())
-							return noTarget(caster, args);
+					SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.location(locationTarget));
+					if (!event.callEvent())
+						return new CastResult(noTarget(data.caster(), data.args()), data);
 
-						locationTarget = event.getTargetLocation();
-						power = event.getPower();
-					}
+					data = event.getSpellData();
+					locationTarget = data.location();
 				}
-
-				if (entityTarget == null && locationTarget == null)
-					return noTarget(caster, args);
 			}
 
-			initLoop(caster, entityTarget, locationTarget, power, args);
-
-			if (entityTarget != null) {
-				sendMessages(caster, entityTarget, args);
-				return PostCastAction.NO_MESSAGES;
-			}
+			if (entityTarget == null && locationTarget == null)
+				return new CastResult(noTarget(data.caster(), data.args()), data);
 		}
 
-		return PostCastAction.HANDLE_NORMALLY;
+		initLoop(data.caster(), entityTarget != null ? entityTarget : data.target(), locationTarget, data.power(),
+				data.args());
+
+		if (entityTarget != null) {
+			sendMessages(data.caster(), entityTarget, data.args());
+			return new CastResult(PostCastAction.NO_MESSAGES, data);
+		}
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtEntity(SpellData data) {
+		if (data.hasCaster()) {
+			if (!validTargetList.canTarget(data.caster(), data.target()))
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		} else if (!validTargetList.canTarget(data.target()))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+
+		initLoop(data.caster(), data.target(), null, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target))
-			return false;
-		initLoop(caster, target, null, power, args);
-		return true;
+		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target))
-			return false;
-		initLoop(null, target, null, power, args);
-		return true;
+		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		initLoop(data.caster(), null, data.location().clone().add(0, yOffset, 0), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		initLoop(caster, null, target.clone().add(0, yOffset, 0), power, args);
-		return true;
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		initLoop(null, null, target.clone().add(0, yOffset, 0), power, args);
-		return true;
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	public Multimap<UUID, Loop> getActiveLoops() {

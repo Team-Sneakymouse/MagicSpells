@@ -14,6 +14,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.RegexUtil;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -73,55 +74,64 @@ public final class MultiSpell extends InstantSpell {
 	}
 
 	@Override
-	public Spell.PostCastAction castSpell(LivingEntity caster, Spell.SpellCastState state, float power, String[] args) {
-		if (state == Spell.SpellCastState.NORMAL) {
-			boolean castRandom = Boolean.TRUE.equals(castRandomSpellInstead.get(caster, power, args));
-			boolean customChance = Boolean.TRUE.equals(customSpellCastChance.get(caster, power, args));
-			boolean individualChances = Boolean.TRUE.equals(enableIndividualChances.get(caster, power, args));
+	public CastResult cast(SpellData data) {
+		boolean castRandom = Boolean.TRUE.equals(castRandomSpellInstead.get(data));
+		boolean customChance = Boolean.TRUE.equals(customSpellCastChance.get(data));
+		boolean individualChances = Boolean.TRUE.equals(enableIndividualChances.get(data));
 
-			if (!castRandom) {
-				int delay = 0;
+		if (!castRandom) {
+			int delay = 0;
+			for (ActionChance actionChance : actions) {
+				Action action = actionChance.action();
+				if (action.isDelay()) {
+					delay += action.getDelay();
+				} else if (action.isSpell()) {
+					Subspell spell = action.getSpell();
+					if (delay == 0)
+						spell.subcast(data);
+					else
+						MagicSpells.scheduleDelayedTask(new DelayedSpell(spell, data.caster(), data.power(), data.args()),
+								delay);
+				}
+			}
+		} else {
+			int index;
+			if (customChance) {
+				int total = 0;
 				for (ActionChance actionChance : actions) {
-					Action action = actionChance.action();
-					if (action.isDelay()) {
-						delay += action.getDelay();
-					} else if (action.isSpell()) {
-						Subspell spell = action.getSpell();
-						if (delay == 0) spell.subcast(new SpellData(caster, power, args));
-						else MagicSpells.scheduleDelayedTask(new DelayedSpell(spell, caster, power, args), delay);
+					total = (int) Math.round(total + actionChance.chance());
+				}
+				index = random.nextInt(total);
+				int s = 0;
+				int i = 0;
+				while (s < index) {
+					s = (int) Math.round(s + actions.get(i++).chance());
+				}
+				Action action = actions.get(Math.max(0, i - 1)).action();
+				if (action.isSpell())
+					action.getSpell().subcast(data);
+			} else if (individualChances) {
+				for (ActionChance actionChance : actions) {
+					double chance = Math.random();
+					if ((actionChance.chance() / 100.0D > chance) && actionChance.action().isSpell()) {
+						Action action = actionChance.action();
+						action.getSpell().subcast(data);
 					}
 				}
 			} else {
-				int index;
-				if (customChance) {
-					int total = 0;
-					for (ActionChance actionChance : actions) {
-						total = (int) Math.round(total + actionChance.chance());
-					}
-					index = random.nextInt(total);
-					int s = 0;
-					int i = 0;
-					while (s < index) {
-						s = (int) Math.round(s + actions.get(i++).chance());
-					}
-					Action action = actions.get(Math.max(0, i - 1)).action();
-					if (action.isSpell()) action.getSpell().subcast(new SpellData(caster, power, args));
-				} else if (individualChances) {
-					for (ActionChance actionChance : actions) {
-						double chance = Math.random();
-						if ((actionChance.chance() / 100.0D > chance) && actionChance.action().isSpell()) {
-							Action action = actionChance.action();
-							action.getSpell().subcast(new SpellData(caster, power, args));
-						}
-					}
-				} else {
-					Action action = actions.get(random.nextInt(actions.size())).action();
-					action.getSpell().subcast(new SpellData(caster, power, args));
-				}
+				Action action = actions.get(random.nextInt(actions.size())).action();
+				action.getSpell().subcast(data);
 			}
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
 		}
-		return Spell.PostCastAction.HANDLE_NORMALLY;
+		playSpellEffects(EffectPosition.CASTER, data.caster(), data);
+		return new CastResult(Spell.PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public Spell.PostCastAction castSpell(LivingEntity caster, Spell.SpellCastState state, float power, String[] args) {
+		if (state != Spell.SpellCastState.NORMAL)
+			return Spell.PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 	@Override

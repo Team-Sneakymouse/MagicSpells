@@ -6,6 +6,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicLocation;
 
@@ -50,15 +51,23 @@ public class LocationSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			Location loc = location.getLocation();
-			if (loc == null) return PostCastAction.ALREADY_HANDLED;
+	public CastResult cast(SpellData data) {
+		Location loc = location.getLocation();
+		if (loc == null)
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 
-			if (spellToCast != null) spellToCast.subcast(new SpellData(caster, loc, power, args));
-			playSpellEffects(caster, loc, power, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		data = data.location(loc);
+		if (spellToCast != null)
+			spellToCast.subcast(data);
+		playSpellEffects(data.caster(), data.location(), data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
 	}
 
 }

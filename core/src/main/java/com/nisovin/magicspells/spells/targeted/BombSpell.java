@@ -12,6 +12,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -77,33 +78,49 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) {
-			List<Block> blocks = getLastTwoTargetedBlocks(caster, power, args);
-			if (blocks.size() != 2)
-				return noTarget(caster, args);
-			if (!blocks.get(1).getType().isSolid())
-				return noTarget(caster, args);
+	public CastResult cast(SpellData data) {
+		List<Block> blocks = getLastTwoTargetedBlocks(data.caster(), data.power(), data.args());
+		if (blocks.size() != 2)
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+		if (!blocks.get(1).getType().isSolid())
+			return new CastResult(noTarget(data.caster(), data.args()), data);
 
-			Block target = blocks.get(0);
-			boolean ok = bomb(caster, target.getLocation(), power, args);
-			if (!ok)
-				return noTarget(caster, args);
-		}
-		return PostCastAction.HANDLE_NORMALLY;
+		Block target = blocks.get(0);
+		if (!bomb(data.location(target.getLocation())))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+	}
+
+	@Override
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		if (state != SpellCastState.NORMAL)
+			return PostCastAction.HANDLE_NORMALLY;
+		return cast(new SpellData(caster, null, getCurrentCastLocation(), power, args)).action();
+	}
+
+	@Override
+	public CastResult castAtLocation(SpellData data) {
+		if (!bomb(data))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return bomb(caster, target, power, args);
+		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return bomb(null, target, power, args);
+		return castAtLocation(new SpellData(null, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	private boolean bomb(LivingEntity livingEntity, Location loc, float power, String[] args) {
+	private boolean bomb(SpellData data) {
+		LivingEntity livingEntity = data.caster();
+		Location loc = data.location();
+		float power = data.power();
+		String[] args = data.args();
 		if (material == null)
 			return false;
 		Block block = loc.getBlock();
@@ -114,11 +131,11 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 				false);
 		blocks.put(block, change);
 
-		SpellData data = new SpellData(livingEntity, loc, power, args);
+		final SpellData effectData = data.location(loc.clone().add(0.5, 0, 0.5));
 		if (livingEntity != null)
-			playSpellEffects(livingEntity, loc.add(0.5, 0, 0.5), data);
+			playSpellEffects(livingEntity, effectData.location(), effectData);
 		else
-			playSpellEffects(EffectPosition.TARGET, loc.add(0.5, 0, 0.5), data);
+			playSpellEffects(EffectPosition.TARGET, effectData.location(), effectData);
 
 		final int interval = this.interval.get(livingEntity, null, power, args);
 		final int fuse = this.fuse.get(livingEntity, null, power, args);
@@ -135,14 +152,14 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 					if (material.equals(block.getType())) {
 						blocks.remove(block);
 						change.undo(false);
-						playSpellEffects(EffectPosition.DELAYED, l, data);
+						playSpellEffects(EffectPosition.DELAYED, l, effectData);
 						if (targetSpell != null)
-							targetSpell.subcast(new SpellData(livingEntity, l, power, args));
+							targetSpell.subcast(effectData.location(l));
 					}
 				} else if (!material.equals(block.getType()))
 					stop(true);
 				else
-					playSpellEffects(EffectPosition.SPECIAL, l, data);
+					playSpellEffects(EffectPosition.SPECIAL, l, effectData);
 			}
 
 		};
