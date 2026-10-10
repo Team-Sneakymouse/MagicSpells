@@ -15,10 +15,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.NamespacedKey;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.EntityPdc;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -33,9 +34,10 @@ import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
 
-@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class BlockBeamSpell extends InstantSpell
 		implements TargetedLocationSpell, TargetedEntitySpell, TargetedEntityFromLocationSpell {
+
+	private static final NamespacedKey BLOCK_BEAM_FLAG = EntityPdc.key("block_beam");
 
 	private final Set<List<LivingEntity>> entities;
 
@@ -203,7 +205,7 @@ public class BlockBeamSpell extends InstantSpell
 	@EventHandler(ignoreCancelled = true)
 	public void onSpellTarget(SpellTargetEvent e) {
 		LivingEntity target = e.getTarget();
-		if (target.hasMetadata("MSBlockBeam"))
+		if (EntityPdc.hasFlag(target, BLOCK_BEAM_FLAG))
 			e.setCancelled(true);
 	}
 
@@ -328,7 +330,7 @@ public class BlockBeamSpell extends InstantSpell
 			armorStand.setInvulnerable(true);
 			armorStand.setRemoveWhenFarAway(true);
 			armorStand.setHeadPose(new EulerAngle(pitch + rotationX, rotationY, rotationZ));
-			armorStand.setMetadata("MSBlockBeam", new FixedMetadataValue(MagicSpells.getInstance(), "MSBlockBeam"));
+			EntityPdc.setFlag(armorStand, BLOCK_BEAM_FLAG);
 
 			if (hpFix) {
 				armorStand.getAttribute(Attribute.MAX_HEALTH).setBaseValue(health);

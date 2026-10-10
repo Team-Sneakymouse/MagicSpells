@@ -2,20 +2,23 @@ package com.nisovin.magicspells.spelleffects.effecttypes;
 
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.FireworkEffect;
 import org.bukkit.entity.Firework;
 import org.bukkit.inventory.meta.FireworkMeta;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.configuration.ConfigurationSection;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.EntityPdc;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
-@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class FireworksEffect extends SpellEffect {
+
+	private static final NamespacedKey FIREWORK_FLAG = EntityPdc.key(MagicSpells.FIREWORK_METADATA_KEY);
+
 
 	private ConfigData<Integer> type;
 	private ConfigData<Integer> flightDuration;
@@ -92,7 +95,7 @@ public class FireworksEffect extends SpellEffect {
 
 		firework.setFireworkMeta(meta);
 		firework.setSilent(true);
-		firework.setMetadata(MagicSpells.FIREWORK_METADATA_KEY, new FixedMetadataValue(MagicSpells.getInstance(), true));
+		EntityPdc.setFlag(firework, FIREWORK_FLAG);
 
 		MagicSpells.scheduleDelayedTask(() -> {
 			if (!firework.isValid()) return;

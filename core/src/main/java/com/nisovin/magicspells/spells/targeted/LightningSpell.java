@@ -1,15 +1,15 @@
 package com.nisovin.magicspells.spells.targeted;
 
-import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.metadata.MetadataValue;
 import org.bukkit.entity.LightningStrike;
 import org.bukkit.event.entity.PigZapEvent;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.event.entity.CreeperPowerEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
@@ -23,8 +23,16 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
 
-@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
+/**
+ * Charge/zap flags must be available during {@code strikeLightning()} itself —
+ * {@link CreeperPowerEvent} / {@link PigZapEvent} often fire before the returned
+ * entity can be tagged. ThreadLocal covers the sync case; UUID map covers later ticks.
+ */
 public class LightningSpell extends TargetedSpell implements TargetedLocationSpell {
+
+	/** bit0 = charge creepers, bit1 = zap pigs */
+	private static final ThreadLocal<Byte> PENDING_FLAGS = new ThreadLocal<>();
+	private static final Map<UUID, Byte> STRIKE_FLAGS = new ConcurrentHashMap<>();
 
 	private ConfigData<Double> additionalDamage;
 
@@ -33,7 +41,7 @@ public class LightningSpell extends TargetedSpell implements TargetedLocationSpe
 	private boolean checkPlugins;
 	private boolean chargeCreepers;
 	private boolean requireEntityTarget;
-	
+
 	public LightningSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -106,37 +114,38 @@ public class LightningSpell extends TargetedSpell implements TargetedLocationSpe
 	private void lightning(Location target) {
 		if (noDamage) target.getWorld().strikeLightningEffect(target);
 		else {
-			LightningStrike strike = target.getWorld().strikeLightning(target);
-			strike.setMetadata("MS" + internalName, new FixedMetadataValue(MagicSpells.plugin, new ChargeOption(chargeCreepers, zapPigs)));
-		}
-	}
-	
-	@EventHandler
-	public void onCreeperCharge(CreeperPowerEvent event) {
-		LightningStrike strike = event.getLightning();
-		if (strike == null) return;
-		List<MetadataValue> data = strike.getMetadata("MS" + internalName);
-		if (data.isEmpty()) return;
-		for (MetadataValue val : data) {
-			ChargeOption option = (ChargeOption) val.value();
-			if (option == null) continue;
-			if (!option.chargeCreeper) event.setCancelled(true);
-			break;
-		}
-	}
-	
-	@EventHandler
-	public void onPigZap(PigZapEvent event) {
-		LightningStrike strike = event.getLightning();
-		List<MetadataValue> data = strike.getMetadata("MS" + internalName);
-		if (data.isEmpty()) return;
-		for (MetadataValue val: data) {
-			ChargeOption option = (ChargeOption) val.value();
-			if (option == null) continue;
-			if (!option.changePig) event.setCancelled(true);
+			byte packed = (byte) ((chargeCreepers ? 1 : 0) | (zapPigs ? 2 : 0));
+			PENDING_FLAGS.set(packed);
+			try {
+				LightningStrike strike = target.getWorld().strikeLightning(target);
+				UUID id = strike.getUniqueId();
+				STRIKE_FLAGS.put(id, packed);
+				MagicSpells.scheduleDelayedTask(() -> STRIKE_FLAGS.remove(id), 40);
+			} finally {
+				PENDING_FLAGS.remove();
+			}
 		}
 	}
 
-	private record ChargeOption(boolean chargeCreeper, boolean changePig) {}
-	
+	private static Byte flagsFor(LightningStrike strike) {
+		Byte pending = PENDING_FLAGS.get();
+		if (pending != null) return pending;
+		if (strike == null) return null;
+		return STRIKE_FLAGS.get(strike.getUniqueId());
+	}
+
+	@EventHandler
+	public void onCreeperCharge(CreeperPowerEvent event) {
+		Byte packed = flagsFor(event.getLightning());
+		if (packed == null) return;
+		if ((packed & 1) == 0) event.setCancelled(true);
+	}
+
+	@EventHandler
+	public void onPigZap(PigZapEvent event) {
+		Byte packed = flagsFor(event.getLightning());
+		if (packed == null) return;
+		if ((packed & 2) == 0) event.setCancelled(true);
+	}
+
 }

@@ -1,20 +1,15 @@
 package com.nisovin.magicspells.spells.passive;
 
 import java.util.Set;
-import java.util.UUID;
 import java.util.HashSet;
 
 import org.bukkit.entity.Arrow;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.OverridePriority;
@@ -22,11 +17,14 @@ import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 
-@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
+/**
+ * Fires when a shot arrow hits a block (misses living entities).
+ * Uses {@link ProjectileHitEvent#getHitEntity()} instead of Bukkit Metadata.
+ */
 public class MissArrowListener extends PassiveListener {
 
 	private final Set<MagicItemData> items = new HashSet<>();
-	
+
 	@Override
 	public void initialize(String var) {
 		if (var == null || var.isEmpty()) return;
@@ -44,36 +42,15 @@ public class MissArrowListener extends PassiveListener {
 			items.add(itemData);
 		}
 	}
-	
+
 	@OverridePriority
 	@EventHandler
-	public void onHitEntity(EntityDamageByEntityEvent event) {
-		LivingEntity attacker = getAttacker(event);
-		if (attacker == null) return;
-		String name = attacker.getName();
-		UUID id = attacker.getUniqueId();
-		if (event.getDamager() instanceof Arrow && event.getDamager().hasMetadata("mal-" + id + '-' + name)
-				&& !event.getEntity().getMetadata("mal-" + id + '-' + name).isEmpty()) {
-			((ArrowParticle) event.getDamager().getMetadata("mal-" + id + '-' + name).get(0).value()).setHitEntity(true);
-		}
-	}
-	
-	@OverridePriority
-	@EventHandler
-	public void onDamage(ProjectileHitEvent event) {
+	public void onHit(ProjectileHitEvent event) {
 		if (!(event.getEntity() instanceof Arrow)) return;
+		if (event.getHitEntity() != null) return;
 
 		LivingEntity caster = getAttacker(event);
 		if (caster == null || !hasSpell(caster) || !canTrigger(caster)) return;
-
-		String name = caster.getName();
-		UUID id = caster.getUniqueId();
-		
-		if (!event.getEntity().hasMetadata("mal-" + id + '-' + name)) return;
-		if (event.getEntity().getMetadata("mal-" + id + '-' + name).isEmpty()) return;
-		
-		ArrowParticle arrowParticle = (ArrowParticle) event.getEntity().getMetadata("mal-" + id + '-' + name).get(0).value();
-		if (arrowParticle.isHitEntity()) return;
 
 		if (!items.isEmpty()) {
 			EntityEquipment eq = caster.getEquipment();
@@ -91,53 +68,13 @@ public class MissArrowListener extends PassiveListener {
 		}
 		return false;
 	}
-	
+
 	private LivingEntity getAttacker(ProjectileHitEvent event) {
 		Projectile e = event.getEntity();
 		if (!(e instanceof Arrow)) return null;
-		if (e.getShooter() != null && e.getShooter() instanceof LivingEntity) {
-			return (LivingEntity) e.getShooter();
-		}
+		if (e.getShooter() instanceof LivingEntity living)
+			return living;
 		return null;
-	}
-
-	private LivingEntity getAttacker(EntityDamageByEntityEvent event) {
-		Entity e = event.getDamager();
-		if (!(e instanceof Arrow)) return null;
-		if (((Arrow) e).getShooter() != null && ((Arrow) e).getShooter() instanceof LivingEntity) {
-			return (LivingEntity) ((Arrow) e).getShooter();
-		}
-		return null;
-	}
-	
-	@EventHandler
-	public void shoot(ProjectileLaunchEvent event) {
-		if (event.getEntity().getShooter() == null || !(event.getEntity().getShooter() instanceof LivingEntity p) || !(event.getEntity() instanceof Arrow)) return;
-		ArrowParticle arrowParticle = new ArrowParticle(p);
-		event.getEntity().setMetadata("mal-" + p.getUniqueId() + '-' + p.getName(), new FixedMetadataValue(MagicSpells.getInstance(), arrowParticle));
-	}
-	
-	private static class ArrowParticle {
-
-		private LivingEntity origCaster;
-		private boolean hitEntity;
-		
-		private ArrowParticle(LivingEntity origCaster) {
-			this.origCaster = origCaster;
-		}
-		
-		public LivingEntity getOrigCaster() {
-			return origCaster;
-		}
-		
-		public boolean isHitEntity() {
-			return hitEntity;
-		}
-		
-		public void setHitEntity(boolean hitEntity) {
-			this.hitEntity = hitEntity;
-		}
-
 	}
 
 }

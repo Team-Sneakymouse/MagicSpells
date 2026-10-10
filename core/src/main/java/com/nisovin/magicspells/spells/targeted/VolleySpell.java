@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.util.Vector;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Arrow;
@@ -14,13 +15,12 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.metadata.MetadataValue;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.EntityPdc;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -32,10 +32,10 @@ import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
 
-@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class VolleySpell extends TargetedSpell implements TargetedLocationSpell, TargetedEntityFromLocationSpell {
 
-	private static final String METADATA_KEY = "MagicSpellsSource";
+	private static final NamespacedKey ID_KEY = EntityPdc.key("volley_id");
+	private static final NamespacedKey DAMAGE_KEY = EntityPdc.key("volley_damage");
 
 	private ConfigData<Integer> fire;
 	private ConfigData<Integer> arrows;
@@ -162,8 +162,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 
 				double damage = this.damage.get(caster, target, power, args);
 				arrow.setDamage(damage);
-				arrow.setMetadata(METADATA_KEY, new FixedMetadataValue(MagicSpells.plugin,
-						new VolleyData("VolleySpell" + internalName, damage)));
+				tagArrow(arrow, damage);
 
 				int fire = this.fire.get(caster, target, power, args);
 				if (fire > 0)
@@ -202,6 +201,11 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 		}
 	}
 
+	private void tagArrow(Arrow arrow, double damage) {
+		EntityPdc.setString(arrow, ID_KEY, "VolleySpell" + internalName);
+		EntityPdc.setDouble(arrow, DAMAGE_KEY, damage);
+	}
+
 	/**
 	 * Arrow knockback is derived from the firing weapon's Punch enchant on modern Paper.
 	 */
@@ -218,18 +222,16 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 			return;
 
 		Entity damagerEntity = event.getDamager();
-		if (!(damagerEntity instanceof Arrow arrow) || !damagerEntity.hasMetadata(METADATA_KEY))
+		if (!(damagerEntity instanceof Arrow arrow))
 			return;
 
-		MetadataValue meta = damagerEntity.getMetadata(METADATA_KEY).iterator().next();
-		if (meta == null)
+		String id = EntityPdc.getString(arrow, ID_KEY);
+		if (id == null || !id.equals("VolleySpell" + internalName))
 			return;
 
-		VolleyData data = (VolleyData) meta.value();
-		if (data == null || !data.identifier.equals("VolleySpell" + internalName))
-			return;
-
-		event.setDamage(data.damage);
+		Double damage = EntityPdc.getDouble(arrow, DAMAGE_KEY);
+		if (damage != null)
+			event.setDamage(damage);
 
 		SpellPreImpactEvent preImpactEvent = new SpellPreImpactEvent(this, this, (LivingEntity) arrow.getShooter(),
 				target, 1);
@@ -304,8 +306,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 
 				double damage = VolleySpell.this.damage.get(caster, target, power, args);
 				arrow.setDamage(damage);
-				arrow.setMetadata(METADATA_KEY, new FixedMetadataValue(MagicSpells.plugin,
-						new VolleyData("VolleySpell" + internalName, damage)));
+				tagArrow(arrow, damage);
 
 				int fire = VolleySpell.this.fire.get(caster, target, power, args);
 				if (fire > 0)
@@ -337,9 +338,6 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 			count++;
 		}
 
-	}
-
-	private record VolleyData(String identifier, double damage) {
 	}
 
 }

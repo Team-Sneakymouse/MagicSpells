@@ -45,6 +45,7 @@ For ordinary (non-removal) deprecations and unchecked casts, enable lint (curren
 | **`BookMeta` string pages** | Adventure `pages()` / `pages(List<Component>)` | |
 | **`JavaPlugin.getDescription`** | `getPluginMeta()` | |
 | **WorldEdit `ClipboardFormats.findByFile`** | `ClipboardFormatsCompat` — `findByPath` when present, else `findByFile` | Runtime WE may be older than compile 7.4 |
+| **Bukkit Metadata (`FixedMetadataValue`)** | `EntityPdc` flags/primitives + `ObjectStore` for BowSpell; LightningSpell uses ThreadLocal+UUID map (charge events fire inside `strikeLightning`); missarrow uses `getHitEntity()` | Live: `MANUAL-TEST-PDC.md`. Left alone: Citizens `IsNPCCondition` (`hasMetadata("NPC")`) |
 
 **Current `[removal]` count on `:core:compileJava`:** **0** (as of this migration pass).
 
@@ -53,6 +54,8 @@ For ordinary (non-removal) deprecations and unchecked casts, enable lint (curren
 See **[MANUAL-TEST-WARNING-MIGRATION.md](MANUAL-TEST-WARNING-MIGRATION.md)** for the human checklist.  
 Targeted cast smoke: **[MANUAL-TEST-TARGETED-CAST.md](MANUAL-TEST-TARGETED-CAST.md)** (already signed off).  
 ChatColor smoke: **[MANUAL-TEST-CHATCOLOR.md](MANUAL-TEST-CHATCOLOR.md)** (already signed off).  
+Inversion / misc: **[MANUAL-TEST-INVERSION.md](MANUAL-TEST-INVERSION.md)** (already signed off).  
+PDC / metadata: **[MANUAL-TEST-PDC.md](MANUAL-TEST-PDC.md)**.  
 Tracked fixtures under `dev-fixtures/` (copy into `core/run/plugins/MagicSpells/` for `runServer`).
 
 ---
@@ -61,8 +64,8 @@ Tracked fixtures under `dev-fixtures/` (copy into `core/run/plugins/MagicSpells/
 
 | Cluster | Notes |
 |---------|--------|
-| **Bukkit Metadata (`FixedMetadataValue`)** | Class-level `@SuppressWarnings("deprecation")` on consumers. Debt: migrate arrow/lightning/bow markers to PDC. |
 | **`GlowSpell` ChatColor** | XGlow API still takes Bukkit `ChatColor`. |
+| **Citizens `IsNPCCondition`** | Still reads external `hasMetadata("NPC")` — not MagicSpells-owned. |
 | **Misc leftovers** | Other `-Xlint:deprecation` / `unchecked` noise outside the clusters above (spot-check when enabling lint). |
 
 ---
@@ -73,6 +76,7 @@ Tracked fixtures under `dev-fixtures/` (copy into `core/run/plugins/MagicSpells/
 - `AttributeSpecParserTest`
 - `SoundKeyNamesTest`
 - `ColorUtilTest`
+- `EntityPdcTest` (lightning charge bit packing; live cover in MANUAL-TEST-PDC)
 - Existing `SpellSnippetValidatorTest` unchanged
 
 Regenerate spell option index for snippet tests: `python3 scripts/wiki/export-test-spell-index.py`

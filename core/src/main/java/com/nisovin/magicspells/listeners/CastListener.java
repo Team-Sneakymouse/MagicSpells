@@ -12,7 +12,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.EventPriority;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.event.inventory.InventoryType;
@@ -31,9 +30,12 @@ import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.BowSpell;
 import com.nisovin.magicspells.util.BlockUtils;
+import com.nisovin.magicspells.util.EntityPdc;
 
-@SuppressWarnings("deprecation") // Bukkit Metadata API; migrate to PDC later
 public class CastListener implements Listener {
+
+	private static final NamespacedKey BOW_DRAW_STRENGTH = EntityPdc.key("bow-draw-strength");
+
 
 	private MagicSpells plugin;
 
@@ -216,7 +218,7 @@ public class CastListener implements Listener {
 			if (bowSpell.canCastWithItem() && bowSpell.isBindRequired() && checkGlobalCooldown(player, spell)) bowSpell.handleBowCast(event);
 		} else castSpell(player, spell, bow);
 
-		event.getProjectile().setMetadata("bow-draw-strength", new FixedMetadataValue(plugin, event.getForce()));
+		EntityPdc.setFloat(event.getProjectile(), BOW_DRAW_STRENGTH, event.getForce());
 	}
 
 	private Boolean castSpell(Player player) {

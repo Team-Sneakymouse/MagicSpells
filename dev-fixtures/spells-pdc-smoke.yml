@@ -1,0 +1,148 @@
+# Live fixtures for MANUAL-TEST-PDC.md
+# Copy: cp dev-fixtures/spells-pdc-smoke.yml core/run/plugins/MagicSpells/
+# Cast: /c <spell> or shoot a bow for bow/missarrow checks.
+
+magic-items:
+  pdc_bow_item:
+    type: bow
+    name: "&bPDC Test Bow"
+    lore:
+      - "&7BowSpell PDC smoke"
+
+# --- Helpers (instant DummySpell so subcast sends str-cast-self) ---
+
+pdc_msg_hit:
+  spell-class: ".instant.DummySpell"
+  helper-spell: true
+  str-cast-self: "PDC: bow hit ENTITY"
+
+pdc_msg_ground:
+  spell-class: ".instant.DummySpell"
+  helper-spell: true
+  str-cast-self: "PDC: bow hit GROUND"
+
+pdc_msg_miss:
+  spell-class: ".instant.DummySpell"
+  helper-spell: true
+  str-cast-self: "PDC: missarrow fired (block hit)"
+
+pdc_msg_shoot:
+  spell-class: ".instant.DummySpell"
+  helper-spell: true
+  str-cast-self: "PDC: bow shot"
+
+# --- A. Fireworks effect: no damage to nearby entities ---
+
+pdc_fireworks:
+  spell-class: ".instant.DummySpell"
+  name: pdc_fireworks
+  always-granted: true
+  str-cast-self: "PDC: fireworks (stand in blast — should NOT damage you)"
+  effects:
+    fw:
+      position: caster
+      effect: fireworks
+      type: 1
+      flight: 0
+      trail: false
+      flicker: false
+      colors: FF5500
+      fade-colors: FFFF00
+
+# --- B. Lightning charge flags (ThreadLocal + UUID map during strike) ---
+
+pdc_lightning_safe:
+  spell-class: ".targeted.LightningSpell"
+  name: pdc_lightning_safe
+  always-granted: true
+  range: 20
+  no-damage: false
+  charge-creepers: false
+  zap-pigs: false
+  require-entity-target: false
+  check-plugins: false
+  str-cast-self: "PDC: lightning (creeper should NOT charge; pig should NOT zap)"
+  str-no-target: "PDC: look at ground near creeper/pig"
+
+pdc_lightning_charge:
+  spell-class: ".targeted.LightningSpell"
+  name: pdc_lightning_charge
+  always-granted: true
+  range: 20
+  no-damage: false
+  charge-creepers: true
+  zap-pigs: true
+  require-entity-target: false
+  check-plugins: false
+  str-cast-self: "PDC: lightning (creeper SHOULD charge; pig MAY zap)"
+  str-no-target: "PDC: look at ground near creeper/pig"
+
+# --- C. Volley damage via PDC string/double ---
+
+pdc_volley:
+  spell-class: ".targeted.VolleySpell"
+  name: pdc_volley
+  always-granted: true
+  range: 30
+  arrows: 3
+  speed: 25
+  spread: 20
+  damage: 6
+  y-offset: 2
+  shoot-interval: 0
+  knockback-strength: 0
+  power-affects-arrow-count: false
+  str-cast-self: "PDC: volley (look at ground near a mob; arrows should deal ~6)"
+  str-no-target: "PDC: look at a block"
+
+# --- D. BlockBeam armor-stand flag ---
+
+pdc_blockbeam:
+  spell-class: ".instant.BlockBeamSpell"
+  name: pdc_blockbeam
+  always-granted: true
+  block-type: stone
+  max-distance: 12
+  remove-delay: 60
+  hit-radius: 1
+  interval: 1
+  str-cast-self: "PDC: block beam (armor stands appear briefly; no console errors)"
+
+# --- E. BowSpell (match via bow-items, not Component name equality) ---
+
+pdc_give_bow:
+  spell-class: ".instant.ConjureSpell"
+  name: pdc_give_bow
+  always-granted: true
+  add-to-inventory: true
+  items:
+    - pdc_bow_item 1
+    - arrow 64
+  str-cast-self: "PDC: gave bow + arrows — shoot the named bow at mob / ground"
+
+pdc_bow:
+  spell-class: ".BowSpell"
+  name: pdc_bow
+  always-granted: true
+  bindable: false
+  require-bind: false
+  cancel-shot: false
+  cancel-shot-on-fail: false
+  remove-arrow: true
+  use-bow-force: true
+  bow-items:
+    - pdc_bow_item
+  spell: pdc_msg_shoot
+  spell-on-hit-entity: pdc_msg_hit
+  spell-on-hit-ground: pdc_msg_ground
+
+# --- F. missarrow (ProjectileHitEntity, no metadata) ---
+
+pdc_miss_arrow:
+  spell-class: ".passive.PassiveSpell"
+  name: pdc_miss_arrow
+  always-granted: true
+  triggers:
+    - missarrow
+  spells: pdc_msg_miss
+  str-cast-self: "PDC: missarrow passive loaded (shoot any bow at a BLOCK)"
