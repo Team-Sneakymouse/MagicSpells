@@ -17,29 +17,42 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.CastItem;
+import com.nisovin.magicspells.util.SpellData;
+import com.nisovin.magicspells.util.CastItemSpellResolver;
 
 public class LeftClickListener implements Listener {
 
 	private final Map<CastItem, Spell> leftClickCastItems = new HashMap<>();
+	private final Map<String, Spell> leftClickCastTags = new HashMap<>();
 	private final Map<String, Long> lastCast = new HashMap<>();
 
 	public LeftClickListener() {
 		for (Spell spell : MagicSpells.getSpells().values()) {
 			CastItem[] items = spell.getLeftClickCastItems();
-			if (items.length == 0) continue;
+			if (items != null) {
+				for (CastItem item : items) {
+					if (item == null) continue;
 
-			for (CastItem item : items) {
-				if (item == null) continue;
+					Spell old = leftClickCastItems.put(item, spell);
+					if (old != null)
+						MagicSpells.error("The spell '" + spell.getInternalName() + "' has same left-click-cast-item as '" + old.getInternalName() + "'!");
+				}
+			}
 
-				Spell old = leftClickCastItems.put(item, spell);
-				if (old != null)
-					MagicSpells.error("The spell '" + spell.getInternalName() + "' has same left-click-cast-item as '" + old.getInternalName() + "'!");
+			String[] tags = spell.getLeftClickCastItemTags();
+			if (tags != null) {
+				for (String tag : tags) {
+					if (tag == null || tag.isEmpty()) continue;
+					Spell old = leftClickCastTags.put(tag, spell);
+					if (old != null)
+						MagicSpells.error("The spell '" + spell.getInternalName() + "' has same left-click-cast-item tag #" + tag + " as '" + old.getInternalName() + "'!");
+				}
 			}
 		}
 	}
 
 	public boolean hasLeftClickCastItems() {
-		return !leftClickCastItems.isEmpty();
+		return !leftClickCastItems.isEmpty() || !leftClickCastTags.isEmpty();
 	}
 
 	@EventHandler
@@ -50,7 +63,7 @@ public class LeftClickListener implements Listener {
 		ItemStack item = event.getItem();
 		if (item == null) return;
 
-		final Spell spell = leftClickCastItems.get(new CastItem(item));
+		final Spell spell = CastItemSpellResolver.resolve(leftClickCastItems, leftClickCastTags, item);
 		if (spell == null) return;
 
 		Player player = event.getPlayer();
@@ -65,12 +78,14 @@ public class LeftClickListener implements Listener {
 		}
 
 		PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
+		String[] args = null;
 		if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
-			final String[] args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
-			MagicSpells.scheduleDelayedTask(() -> spell.cast(player, 1.0F, args), 0);
-		} else {
-			MagicSpells.scheduleDelayedTask(() -> spell.cast(player), 0);
+			args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
 		}
+		final ItemStack castStack = item.clone();
+		final String[] castArgs = args;
+		MagicSpells.scheduleDelayedTask(
+				() -> spell.hardCast(new SpellData(player, 1.0F, castArgs).castItem(castStack)), 0);
 	}
 
 }

@@ -186,6 +186,10 @@ public class ConditionManager {
 		addCondition("expression", ExpressionCondition.class);
 		addCondition("expressionstringcontains", ExpressionStringContainsCondition.class);
 		addCondition("expressionstringequals", ExpressionStringEqualsCondition.class);
+		addCondition("hasitempdc", HasItemPdcCondition.class);
+		addCondition("itempdcequals", ItemPdcEqualsCondition.class);
+		addCondition("itempdccontains", ItemPdcContainsCondition.class);
+		addCondition("itempdcexpression", ItemPdcExpressionCondition.class);
 		addCondition("locationmatchesschematic", LocationMatchesSchematicCondition.class);
 	}
 

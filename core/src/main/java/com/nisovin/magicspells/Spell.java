@@ -133,6 +133,11 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected CastItem[] leftClickCastItems;
 	protected CastItem[] rightClickCastItems;
 
+	protected String[] castItemTags = new String[0];
+	protected String[] consumeCastItemTags = new String[0];
+	protected String[] leftClickCastItemTags = new String[0];
+	protected String[] rightClickCastItemTags = new String[0];
+
 	protected String[] aliases;
 
 	protected String name;
@@ -229,57 +234,81 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		if (config.contains(path + "cast-item")) {
 			String[] sItems = config.getString(path + "cast-item", "-5").trim().replace(" ", "")
 					.split(MagicItemDataParser.DATA_REGEX);
-			castItems = setupCastItems(sItems, "Spell '" + internalName + "' has an invalid cast item specified: %i");
+			CastItemConfig castConfig = setupCastItemConfig(sItems, "Spell '" + internalName + "' has an invalid cast item specified: %i");
+			castItems = castConfig.items();
+			castItemTags = castConfig.tags();
 		} else if (config.contains(path + "cast-items")) {
 			List<String> sItems = config.getStringList(path + "cast-items", null);
 			if (sItems == null)
 				sItems = new ArrayList<>();
-			castItems = setupCastItems(sItems.toArray(new String[0]),
+			CastItemConfig castConfig = setupCastItemConfig(sItems.toArray(new String[0]),
 					"Spell '" + internalName + "' has an invalid cast item specified: %i");
-		} else
+			castItems = castConfig.items();
+			castItemTags = castConfig.tags();
+		} else {
 			castItems = new CastItem[0];
+			castItemTags = new String[0];
+		}
 
 		if (config.contains(path + "left-click-cast-item")) {
 			String[] sItems = config.getString(path + "left-click-cast-item", "-5").trim().replace(" ", "")
 					.split(MagicItemDataParser.DATA_REGEX);
-			leftClickCastItems = setupCastItems(sItems,
+			CastItemConfig castConfig = setupCastItemConfig(sItems,
 					"Spell '" + internalName + "' has an invalid left click cast item specified: %i");
+			leftClickCastItems = castConfig.items();
+			leftClickCastItemTags = castConfig.tags();
 		} else if (config.contains(path + "left-click-cast-items")) {
 			List<String> sItems = config.getStringList(path + "left-click-cast-items", null);
 			if (sItems == null)
 				sItems = new ArrayList<>();
-			leftClickCastItems = setupCastItems(sItems.toArray(new String[0]),
+			CastItemConfig castConfig = setupCastItemConfig(sItems.toArray(new String[0]),
 					"Spell '" + internalName + "' has an invalid left click cast item listed: %i");
-		} else
+			leftClickCastItems = castConfig.items();
+			leftClickCastItemTags = castConfig.tags();
+		} else {
 			leftClickCastItems = new CastItem[0];
+			leftClickCastItemTags = new String[0];
+		}
 
 		if (config.contains(path + "right-click-cast-item")) {
 			String[] sItems = config.getString(path + "right-click-cast-item", "-5").trim().replace(" ", "")
 					.split(MagicItemDataParser.DATA_REGEX);
-			rightClickCastItems = setupCastItems(sItems,
+			CastItemConfig castConfig = setupCastItemConfig(sItems,
 					"Spell '" + internalName + "' has an invalid right click cast item specified: %i");
+			rightClickCastItems = castConfig.items();
+			rightClickCastItemTags = castConfig.tags();
 		} else if (config.contains(path + "right-click-cast-items")) {
 			List<String> sItems = config.getStringList(path + "right-click-cast-items", null);
 			if (sItems == null)
 				sItems = new ArrayList<>();
-			rightClickCastItems = setupCastItems(sItems.toArray(new String[0]),
+			CastItemConfig castConfig = setupCastItemConfig(sItems.toArray(new String[0]),
 					"Spell '" + internalName + "' has an invalid right click cast item listed: %i");
-		} else
+			rightClickCastItems = castConfig.items();
+			rightClickCastItemTags = castConfig.tags();
+		} else {
 			rightClickCastItems = new CastItem[0];
+			rightClickCastItemTags = new String[0];
+		}
 
 		if (config.contains(path + "consume-cast-item")) {
 			String[] sItems = config.getString(path + "consume-cast-item", "-5").trim().replace(" ", "")
 					.split(MagicItemDataParser.DATA_REGEX);
-			consumeCastItems = setupCastItems(sItems,
+			CastItemConfig castConfig = setupCastItemConfig(sItems,
 					"Spell '" + internalName + "' has an invalid consume cast item specified: %i");
+			consumeCastItems = castConfig.items();
+			consumeCastItemTags = castConfig.tags();
 		} else if (config.contains(path + "consume-cast-items")) {
 			List<String> sItems = config.getStringList(path + "consume-cast-items", null);
 			if (sItems == null)
 				sItems = new ArrayList<>();
-			consumeCastItems = setupCastItems(sItems.toArray(new String[0]),
+			CastItemConfig castConfig = setupCastItemConfig(sItems.toArray(new String[0]),
 					"Spell '" + internalName + "' has an invalid consume cast item listed: %i");
-		} else
+			consumeCastItems = castConfig.items();
+			consumeCastItemTags = castConfig.tags();
+		} else {
 			consumeCastItems = new CastItem[0];
+			consumeCastItemTags = new String[0];
+		}
 
 		castWithLeftClick = config.getBoolean(path + "cast-with-left-click", MagicSpells.canCastWithLeftClick());
 		castWithRightClick = config.getBoolean(path + "cast-with-right-click", MagicSpells.canCastWithRightClick());
@@ -1235,15 +1264,14 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	public boolean isValidItemForCastCommand(ItemStack item) {
-		if (!requireCastItemOnCommand || castItems == null)
+		if (!requireCastItemOnCommand)
 			return true;
-		if (item == null && castItems.length == 1 && BlockUtils.isAir(castItems[0].getType()))
+		if ((castItems == null || castItems.length == 0) && (castItemTags == null || castItemTags.length == 0))
 			return true;
-		for (CastItem castItem : castItems) {
-			if (castItem.equals(new CastItem(item)))
-				return true;
-		}
-		return false;
+		if (item == null && castItems != null && castItems.length == 1 && castItems[0] != null
+				&& BlockUtils.isAir(castItems[0].getType()))
+			return true;
+		return new CastItemConfig(castItems, castItemTags).matches(item);
 	}
 
 	public boolean canBind(CastItem item) {
@@ -2112,22 +2140,40 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	protected CastItem[] setupCastItems(String[] items, String errorMessage) {
-		CastItem[] castItems = new CastItem[items.length];
-		for (int i = 0; i < items.length; i++) {
-			MagicItem magicItem = MagicItems.getMagicItemFromString(items[i]);
+		return setupCastItemConfig(items, errorMessage).items();
+	}
+
+	protected CastItemConfig setupCastItemConfig(String[] items, String errorMessage) {
+		if (items == null || items.length == 0) return CastItemConfig.EMPTY;
+
+		List<CastItem> castItemList = new ArrayList<>();
+		List<String> tagList = new ArrayList<>();
+		for (String entry : items) {
+			if (entry == null || entry.isEmpty()) continue;
+			if (entry.startsWith("#")) {
+				String tag = entry.substring(1).trim();
+				if (tag.isEmpty()) {
+					MagicSpells.error(errorMessage.replace("%i", entry));
+					continue;
+				}
+				tagList.add(tag);
+				continue;
+			}
+
+			MagicItem magicItem = MagicItems.getMagicItemFromString(entry);
 			if (magicItem == null) {
-				MagicSpells.error(errorMessage.replace("%i", items[i]));
+				MagicSpells.error(errorMessage.replace("%i", entry));
 				continue;
 			}
 
 			ItemStack item = magicItem.getItemStack();
 			if (item == null) {
-				MagicSpells.error(errorMessage.replace("%i", items[i]));
+				MagicSpells.error(errorMessage.replace("%i", entry));
 				continue;
 			}
-			castItems[i] = new CastItem(item);
+			castItemList.add(new CastItem(item));
 		}
-		return castItems;
+		return new CastItemConfig(castItemList.toArray(new CastItem[0]), tagList.toArray(new String[0]));
 	}
 
 	protected Subspell initSubspell(String subspellName, String errorMessage) {
@@ -2381,16 +2427,32 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return castItems;
 	}
 
+	public String[] getCastItemTags() {
+		return castItemTags;
+	}
+
 	public CastItem[] getLeftClickCastItems() {
 		return leftClickCastItems;
+	}
+
+	public String[] getLeftClickCastItemTags() {
+		return leftClickCastItemTags;
 	}
 
 	public CastItem[] getRightClickCastItems() {
 		return rightClickCastItems;
 	}
 
+	public String[] getRightClickCastItemTags() {
+		return rightClickCastItemTags;
+	}
+
 	public CastItem[] getConsumeCastItems() {
 		return consumeCastItems;
+	}
+
+	public String[] getConsumeCastItemTags() {
+		return consumeCastItemTags;
 	}
 
 	public String getDanceCastSequence() {

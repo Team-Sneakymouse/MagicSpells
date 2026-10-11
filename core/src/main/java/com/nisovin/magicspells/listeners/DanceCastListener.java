@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.EventHandler;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
@@ -17,6 +18,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.CastItem;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.PlayerNameUtils;
@@ -90,12 +92,12 @@ public class DanceCastListener implements Listener {
 		if (!spells.isEmpty()) MagicSpells.registerEvents(this);
 	}
 	
-	private boolean processDanceCast(Player player, String castSequence, boolean forceEnd) {
+	private boolean processDanceCast(Player player, String castSequence, boolean forceEnd, ItemStack wand) {
 		boolean casted = false;
 		Spell spell = spells.get(castSequence);
 		if (spell != null) {
 			MagicSpells.sendMessage(strDanceComplete, player, MagicSpells.NULL_ARGS);
-			SpellCastResult result = spell.cast(player);
+			SpellCastResult result = spell.hardCast(new SpellData(player).castItem(wand));
 			casted = result.state == SpellCastState.NORMAL && result.action != PostCastAction.ALREADY_HANDLED;
 		} else if (forceEnd) {
 			MagicSpells.sendMessage(strDanceFail, player, MagicSpells.NULL_ARGS);
@@ -129,7 +131,7 @@ public class DanceCastListener implements Listener {
 			if (castSequence != null) {
 				castSequence = processMovement(player, castSequence);
 				MagicSpells.debug("Player " + player.getName() + " performed dance sequence " + castSequence);
-				processDanceCast(player, castSequence, true);
+				processDanceCast(player, castSequence, true, event.getItem());
 				return;
 			}
 			// starting a cast
@@ -153,7 +155,7 @@ public class DanceCastListener implements Listener {
 			if (castSequence == null) return;
 			castSequence = processMovement(player, castSequence) + 'C';
 			playerCasts.put(playerName, castSequence);
-			if (dynamicCasting) processDanceCast(player, castSequence, false);
+			if (dynamicCasting) processDanceCast(player, castSequence, false, event.getItem());
 		}
 	}
 	
@@ -165,7 +167,7 @@ public class DanceCastListener implements Listener {
 		if (castSequence == null) return;
 		castSequence = processMovement(player, castSequence) + (event.isSneaking() ? "S" : "U");
 		playerCasts.put(playerName, castSequence);
-		if (dynamicCasting) processDanceCast(player, castSequence, false);
+		if (dynamicCasting) processDanceCast(player, castSequence, false, player.getInventory().getItemInMainHand());
 	}
 	
 	@EventHandler

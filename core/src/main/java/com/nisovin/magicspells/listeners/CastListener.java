@@ -31,6 +31,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.BowSpell;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.EntityPdc;
+import com.nisovin.magicspells.util.SpellData;
 
 public class CastListener implements Listener {
 
@@ -243,7 +244,7 @@ public class CastListener implements Listener {
 				args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
 			}
 		}
-		return spell.cast(player, 1.0F, args).state.equals(SpellCastState.NORMAL);
+		return spell.hardCast(new SpellData(player, 1.0F, args).castItem(item)).state.equals(SpellCastState.NORMAL);
 	}
 
 	private boolean checkGlobalCooldown(Player player, Spell spell) {

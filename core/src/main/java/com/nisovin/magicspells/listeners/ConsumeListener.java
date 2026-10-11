@@ -15,35 +15,49 @@ import org.bukkit.persistence.PersistentDataType;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.CastItem;
+import com.nisovin.magicspells.util.SpellData;
+import com.nisovin.magicspells.util.CastItemSpellResolver;
 import com.nisovin.magicspells.Spell.SpellCastState;
 import com.nisovin.magicspells.Spell.SpellCastResult;
 
 public class ConsumeListener implements Listener {
 
 	private Map<CastItem, Spell> consumeCastItems = new HashMap<>();
+	private Map<String, Spell> consumeCastTags = new HashMap<>();
 	private Map<String, Long> lastCast = new HashMap<>();
 	
 	public ConsumeListener() {
 		for (Spell spell : MagicSpells.getSpells().values()) {
 			CastItem[] items = spell.getConsumeCastItems();
-			if (items.length <= 0) continue;
-			for (CastItem item : items) {
-				Spell old = consumeCastItems.put(item, spell);
-				if (old == null) continue;
-				MagicSpells.error("The spell '" + spell.getInternalName() + "' has same consume-cast-item as '" + old.getInternalName() + "'!");
+			if (items != null) {
+				for (CastItem item : items) {
+					if (item == null) continue;
+					Spell old = consumeCastItems.put(item, spell);
+					if (old == null) continue;
+					MagicSpells.error("The spell '" + spell.getInternalName() + "' has same consume-cast-item as '" + old.getInternalName() + "'!");
+				}
+			}
+
+			String[] tags = spell.getConsumeCastItemTags();
+			if (tags != null) {
+				for (String tag : tags) {
+					if (tag == null || tag.isEmpty()) continue;
+					Spell old = consumeCastTags.put(tag, spell);
+					if (old == null) continue;
+					MagicSpells.error("The spell '" + spell.getInternalName() + "' has same consume-cast-item tag #" + tag + " as '" + old.getInternalName() + "'!");
+				}
 			}
 		}
 	}
 	
 	public boolean hasConsumeCastItems() {
-		return !consumeCastItems.isEmpty();
+		return !consumeCastItems.isEmpty() || !consumeCastTags.isEmpty();
 	}
 	
 	@EventHandler
 	public void onConsume(final PlayerItemConsumeEvent event) {
 		ItemStack item = event.getItem();
-		CastItem castItem = new CastItem(item);
-		final Spell spell = consumeCastItems.get(castItem);
+		final Spell spell = CastItemSpellResolver.resolve(consumeCastItems, consumeCastTags, item);
 		if (spell == null) return;
 
 		Player player = event.getPlayer();
@@ -58,7 +72,7 @@ public class ConsumeListener implements Listener {
 				args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
 			}
 
-			SpellCastResult result = spell.cast(player, 1.0F, args);
+			SpellCastResult result = spell.hardCast(new SpellData(player, 1.0F, args).castItem(item));
 			if (result.state != SpellCastState.NORMAL) event.setCancelled(true);
 		}
 	}

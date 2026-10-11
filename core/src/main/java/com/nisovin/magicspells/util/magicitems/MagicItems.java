@@ -417,7 +417,7 @@ public class MagicItems {
 			case PATTERNS -> BannerHandler.processItemMeta(meta, partial);
 			case ENCHANTS -> applyEnchants(meta, partial.getAttribute(ENCHANTS));
 			case ATTRIBUTES -> applyBukkitAttributes(item, meta, partial.getAttribute(ATTRIBUTES));
-			case PERMANENT_DATA -> PersistentDataHandler.processItemMeta(meta, partial);
+			case PERMANENT_DATA, PERSISTENT_DATA, TAGS -> PersistentDataHandler.processItemMeta(meta, partial);
 			default -> {}
 		}
 	}

@@ -571,6 +571,18 @@ public class MagicItemDataParser {
 
 							if (!permanentPdcMap.isEmpty()) data.setAttribute(PERMANENT_DATA, permanentPdcMap);
 							break;
+						case "tags":
+							java.util.LinkedHashSet<String> tags = new java.util.LinkedHashSet<>();
+							if (value.isJsonArray()) {
+								for (JsonElement element : value.getAsJsonArray()) {
+									String tag = element.getAsString();
+									if (tag != null && !tag.isBlank()) tags.add(tag.trim());
+								}
+							} else if (value.isJsonPrimitive()) {
+								tags.addAll(MagicItemTags.deserialize(value.getAsString()));
+							}
+							if (!tags.isEmpty()) data.setAttribute(TAGS, java.util.Collections.unmodifiableSet(tags));
+							break;
 						case "ignoredattributes":
 						case "ignored-attributes":
 						case "ignored_attributes":

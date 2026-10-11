@@ -38,6 +38,7 @@ import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.ColorUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.ParticleUtil;
 
 public class ConfigDataUtil {
@@ -817,12 +818,12 @@ public class ConfigDataUtil {
 			@Override
 			public MagicItem get(LivingEntity caster, LivingEntity target, Location location, float power,
 					String[] args) {
-				String val = supplier.get(caster, target, location, power, args);
-				if (val == null)
-					return MagicItems.getMagicItemFromString(def);
+				return resolveMagicItem(supplier.get(caster, target, location, power, args), def);
+			}
 
-				MagicItem material = MagicItems.getMagicItemFromString(val);
-				return material == null ? MagicItems.getMagicItemFromString(def) : material;
+			@Override
+			public MagicItem get(SpellData data) {
+				return resolveMagicItem(supplier.get(data), def);
 			}
 
 			@Override
@@ -847,12 +848,12 @@ public class ConfigDataUtil {
 			@Override
 			public MagicItem get(LivingEntity caster, LivingEntity target, Location location, float power,
 					String[] args) {
-				String val = supplier.get(caster, target, location, power, args);
-				if (val == null)
-					return MagicItems.getMagicItemFromString(string);
+				return resolveMagicItem(supplier.get(caster, target, location, power, args), string);
+			}
 
-				MagicItem material = MagicItems.getMagicItemFromString(val);
-				return material == null ? MagicItems.getMagicItemFromString(string) : material;
+			@Override
+			public MagicItem get(SpellData data) {
+				return resolveMagicItem(supplier.get(data), string);
 			}
 
 			@Override
@@ -861,6 +862,12 @@ public class ConfigDataUtil {
 			}
 
 		};
+	}
+
+	private static MagicItem resolveMagicItem(@Nullable String val, @Nullable String fallback) {
+		if (val == null) return MagicItems.getMagicItemFromString(fallback);
+		MagicItem material = MagicItems.getMagicItemFromString(val);
+		return material == null ? MagicItems.getMagicItemFromString(fallback) : material;
 	}
 
 	@NotNull

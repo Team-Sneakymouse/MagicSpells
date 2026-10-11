@@ -13,6 +13,7 @@ import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.handlers.MagicXpHandler;
 import com.nisovin.magicspells.events.SpellSelectionChangedEvent;
+import com.nisovin.magicspells.util.magicitems.MagicItemTags;
 
 public class Spellbook {
 
@@ -51,6 +52,8 @@ public class Spellbook {
 
 	private final Map<CastItem, List<Spell>> itemSpells = new HashMap<>();
 	private final Map<CastItem, Integer> activeSpells = new HashMap<>();
+	private final Map<String, List<Spell>> tagSpells = new HashMap<>();
+	private final Map<String, Integer> activeTagSpells = new HashMap<>();
 	private final Map<Spell, Set<CastItem>> customBindings = new HashMap<>();
 	private final Map<Plugin, Set<Spell>> temporarySpells = new HashMap<>();
 
@@ -68,6 +71,8 @@ public class Spellbook {
 		cantLearn.clear();
 		itemSpells.clear();
 		activeSpells.clear();
+		tagSpells.clear();
+		activeTagSpells.clear();
 		customBindings.clear();
 		temporarySpells.clear();
 
@@ -202,8 +207,11 @@ public class Spellbook {
 		spells.add(spell);
 		if (spell.canCastWithItem()) {
 			CastItem[] items = spell.getCastItems();
-			if (castItems != null && castItems.length > 0) {
+			String[] tags = spell.getCastItemTags();
+			boolean custom = castItems != null && castItems.length > 0;
+			if (custom) {
 				items = castItems;
+				tags = new String[0];
 				Set<CastItem> set = new HashSet<>();
 				for (CastItem item : items) {
 					if (item == null) continue;
@@ -213,7 +221,7 @@ public class Spellbook {
 			} else if (MagicSpells.ignoreDefaultBindings()) return;
 
 			for (CastItem item : items) {
-				MagicSpells.debug(3, "        Cast item: " + item + (castItems != null ? " (custom)" : " (default)"));
+				MagicSpells.debug(3, "        Cast item: " + item + (custom ? " (custom)" : " (default)"));
 				if (item == null) continue;
 				List<Spell> temp = itemSpells.get(item);
 				if (temp != null) {
@@ -224,6 +232,22 @@ public class Spellbook {
 				temp.add(spell);
 				itemSpells.put(item, temp);
 				activeSpells.put(item, MagicSpells.canCycleToNoSpell() ? -1 : 0);
+			}
+
+			if (tags != null) {
+				for (String tag : tags) {
+					if (tag == null || tag.isEmpty()) continue;
+					MagicSpells.debug(3, "        Cast item tag: #" + tag + (custom ? " (custom)" : " (default)"));
+					List<Spell> temp = tagSpells.get(tag);
+					if (temp != null) {
+						temp.add(spell);
+						continue;
+					}
+					temp = new ArrayList<>();
+					temp.add(spell);
+					tagSpells.put(tag, temp);
+					activeTagSpells.put(tag, MagicSpells.canCycleToNoSpell() ? -1 : 0);
+				}
 			}
 		}
 		// Remove any spells that this spell replaces
@@ -246,7 +270,11 @@ public class Spellbook {
 	public void removeSpell(Spell spell) {
 		if (spell instanceof BuffSpell buffSpell) buffSpell.turnOff(player);
 		CastItem[] items = spell.getCastItems();
-		if (customBindings.containsKey(spell)) items = customBindings.remove(spell).toArray(new CastItem[]{});
+		String[] tags = spell.getCastItemTags();
+		if (customBindings.containsKey(spell)) {
+			items = customBindings.remove(spell).toArray(new CastItem[]{});
+			tags = new String[0];
+		}
 		for (CastItem item : items) {
 			if (item == null) continue;
 			List<Spell> temp = itemSpells.get(item);
@@ -258,6 +286,20 @@ public class Spellbook {
 				continue;
 			}
 			activeSpells.put(item, -1);
+		}
+		if (tags != null) {
+			for (String tag : tags) {
+				if (tag == null || tag.isEmpty()) continue;
+				List<Spell> temp = tagSpells.get(tag);
+				if (temp == null) continue;
+				temp.remove(spell);
+				if (temp.isEmpty()) {
+					tagSpells.remove(tag);
+					activeTagSpells.remove(tag);
+					continue;
+				}
+				activeTagSpells.put(tag, -1);
+			}
 		}
 		spells.remove(spell);
 	}
@@ -288,9 +330,22 @@ public class Spellbook {
 		return null;
 	}
 
+	private String getTagForCycling(ItemStack item) {
+		if (item == null) return null;
+		for (String tag : MagicItemTags.read(item)) {
+			List<Spell> spells = tagSpells.get(tag);
+			if (spells != null && (spells.size() > 1 || (spells.size() == 1 && MagicSpells.canCycleToNoSpell()))) {
+				return tag;
+			}
+		}
+		return null;
+	}
+
 	public Spell nextSpell(ItemStack item) {
 		CastItem castItem = getCastItemForCycling(item);
 		if (castItem != null) return nextSpell(castItem);
+		String tag = getTagForCycling(item);
+		if (tag != null) return nextSpellForTag(tag);
 		return null;
 	}
 
@@ -321,9 +376,36 @@ public class Spellbook {
 		return null;
 	}
 
+	private Spell nextSpellForTag(String tag) {
+		Integer i = activeTagSpells.get(tag);
+		if (i == null) return null;
+		List<Spell> spells = tagSpells.get(tag);
+		if (!(spells.size() > 1 || i.equals(-1) || MagicSpells.canCycleToNoSpell() || MagicSpells.showMessageOnCycle())) return null;
+		int count = 0;
+		while (count++ < spells.size()) {
+			i++;
+			if (i >= spells.size()) {
+				if (MagicSpells.canCycleToNoSpell()) {
+					activeTagSpells.put(tag, -1);
+					MagicSpells.sendMessage(MagicSpells.getSpellChangeEmptyMessage(), player, MagicSpells.NULL_ARGS);
+					return null;
+				} else {
+					i = 0;
+				}
+			}
+			if (!MagicSpells.cycleToCastableSpells() || canCast(spells.get(i))) {
+				activeTagSpells.put(tag, i);
+				return spells.get(i);
+			}
+		}
+		return null;
+	}
+
 	public Spell prevSpell(ItemStack item) {
 		CastItem castItem = getCastItemForCycling(item);
 		if (castItem != null) return prevSpell(castItem);
+		String tag = getTagForCycling(item);
+		if (tag != null) return prevSpellForTag(tag);
 		return null;
 	}
 
@@ -357,9 +439,44 @@ public class Spellbook {
 		return null;
 	}
 
+	private Spell prevSpellForTag(String tag) {
+		Integer i = activeTagSpells.get(tag);
+		if (i == null) return null;
+		List<Spell> spells = tagSpells.get(tag);
+		if (spells.size() > 1 || i.equals(-1) || MagicSpells.canCycleToNoSpell()) {
+			int count = 0;
+			while (count++ < spells.size()) {
+				i--;
+				if (i < 0) {
+					if (MagicSpells.canCycleToNoSpell() && i == -1) {
+						activeTagSpells.put(tag, -1);
+						MagicSpells.sendMessage(MagicSpells.getSpellChangeEmptyMessage(), player, MagicSpells.NULL_ARGS);
+						return null;
+					} else {
+						i = spells.size() - 1;
+					}
+				}
+				if (!MagicSpells.cycleToCastableSpells() || canCast(spells.get(i))) {
+					activeTagSpells.put(tag, i);
+					return spells.get(i);
+				}
+			}
+			return null;
+		}
+		return null;
+	}
+
 	public Spell getActiveSpell(ItemStack item) {
 		CastItem castItem = new CastItem(item);
-		return getActiveSpell(castItem);
+		if (itemSpells.containsKey(castItem)) return getActiveSpell(castItem);
+		if (item == null) return null;
+		for (String tag : MagicItemTags.read(item)) {
+			if (!tagSpells.containsKey(tag)) continue;
+			Integer i = activeTagSpells.get(tag);
+			List<Spell> spells = tagSpells.get(tag);
+			if (i != null && i != -1 && spells != null && i < spells.size()) return spells.get(i);
+		}
+		return null;
 	}
 
 	public Spell getActiveSpell(CastItem castItem) {
@@ -445,6 +562,8 @@ public class Spellbook {
 		spells.clear();
 		itemSpells.clear();
 		activeSpells.clear();
+		tagSpells.clear();
+		activeTagSpells.clear();
 		customBindings.clear();
 	}
 

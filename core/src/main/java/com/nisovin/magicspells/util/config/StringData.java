@@ -15,6 +15,8 @@ import me.clip.placeholderapi.PlaceholderAPI;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TxtUtil;
+import com.nisovin.magicspells.util.SpellData;
+import com.nisovin.magicspells.util.magicitems.MagicItemTags;
 import com.nisovin.magicspells.variables.Variable;
 import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;
@@ -30,7 +32,7 @@ public class StringData implements ConfigData<String> {
 			((papi|casterpapi|targetpapi):([^%]+))|\
 			(playerpapi:([a-zA-Z0-9_]{3,16}):([^%]+))\
 			)%|\
-			%([at])""", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+			%(cast_item|[at])""", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
 	private final List<ConfigData<String>> values;
 	private final List<String> fragments;
@@ -137,10 +139,14 @@ public class StringData implements ConfigData<String> {
 		}
 
 		if (matcher.group(20) != null) {
-			if ("a".equalsIgnoreCase(matcher.group(20))) {
+			String token = matcher.group(20);
+			if ("cast_item".equalsIgnoreCase(token)) {
+				return new CastItemNameData(matcher.group());
+			}
+			if ("a".equalsIgnoreCase(token)) {
 				return new CasterNameData(matcher.group());
 			}
-			if ("t".equalsIgnoreCase(matcher.group(20))) {
+			if ("t".equalsIgnoreCase(token)) {
 				return new TargetNameData(matcher.group());
 			}
 		}
@@ -156,6 +162,21 @@ public class StringData implements ConfigData<String> {
 		for (int i = 0; i < fragments.size() - 1; i++) {
 			builder.append(fragments.get(i));
 			builder.append(values.get(i).get(caster, target, location, power, args));
+		}
+		builder.append(fragments.get(fragments.size() - 1));
+
+		return builder.toString();
+	}
+
+	@Override
+	public String get(SpellData data) {
+		if (values.isEmpty())
+			return fragments.get(0);
+
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < fragments.size() - 1; i++) {
+			builder.append(fragments.get(i));
+			builder.append(values.get(i).get(data));
 		}
 		builder.append(fragments.get(fragments.size() - 1));
 
@@ -509,6 +530,26 @@ public class StringData implements ConfigData<String> {
 		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			return target != null ? target.getName() : placeholder;
 		}
+	}
+
+	public static class CastItemNameData extends PlaceholderData {
+
+		public CastItemNameData(String placeholder) {
+			super(placeholder);
+		}
+
+		@Override
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			return placeholder;
+		}
+
+		@Override
+		public String get(SpellData data) {
+			if (data == null || !data.hasCastItem()) return placeholder;
+			String name = MagicItemTags.magicItemName(data.castItem());
+			return name != null && !name.isEmpty() ? name : placeholder;
+		}
+
 	}
 
 }

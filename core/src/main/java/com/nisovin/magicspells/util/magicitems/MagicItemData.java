@@ -165,6 +165,7 @@ public class MagicItemData {
 		for (MagicItemAttribute attr : keysSelf) {
 			if (ignoredAttributes.contains(attr) || additionalIgnored.contains(attr)) continue;
 			if (attr == MagicItemAttribute.PERSISTENT_DATA) continue;
+			if (attr == MagicItemAttribute.TAGS) continue;
 			if (attr == MagicItemAttribute.SOULBOUND || attr == MagicItemAttribute.EXPIRATION) continue;
 			if (attr == MagicItemAttribute.MAGIC_ITEM_NAME && !checkItemPersistentData()) continue;
 			if (!keysOther.contains(attr)) return false;
@@ -337,6 +338,7 @@ public class MagicItemData {
 		ATTRIBUTES(Multimap.class),
 		PERSISTENT_DATA(Map.class),
 		PERMANENT_DATA(Map.class),
+		TAGS(Set.class),
 		MAGIC_ITEM_NAME(String.class),
 		SOULBOUND(Boolean.class),
 		EXPIRATION(Double.class);
@@ -1005,6 +1007,25 @@ public class MagicItemData {
 							.append('"');
 
 					previousLine = true;
+				}
+			}
+			output.append(']');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.TAGS)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			Set<String> tags = getAttribute(MagicItemAttribute.TAGS);
+			boolean previousTag = false;
+			output.append("\"tags\":[");
+			if (tags != null) {
+				for (String tag : tags) {
+					if (previousTag) output.append(',');
+					output.append('"').append(TxtUtil.escapeJSON(tag)).append('"');
+					previousTag = true;
 				}
 			}
 			output.append(']');

@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.util.itemreader;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.HashMap;
 
 import org.bukkit.NamespacedKey;
@@ -11,7 +12,9 @@ import org.bukkit.persistence.PersistentDataContainer;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.nisovin.magicspells.util.magicitems.MagicItemTags;
 
+import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.TAGS;
 import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME;
 import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.PERMANENT_DATA;
 import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.PERSISTENT_DATA;
@@ -41,6 +44,22 @@ public class PersistentDataHandler {
                 meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), PERMANENT_PREFIX + entry.getKey()), PersistentDataType.STRING, entry.getValue());
             }
         }
+
+        Set<String> tags = parseTags(config);
+        if (!tags.isEmpty()) {
+            data.setAttribute(TAGS, tags);
+            MagicItemTags.write(meta, tags);
+        }
+    }
+
+    private static Set<String> parseTags(ConfigurationSection config) {
+        if (config.isList("tags")) {
+            return MagicItemTags.fromConfigList(config.getStringList("tags"));
+        }
+        if (config.isString("tags")) {
+            return MagicItemTags.deserialize(config.getString("tags"));
+        }
+        return Set.of();
     }
 
     private static Map<String, String> parseMap(ConfigurationSection config, String... keys) {
@@ -82,6 +101,10 @@ public class PersistentDataHandler {
                 meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), PERMANENT_PREFIX + entry.getKey()), PersistentDataType.STRING, entry.getValue());
             }
         }
+
+        if (data.hasAttribute(TAGS)) {
+            MagicItemTags.write(meta, (Set<String>) data.getAttribute(TAGS));
+        }
     }
 
     public static void processMagicItemData(ItemMeta meta, MagicItemData data) {
@@ -108,6 +131,9 @@ public class PersistentDataHandler {
 
         if (!pdcMap.isEmpty()) data.setAttribute(PERSISTENT_DATA, pdcMap);
         if (!permanentPdcMap.isEmpty()) data.setAttribute(PERMANENT_DATA, permanentPdcMap);
+
+        Set<String> tags = MagicItemTags.readFromMeta(meta);
+        if (!tags.isEmpty()) data.setAttribute(TAGS, tags);
     }
 
 }
