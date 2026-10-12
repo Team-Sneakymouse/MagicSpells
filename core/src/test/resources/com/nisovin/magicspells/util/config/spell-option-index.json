@@ -1,6 +1,6 @@
 {
   "generatedFrom": "spell-index.json",
-  "generated": "2026-10-11",
+  "generated": "2026-10-12",
   "sharedKeys": [
     "aliases",
     "always-granted",
@@ -1737,6 +1737,9 @@
       "point-blank",
       "power-affects-radius",
       "radius"
+    ],
+    ".targeted.RemoveEntitySpell": [
+      "allow-players"
     ],
     ".targeted.RemoveMarksSpell": [
       "mark-spell",

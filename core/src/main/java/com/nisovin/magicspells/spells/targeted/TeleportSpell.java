@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.CastResult;
@@ -50,7 +51,7 @@ public class TeleportSpell extends TargetedSpell implements TargetedEntitySpell 
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -67,8 +68,8 @@ public class TeleportSpell extends TargetedSpell implements TargetedEntitySpell 
 
 
 	private boolean teleport(SpellData data) {
-		LivingEntity caster = data.caster();
-		LivingEntity target = data.target();
+		Entity caster = data.caster();
+		Entity target = data.target();
 		float power = data.power();
 		String[] args = data.args();
 		Location targetLoc = target.getLocation();

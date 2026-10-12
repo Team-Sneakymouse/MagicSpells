@@ -1,7 +1,7 @@
 package com.nisovin.magicspells.spells;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Entity;
 
 import com.nisovin.magicspells.Spell.PostCastAction;
 import com.nisovin.magicspells.util.CastResult;
@@ -16,25 +16,25 @@ public interface TargetedEntityFromLocationSpell {
 	CastResult castAtEntityFromLocation(SpellData data);
 
 	@Deprecated
-	default boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+	default boolean castAtEntityFromLocation(Entity caster, Location from, Entity target, float power,
 			String[] args) {
 		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
 				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Deprecated
-	default boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
+	default boolean castAtEntityFromLocation(Location from, Entity target, float power, String[] args) {
 		return castAtEntityFromLocation(new SpellData(null, target, from, power, args)).action()
 				!= PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Deprecated
-	default boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
+	default boolean castAtEntityFromLocation(Entity caster, Location from, Entity target, float power) {
 		return castAtEntityFromLocation(caster, from, target, power, null);
 	}
 
 	@Deprecated
-	default boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
+	default boolean castAtEntityFromLocation(Location from, Entity target, float power) {
 		return castAtEntityFromLocation(from, target, power, null);
 	}
 

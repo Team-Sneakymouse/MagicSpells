@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.Lidded;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.NumberConversions;
@@ -75,7 +76,7 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -89,14 +90,14 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 	
 	}
 @Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 
 
 
-	private boolean replaceBlockData(LivingEntity caster, Location target, float power, String[] args) {
+	private boolean replaceBlockData(Entity caster, Location target, float power, String[] args) {
 		if (replace == null || replaceWith == null)
 			return false;
 

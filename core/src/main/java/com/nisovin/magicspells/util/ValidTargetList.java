@@ -41,7 +41,7 @@ public class ValidTargetList {
 	private boolean targetMonsters = false;
 	private boolean targetInvisibles = false;
 	private boolean targetNonPlayers = false;
-	private boolean targetNonLivingEntities = false; // This will be kept as false for now during restructuring
+	private boolean targetNonLivingEntities = false;
 	private boolean targetMounts = false;
 	private boolean targetPassengers = false;
 	private boolean targetCasterMount = false;
@@ -106,10 +106,15 @@ public class ValidTargetList {
 				case "castermount", "selfmount" -> targetCasterMount = true;
 				case "casterpassenger", "selfpassenger" -> targetCasterPassenger = true;
 				case "entitytarget", "mobtarget" -> targetEntityTarget = true;
+				case "nonliving", "nonlivingentities", "nonlivingentity" -> targetNonLivingEntities = true;
 				default -> {
 					EntityType type = MobUtil.getEntityType(s);
-					if (type != null) types.add(type);
-					else MagicSpells.error("Spell '" + spell.getInternalName() + "' has an invalid target type defined: " + s);
+					if (type != null) {
+						types.add(type);
+						Class<? extends Entity> entityClass = type.getEntityClass();
+						if (entityClass != null && !LivingEntity.class.isAssignableFrom(entityClass))
+							targetNonLivingEntities = true;
+					} else MagicSpells.error("Spell '" + spell.getInternalName() + "' has an invalid target type defined: " + s);
 				}
 			}
 		}
@@ -126,12 +131,12 @@ public class ValidTargetList {
 		}
 	}
 	
-	public boolean canTarget(LivingEntity caster, Entity target) {
+	public boolean canTarget(Entity caster, Entity target) {
 		if (caster == null) return canTarget(target);
 		return canTarget(caster, target, targetPlayers);
 	}
 	
-	public boolean canTarget(LivingEntity caster, Entity target, boolean targetPlayers) {
+	public boolean canTarget(Entity caster, Entity target, boolean targetPlayers) {
 		if (!(target instanceof LivingEntity) && !targetNonLivingEntities) return false;
 
 		if (target.getClass().getCanonicalName().toString().contains(".entity.EntityHumanNPC.PlayerNPC")) return targetCitizens;
@@ -159,7 +164,7 @@ public class ValidTargetList {
 		if (targetCasterPassenger && target instanceof LivingEntity && target.isInsideVehicle() && target.getVehicle().equals(caster)) return true;
 		if (targetCasterMount && target instanceof LivingEntity && caster.isInsideVehicle() && caster.getVehicle().equals(target)) return true;
 
-		if (targetEntityTarget && (caster instanceof Creature creature) && creature.getTarget() != null && ((Creature) caster).getTarget().equals(target)) return true;
+		if (targetEntityTarget && (caster instanceof Creature creature) && creature.getTarget() != null && creature.getTarget().equals(target)) return true;
 		if (types.contains(target.getType())) return true;
 		return false;
 	}
@@ -210,15 +215,29 @@ public class ValidTargetList {
 		return false;
 	}
 	
-	public List<LivingEntity> filterTargetListCastingAsLivingEntities(LivingEntity caster, List<Entity> targets) {
+	public List<LivingEntity> filterTargetListCastingAsLivingEntities(Entity caster, List<Entity> targets) {
 		return filterTargetListCastingAsLivingEntities(caster, targets, targetPlayers);
 	}
 	
-	public List<LivingEntity> filterTargetListCastingAsLivingEntities(LivingEntity caster, List<Entity> targets, boolean targetPlayers) {
+	public List<LivingEntity> filterTargetListCastingAsLivingEntities(Entity caster, List<Entity> targets, boolean targetPlayers) {
 		List<LivingEntity> realTargets = new ArrayList<>();
 		for (Entity e : targets) {
+			if (!(e instanceof LivingEntity living)) continue;
 			if (!canTarget(caster, e, targetPlayers)) continue;
-			realTargets.add((LivingEntity) e);
+			realTargets.add(living);
+		}
+		return realTargets;
+	}
+
+	public List<Entity> filterTargetList(Entity caster, List<Entity> targets) {
+		return filterTargetList(caster, targets, targetPlayers);
+	}
+
+	public List<Entity> filterTargetList(Entity caster, List<Entity> targets, boolean targetPlayers) {
+		List<Entity> realTargets = new ArrayList<>();
+		for (Entity e : targets) {
+			if (!canTarget(caster, e, targetPlayers)) continue;
+			realTargets.add(e);
 		}
 		return realTargets;
 	}

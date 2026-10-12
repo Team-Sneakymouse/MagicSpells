@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -205,7 +206,7 @@ public class ModifierSet {
 	 * @deprecated use {@link #apply(SpellData)}
 	 */
 	@Deprecated
-	public ModifierResult apply(LivingEntity caster, SpellData data) {
+	public ModifierResult apply(Entity caster, SpellData data) {
 		return apply(data.caster(caster));
 	}
 
@@ -213,7 +214,7 @@ public class ModifierSet {
 	 * @deprecated use {@link #applyTarget(SpellData)}
 	 */
 	@Deprecated
-	public ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data) {
+	public ModifierResult apply(Entity caster, Entity target, SpellData data) {
 		return applyTarget(data.caster(caster).target(target));
 	}
 
@@ -221,7 +222,7 @@ public class ModifierSet {
 	 * @deprecated use {@link #applyLocation(SpellData)}
 	 */
 	@Deprecated
-	public ModifierResult apply(LivingEntity caster, Location target, SpellData data) {
+	public ModifierResult apply(Entity caster, Location target, SpellData data) {
 		return applyLocation(data.caster(caster).location(target));
 	}
 
@@ -250,7 +251,7 @@ public class ModifierSet {
 	 * @deprecated use {@link #check(SpellData)}
 	 */
 	@Deprecated
-	public boolean check(LivingEntity livingEntity) {
+	public boolean check(Entity livingEntity) {
 		return check(new SpellData(livingEntity));
 	}
 
@@ -258,7 +259,7 @@ public class ModifierSet {
 	 * @deprecated use {@link #checkTarget(SpellData)}
 	 */
 	@Deprecated
-	public boolean check(LivingEntity livingEntity, LivingEntity entity) {
+	public boolean check(Entity livingEntity, Entity entity) {
 		return checkTarget(new SpellData(livingEntity, entity));
 	}
 
@@ -266,7 +267,7 @@ public class ModifierSet {
 	 * @deprecated use {@link #checkLocation(SpellData)}
 	 */
 	@Deprecated
-	public boolean check(LivingEntity livingEntity, Location location) {
+	public boolean check(Entity livingEntity, Location location) {
 		return checkLocation(new SpellData(livingEntity, location));
 	}
 

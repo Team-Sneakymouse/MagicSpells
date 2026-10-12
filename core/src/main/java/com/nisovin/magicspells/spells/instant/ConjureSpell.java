@@ -13,6 +13,7 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -262,6 +263,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 	@Override
 	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof LivingEntity livingCaster))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (itemListData == null)
 			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (!(data.caster() instanceof Player player))
@@ -280,7 +283,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -499,7 +502,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			item.setAmount(quant);
 			applyEnchantments(item, spellData);
 			applyAttributes(item, spellData);
-			LivingEntity owner = spellData.caster();
+			LivingEntity owner = spellData.caster() instanceof LivingEntity livingOwner ? livingOwner : null;
 			if (itemDataTypes != null && i < itemDataTypes.length)
 				MagicItemBehaviors.applyFromData(item, itemDataTypes[i], owner);
 			MagicItemBehaviors.applyConjureOverlay(item, soulbound, expiration.get(spellData), owner);
@@ -557,8 +560,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		MagicSpells.getAttributeManager().addItemAttributes(item, resolved);
 	}
 
-	private boolean conjureItemsAtLocation(Location location, float power, @NotNull LivingEntity player,
-			@NotNull LivingEntity target) {
+	private boolean conjureItemsAtLocation(Location location, float power, Entity player,
+			Entity target) {
 
 		SpellData spellData = new SpellData(player, location, power);
 		List<String> itemList = this.itemListData.get(spellData);

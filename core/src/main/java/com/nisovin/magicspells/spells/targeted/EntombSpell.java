@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.block.BlockBreakEvent;
 
@@ -87,7 +88,7 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -114,7 +115,7 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 
 
 
-	private void createTomb(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void createTomb(Entity caster, Entity target, float power, String[] args) {
 		List<Block> tempBlocks = new ArrayList<>();
 		List<AlteredBlockManager.Change> tombChanges = new ArrayList<>();
 

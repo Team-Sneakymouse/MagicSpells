@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -36,7 +37,18 @@ public class HasScoreboardTagCondition extends Condition {
         return false;
     }
 
-    private boolean checkTags(LivingEntity caster, LivingEntity target) {
+    @Override
+    public boolean check(Entity entity) {
+        return checkTags(entity, entity);
+    }
+
+    @Override
+    public boolean check(Entity entity, Entity target) {
+        return checkTags(entity, target);
+    }
+
+    private boolean checkTags(Entity caster, Entity target) {
+        if (target == null) return false;
         String localTag = doReplacement ? MagicSpells.doReplacements(tag, caster, target) : tag;
         return target.getScoreboardTags().contains(localTag);
     }

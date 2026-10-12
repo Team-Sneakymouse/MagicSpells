@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Subspell;
@@ -68,18 +69,18 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			return result;
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			return result;
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			return result;
 		}
@@ -129,18 +130,18 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			return new ModifierResult(result.data(), !result.check());
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			return new ModifierResult(result.data(), !result.check());
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			return new ModifierResult(result.data(), !result.check());
 		}
@@ -192,7 +193,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			if (result.check()) {
 				SpellData data = result.data();
 				return new ModifierResult(data.power(data.power() * CustomDataFloat.from(customData, data)), true);
@@ -202,7 +203,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			if (result.check()) {
 				SpellData data = result.data();
@@ -213,7 +214,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			if (result.check()) {
 				SpellData data = result.data();
@@ -275,7 +276,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			if (result.check()) {
 				SpellData data = result.data();
 				return new ModifierResult(data.power(data.power() + CustomDataFloat.from(customData, data)), true);
@@ -285,7 +286,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			if (result.check()) {
 				SpellData data = result.data();
@@ -296,7 +297,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			if (result.check()) {
 				SpellData data = result.data();
@@ -348,18 +349,18 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			return result.check() ? result : new ModifierResult(result.data(), true);
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			return result.check() ? result : new ModifierResult(result.data(), true);
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			return result.check() ? result : new ModifierResult(result.data(), true);
 		}
@@ -406,18 +407,18 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			return result.check() ? result : new ModifierResult(result.data(), true);
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			return result.check() ? result : new ModifierResult(result.data(), true);
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			return result.check() ? result : new ModifierResult(result.data(), true);
 		}
@@ -464,18 +465,18 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			return result.check() ? result : new ModifierResult(result.data(), true);
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			return result.check() ? result : new ModifierResult(result.data(), true);
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			return result.check() ? result : new ModifierResult(result.data(), true);
 		}
@@ -520,18 +521,18 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			return new ModifierResult(result.data(), !result.check());
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			return new ModifierResult(result.data(), !result.check());
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			return new ModifierResult(result.data(), !result.check());
 		}
@@ -571,18 +572,18 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			return result;
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			return result;
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			return result;
 		}
@@ -658,7 +659,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			CastData data = (CastData) customData;
 			if (result.check() && data.isValid())
 				data.spell.subcast(result.data());
@@ -666,7 +667,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			CastData data = (CastData) customData;
 			if (result.check() && data.isValid())
@@ -675,7 +676,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			CastData data = (CastData) customData;
 			if (result.check() && data.isValid())
@@ -779,7 +780,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			CustomInsteadData data = (CustomInsteadData) customData;
 			if (result.check() && data.isValid())
 				data.spell.subcast(result.data());
@@ -787,7 +788,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			CustomInsteadData data = (CustomInsteadData) customData;
 			if (result.check() && data.isValid())
@@ -796,7 +797,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			CustomInsteadData data = (CustomInsteadData) customData;
 			if (result.check() && data.isValid())
@@ -913,7 +914,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			if (!(caster instanceof Player player))
 				return result.check() ? new ModifierResult(result.data(), false) : result;
 			if (result.check()) {
@@ -923,7 +924,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			if (!(caster instanceof Player player))
 				return result.check() ? new ModifierResult(result.data(), false) : result;
@@ -935,7 +936,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			if (!(caster instanceof Player player))
 				return result.check() ? new ModifierResult(result.data(), false) : result;
@@ -1063,7 +1064,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData) {
+		public ModifierResult apply(Entity caster, ModifierResult result, CustomData customData) {
 			if (!(caster instanceof Player player))
 				return result.check() ? new ModifierResult(result.data(), false) : result;
 			if (result.check()) {
@@ -1074,7 +1075,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 				CustomData customData) {
 			if (!(caster instanceof Player player))
 				return result.check() ? new ModifierResult(result.data(), false) : result;
@@ -1086,7 +1087,7 @@ public enum ModifierType {
 		}
 
 		@Override
-		public ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+		public ModifierResult apply(Entity caster, Location target, ModifierResult result,
 				CustomData customData) {
 			if (!(caster instanceof Player player))
 				return result.check() ? new ModifierResult(result.data(), false) : result;
@@ -1143,12 +1144,12 @@ public enum ModifierType {
 
 	public abstract boolean apply(SpellCastedEvent event, boolean check, CustomData customData);
 
-	public abstract ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData);
+	public abstract ModifierResult apply(Entity caster, ModifierResult result, CustomData customData);
 
-	public abstract ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result,
+	public abstract ModifierResult apply(Entity caster, Entity target, ModifierResult result,
 			CustomData customData);
 
-	public abstract ModifierResult apply(LivingEntity caster, Location target, ModifierResult result,
+	public abstract ModifierResult apply(Entity caster, Location target, ModifierResult result,
 			CustomData customData);
 
 	public CustomData buildCustomActionData(String text) {

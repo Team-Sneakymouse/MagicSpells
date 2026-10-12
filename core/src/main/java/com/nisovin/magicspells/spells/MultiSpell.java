@@ -128,7 +128,7 @@ public final class MultiSpell extends InstantSpell {
 	}
 
 	@Override
-	public Spell.PostCastAction castSpell(LivingEntity caster, Spell.SpellCastState state, float power, String[] args) {
+	public Spell.PostCastAction castSpell(Entity caster, Spell.SpellCastState state, float power, String[] args) {
 		if (state != Spell.SpellCastState.NORMAL)
 			return Spell.PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -245,7 +245,7 @@ public final class MultiSpell extends InstantSpell {
 		private final float power;
 		private final UUID casterUUID;
 
-		DelayedSpell(Subspell spell, LivingEntity caster, float power, String[] args) {
+		DelayedSpell(Subspell spell, Entity caster, float power, String[] args) {
 			this.casterUUID = caster.getUniqueId();
 			this.spell = spell;
 			this.power = power;

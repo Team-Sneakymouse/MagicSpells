@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Breedable;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.TargetInfo;
@@ -43,7 +44,7 @@ public class AgeSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -66,7 +67,7 @@ public class AgeSpell extends TargetedSpell implements TargetedEntitySpell {
 
 
 
-	private void applyAgeChanges(LivingEntity caster, Ageable target, float power, String[] args) {
+	private void applyAgeChanges(Entity caster, Ageable target, float power, String[] args) {
 		if (setMaturity) target.setAge(rawAge.get(caster, target, power, args));
 		if (target instanceof Breedable breedable) breedable.setAgeLock(applyAgeLock);
 

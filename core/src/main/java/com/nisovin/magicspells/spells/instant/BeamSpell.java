@@ -156,7 +156,7 @@ public class BeamSpell extends InstantSpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -187,7 +187,7 @@ public class BeamSpell extends InstantSpell
 	}
 
 
-	private void shootBeam(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
+	private void shootBeam(Entity caster, Entity target, Location from, float power, String[] args) {
 		SpellData data = new SpellData(caster, target, from, power, args);
 		playSpellEffects(EffectPosition.CASTER, caster, data);
 
@@ -316,7 +316,7 @@ public class BeamSpell extends InstantSpell
 				if (!event.callEvent())
 					continue;
 
-				LivingEntity entity = event.getTarget();
+				Entity entity = event.getTarget();
 
 				if (hitSpell != null)
 					hitSpell.subcast(event.getSpellData());

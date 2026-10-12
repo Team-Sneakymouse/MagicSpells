@@ -152,7 +152,8 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 
 	@Override
 	public CastResult cast(SpellData data) {
-		LivingEntity caster = data.caster();
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		float power = data.power();
 		String[] args = data.args();
 		Vector v = getVector(caster, caster.getLocation(), power, args);
@@ -164,7 +165,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -172,7 +173,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 
 	@Override
 	public CastResult castAtLocation(SpellData data) {
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		float power = data.power();
 		String[] args = data.args();
 		Location target = data.location();
@@ -190,7 +191,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 				!= PostCastAction.ALREADY_HANDLED;
 	}
 
-	private Vector getVector(LivingEntity caster, Location loc, float power, String[] args) {
+	private Vector getVector(Entity caster, Location loc, float power, String[] args) {
 		Vector v = loc.getDirection();
 
 		float verticalAdjustment = this.verticalAdjustment.get(caster, null, power, args);
@@ -208,7 +209,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		return v.normalize().multiply(velocity);
 	}
 
-	private ThrownBlock spawnFallingBlock(LivingEntity caster, Location location, Vector velocity, float power,
+	private ThrownBlock spawnFallingBlock(Entity caster, Location location, Vector velocity, float power,
 			String[] args) {
 		Entity entity = null;
 		ThrownBlock info = new ThrownBlock(material.createBlockData(), caster, power, args);
@@ -431,7 +432,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 
 	public class ThrownBlock {
 
-		private final LivingEntity caster;
+		private final Entity caster;
 		private final SpellData data;
 		private final String[] args;
 		private final float power;
@@ -442,7 +443,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		public Block targetBlock;
 		public AlteredBlockManager.Change change;
 
-		public ThrownBlock(BlockData blockData, LivingEntity caster, float power, String[] args) {
+		public ThrownBlock(BlockData blockData, Entity caster, float power, String[] args) {
 			this.blockData = blockData;
 			this.caster = caster;
 			this.power = power;

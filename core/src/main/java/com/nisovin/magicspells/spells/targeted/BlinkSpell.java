@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.util.BlockIterator;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.BlockUtils;
@@ -30,6 +31,8 @@ public class BlinkSpell extends TargetedSpell implements TargetedLocationSpell {
 	
 	@Override
 	public CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof LivingEntity livingCaster))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		int range = getRange(data.power());
 		if (range <= 0)
 			range = 25;
@@ -37,7 +40,7 @@ public class BlinkSpell extends TargetedSpell implements TargetedLocationSpell {
 			range = 125;
 		BlockIterator iter;
 		try {
-			iter = new BlockIterator(data.caster(), range);
+			iter = new BlockIterator(livingCaster, range);
 		} catch (IllegalStateException e) {
 			iter = null;
 		}
@@ -95,7 +98,7 @@ public class BlinkSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();

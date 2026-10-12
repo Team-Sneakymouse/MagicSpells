@@ -26,6 +26,7 @@ import org.bukkit.util.Vector;
 import org.bukkit.util.EulerAngle;
 import org.joml.Vector3f;
 import org.joml.Quaternionf;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.Particle.DustOptions;
@@ -79,7 +80,7 @@ public class ConfigDataUtil {
 
 		return new ConfigData<>() {
 			@Override
-			public AttributeManager.AttributeInfo get(LivingEntity caster, LivingEntity target, Location location,
+			public AttributeManager.AttributeInfo get(Entity caster, Entity target, Location location,
 					float power,
 					String[] args) {
 				String name = attributeName.get(caster, target, location, power, args);
@@ -135,7 +136,7 @@ public class ConfigDataUtil {
 
 		return new ConfigData<>() {
 			@Override
-			public Map.Entry<Enchantment, Integer> get(LivingEntity caster, LivingEntity target, Location location,
+			public Map.Entry<Enchantment, Integer> get(Entity caster, Entity target, Location location,
 					float power, String[] args) {
 				return buildEnchantmentEntry(value, enchantName.get(caster, target, location, power, args),
 						level.get(caster, target, location, power, args));
@@ -187,7 +188,7 @@ public class ConfigDataUtil {
 
 		return new ConfigData<>() {
 			@Override
-			public Map<Enchantment, Integer> get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public Map<Enchantment, Integer> get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				Map<Enchantment, Integer> resolved = new HashMap<>();
 				for (ConfigData<Map.Entry<Enchantment, Integer>> supplier : suppliers) {
@@ -661,7 +662,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public Component get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public Component get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				String value = supplier.get(caster, target, location, power, args);
 				if (value == null)
@@ -747,7 +748,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public T get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+				public T get(Entity caster, Entity target, Location location, float power, String[] args) {
 					String val = supplier.get(caster, target, location, power, args);
 					if (val == null)
 						return def;
@@ -785,7 +786,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public Material get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public Material get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				String val = supplier.get(caster, target, location, power, args);
 				if (val == null)
@@ -816,7 +817,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public MagicItem get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public MagicItem get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				return resolveMagicItem(supplier.get(caster, target, location, power, args), def);
 			}
@@ -846,7 +847,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public MagicItem get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public MagicItem get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				return resolveMagicItem(supplier.get(caster, target, location, power, args), string);
 			}
@@ -888,7 +889,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public PotionEffectType get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public PotionEffectType get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				String val = supplier.get(caster, target, location, power, args);
 				if (val == null)
@@ -924,7 +925,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public Particle get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public Particle get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				String val = supplier.get(caster, target, location, power, args);
 				if (val == null)
@@ -960,7 +961,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public BlockData get(LivingEntity caster, LivingEntity target, Location location, float power,
+				public BlockData get(Entity caster, Entity target, Location location, float power,
 						String[] args) {
 					String val = supplier.get(caster, target, location, power, args);
 					if (val == null)
@@ -1002,7 +1003,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public T get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			public T get(Entity caster, Entity target, Location location, float power, String[] args) {
 				String val = supplier.get(caster, target, location, power, args);
 				if (val == null)
 					return def;
@@ -1135,7 +1136,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public Vector3f get(LivingEntity caster, LivingEntity target, Location location, float power,
+				public Vector3f get(Entity caster, Entity target, Location location, float power,
 						String[] args) {
 					String value = supplier.get(caster, target, location, power, args);
 					if (value == null)
@@ -1176,7 +1177,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public Vector3f get(LivingEntity caster, LivingEntity target, Location location, float power,
+				public Vector3f get(Entity caster, Entity target, Location location, float power,
 						String[] args) {
 					return new Vector3f(x.get(caster, target, location, power, args),
 							y.get(caster, target, location, power, args),
@@ -1218,7 +1219,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public Quaternionf get(LivingEntity caster, LivingEntity target, Location location, float power,
+				public Quaternionf get(Entity caster, Entity target, Location location, float power,
 						String[] args) {
 					String value = supplier.get(caster, target, location, power, args);
 					if (value == null)
@@ -1260,7 +1261,7 @@ public class ConfigDataUtil {
 				return new ConfigData<>() {
 
 					@Override
-					public Quaternionf get(LivingEntity caster, LivingEntity target, Location location, float power,
+					public Quaternionf get(Entity caster, Entity target, Location location, float power,
 							String[] args) {
 						return new Quaternionf().rotationAxis(
 								(float) Math.toRadians(angle.get(caster, target, location, power, args)),
@@ -1288,7 +1289,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public Quaternionf get(LivingEntity caster, LivingEntity target, Location location, float power,
+				public Quaternionf get(Entity caster, Entity target, Location location, float power,
 						String[] args) {
 					return new Quaternionf(x.get(caster, target, location, power, args),
 							y.get(caster, target, location, power, args),
@@ -1325,7 +1326,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public Color get(LivingEntity caster, LivingEntity target, Location location, float power,
+				public Color get(Entity caster, Entity target, Location location, float power,
 						String[] args) {
 					Color color = ColorUtil.getColorFromHexString(supplier.get(caster, target, location, power, args),
 							false);
@@ -1363,7 +1364,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public Color get(LivingEntity caster, LivingEntity target, Location location, float power,
+				public Color get(Entity caster, Entity target, Location location, float power,
 						String[] args) {
 					Integer r = red.get(caster, target, location, power, args);
 					Integer g = green.get(caster, target, location, power, args);
@@ -1404,7 +1405,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public Color get(LivingEntity caster, LivingEntity target, Location location, float power,
+				public Color get(Entity caster, Entity target, Location location, float power,
 						String[] args) {
 					Color color = ColorUtil
 							.getColorFromARGHexString(supplier.get(caster, target, location, power, args), false);
@@ -1445,7 +1446,7 @@ public class ConfigDataUtil {
 			return new ConfigData<>() {
 
 				@Override
-				public Color get(LivingEntity caster, LivingEntity target, Location location, float power,
+				public Color get(Entity caster, Entity target, Location location, float power,
 						String[] args) {
 					Integer a = alpha.get(caster, target, location, power, args);
 					Integer r = red.get(caster, target, location, power, args);
@@ -1494,7 +1495,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public DustOptions get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public DustOptions get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				Color c = color.get(caster, target, location, power, args);
 				if (c == null)
@@ -1546,7 +1547,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public DustTransition get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public DustTransition get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				Color c = color.get(caster, target, location, power, args);
 				if (c == null)
@@ -1603,7 +1604,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public List<String> get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public List<String> get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				List<String> results = new ArrayList<>();
 				for (ConfigData<String> configData : configDataList) {
@@ -1657,7 +1658,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public List<Integer> get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public List<Integer> get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				List<Integer> results = new ArrayList<>();
 				for (ConfigData<Integer> configData : configDataList) {
@@ -1725,7 +1726,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public ConfigurationSection get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public ConfigurationSection get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				ConfigurationSection results = new YamlConfiguration();
 

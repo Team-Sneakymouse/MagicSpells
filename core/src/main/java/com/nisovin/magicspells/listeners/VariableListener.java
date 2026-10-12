@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -57,7 +58,7 @@ public class VariableListener implements Listener {
 		Multimap<String, VariableMod> varMods = event.getSpell().getVariableModsCast();
 		if (varMods == null || varMods.isEmpty())
 			return;
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		for (Map.Entry<String, VariableMod> entry : varMods.entries()) {
 			VariableMod mod = entry.getValue();
 			if (mod == null)
@@ -93,7 +94,7 @@ public class VariableListener implements Listener {
 		Multimap<String, VariableMod> varMods = event.getSpell().getVariableModsCasted();
 		if (varMods == null || varMods.isEmpty())
 			return;
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		for (Map.Entry<String, VariableMod> entry : varMods.entries()) {
 			VariableMod mod = entry.getValue();
 			if (mod == null)
@@ -126,7 +127,7 @@ public class VariableListener implements Listener {
 		Multimap<String, VariableMod> varMods = event.getSpell().getVariableModsTarget();
 		if (varMods == null || varMods.isEmpty())
 			return;
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		Player target = event.getTarget() instanceof Player ? (Player) event.getTarget() : null;
 		if (target == null)
 			return;
@@ -149,7 +150,7 @@ public class VariableListener implements Listener {
 		Multimap<String, VariableMod> varMods = event.getSpell().getVariableModsLocation();
 		if (varMods == null || varMods.isEmpty())
 			return;
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		for (Map.Entry<String, VariableMod> entry : varMods.entries()) {
 			VariableMod mod = entry.getValue();
 			if (mod == null)

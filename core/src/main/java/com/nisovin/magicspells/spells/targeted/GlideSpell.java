@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.TargetInfo;
@@ -34,7 +35,7 @@ public class GlideSpell extends TargetedSpell implements TargetedEntitySpell{
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -44,13 +45,15 @@ public class GlideSpell extends TargetedSpell implements TargetedEntitySpell{
 	
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (data.hasCaster()) {
 			if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							data.target().setGliding(targetState.getBooleanState(data.target().isGliding()));
+							target.setGliding(targetState.getBooleanState(target.isGliding()));
 							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		} else {
 			if (!validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							data.target().setGliding(targetState.getBooleanState(data.target().isGliding()));
+							target.setGliding(targetState.getBooleanState(target.isGliding()));
 							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
 	}

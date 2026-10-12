@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.CastData;
@@ -66,7 +67,7 @@ public class SpellHasteSpell extends BuffSpell {
 	public void onSpellSpeedCast(SpellCastEvent event) {
 		if (!filter.check(event.getSpell())) return;
 
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		if (!isActive(caster)) return;
 
 		CastData data = entities.get(event.getCaster().getUniqueId());

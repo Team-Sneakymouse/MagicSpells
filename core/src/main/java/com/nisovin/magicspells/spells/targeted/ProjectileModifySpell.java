@@ -7,6 +7,7 @@ import java.util.Iterator;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.NumberConversions;
 
@@ -282,7 +283,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -297,7 +298,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 
 
 
-	private boolean modify(LivingEntity caster, Location location, float power, String[] args) {
+	private boolean modify(Entity caster, Location location, float power, String[] args) {
 		int count = 0;
 
 		SpellData data = new SpellData(caster, location, power, args);

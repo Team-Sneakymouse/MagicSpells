@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.CastResult;
@@ -260,8 +261,8 @@ public class Subspell {
 		if (invert)
 			data = data.invert();
 
-		LivingEntity caster = data.caster();
-		LivingEntity target = data.target();
+		Entity caster = data.caster();
+		Entity target = data.target();
 		Location location = data.location();
 		float power = data.power();
 		String[] args = data.args();
@@ -307,11 +308,11 @@ public class Subspell {
 		};
 	}
 
-	public PostCastAction cast(LivingEntity caster, float power) {
+	public PostCastAction cast(Entity caster, float power) {
 		return cast(caster, power, null);
 	}
 
-	public PostCastAction cast(LivingEntity caster, float power, String[] args) {
+	public PostCastAction cast(Entity caster, float power, String[] args) {
 		if (!canCast())
 			return PostCastAction.ALREADY_HANDLED;
 
@@ -332,7 +333,7 @@ public class Subspell {
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	private PostCastAction castReal(LivingEntity caster, float basePower, String[] args) {
+	private PostCastAction castReal(Entity caster, float basePower, String[] args) {
 		if (!canCast())
 			return PostCastAction.ALREADY_HANDLED;
 		try (var audit = PerformanceDiagnostics.EXECUTION.enter(Operation.SUBSPELL, spell.getInternalName(), "")) {
@@ -362,15 +363,15 @@ public class Subspell {
 	}
 
 	@SuppressWarnings("deprecation")
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
+	public boolean castAtEntity(Entity caster, Entity target, float power) {
 		return castAtEntity(caster, target, power, null, passTargeting);
 	}
 
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, boolean passTargeting) {
+	public boolean castAtEntity(Entity caster, Entity target, float power, boolean passTargeting) {
 		return castAtEntity(caster, target, power, null, passTargeting | this.passTargeting);
 	}
 
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args,
+	public boolean castAtEntity(Entity caster, Entity target, float power, String[] args,
 			boolean passTargeting) {
 		if (!canCast())
 			return false;
@@ -392,7 +393,7 @@ public class Subspell {
 		return true;
 	}
 
-	private boolean castAtEntityReal(LivingEntity caster, LivingEntity target, float basePower, String[] args,
+	private boolean castAtEntityReal(Entity caster, Entity target, float basePower, String[] args,
 			boolean passTargeting) {
 		if (!canCast())
 			return false;
@@ -494,7 +495,7 @@ public class Subspell {
 		}
 	}
 
-	public boolean passTargetingEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public boolean passTargetingEntity(Entity caster, Entity target, float power, String[] args) {
 		ValidTargetList list = spell.getValidTargetList();
 		ValidTargetList originalList = list.clone();
 		if (Objects.equals(caster, target) && !list.canTargetSelf())
@@ -511,11 +512,11 @@ public class Subspell {
 	}
 
 	@SuppressWarnings("deprecation")
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
+	public boolean castAtLocation(Entity caster, Location target, float power) {
 		return castAtLocation(caster, target, null, power);
 	}
 
-	public boolean castAtLocation(LivingEntity caster, Location target, String[] args, float power) {
+	public boolean castAtLocation(Entity caster, Location target, String[] args, float power) {
 		if (!canCast())
 			return false;
 
@@ -536,7 +537,7 @@ public class Subspell {
 		return true;
 	}
 
-	private boolean castAtLocationReal(LivingEntity caster, Location target, float basePower, String[] args) {
+	private boolean castAtLocationReal(Entity caster, Location target, float basePower, String[] args) {
 		if (!canCast())
 			return false;
 		try (var audit = PerformanceDiagnostics.EXECUTION.enter(Operation.SUBSPELL, spell.getInternalName(), "")) {
@@ -620,16 +621,16 @@ public class Subspell {
 	}
 
 	@SuppressWarnings("deprecation")
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
+	public boolean castAtEntityFromLocation(Entity caster, Location from, Entity target, float power) {
 		return castAtEntityFromLocation(caster, from, target, power, null, passTargeting);
 	}
 
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+	public boolean castAtEntityFromLocation(Entity caster, Location from, Entity target, float power,
 			boolean passTargeting) {
 		return castAtEntityFromLocation(caster, from, target, power, null, passTargeting | this.passTargeting);
 	}
 
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+	public boolean castAtEntityFromLocation(Entity caster, Location from, Entity target, float power,
 			String[] args, boolean passTargeting) {
 		if (!canCast())
 			return false;
@@ -652,7 +653,7 @@ public class Subspell {
 		return true;
 	}
 
-	private boolean castAtEntityFromLocationReal(LivingEntity caster, Location from, LivingEntity target,
+	private boolean castAtEntityFromLocationReal(Entity caster, Location from, Entity target,
 			float basePower, String[] args, boolean passTargeting) {
 		if (!canCast())
 			return false;
@@ -766,7 +767,7 @@ public class Subspell {
 		}
 	}
 
-	public boolean passTargetingEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+	public boolean passTargetingEntityFromLocation(Entity caster, Location from, Entity target, float power,
 			String[] args) {
 		ValidTargetList list = spell.getValidTargetList();
 		ValidTargetList originalList = list.clone();

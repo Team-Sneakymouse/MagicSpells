@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.instant;
 import java.util.Map;
 import java.util.List;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.enchantments.Enchantment;
@@ -39,15 +40,17 @@ public class EnchantSpell extends InstantSpell {
 
 	@Override
 	public CastResult cast(SpellData data) {
-		ItemStack targetItem = data.caster().getEquipment().getItemInMainHand();
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		ItemStack targetItem = caster.getEquipment().getItemInMainHand();
 					if (targetItem == null) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-					enchant(targetItem, new SpellData(data.caster(), data.power(), data.args()));
-					playSpellEffects(EffectPosition.CASTER, data.caster(), data.power(), data.args());
+					enchant(targetItem, new SpellData(caster, data.power(), data.args()));
+					playSpellEffects(EffectPosition.CASTER, caster, data.power(), data.args());
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();

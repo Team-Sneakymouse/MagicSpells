@@ -45,7 +45,7 @@ public class MountSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -61,7 +61,7 @@ public class MountSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 
-	private void mount(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void mount(Entity caster, Entity target, float power, String[] args) {
 		if (caster == null || target == null) return;
 
 		int duration = this.duration.get(caster, target, power, args);
@@ -73,7 +73,7 @@ public class MountSpell extends TargetedSpell implements TargetedEntitySpell {
 
 			caster.addPassenger(target);
 			if (duration > 0) {
-				LivingEntity finalTarget = target;
+				Entity finalTarget = target;
 				MagicSpells.scheduleDelayedTask(() -> caster.removePassenger(finalTarget), duration);
 			}
 			sendMessages(caster, target, args);
@@ -105,7 +105,7 @@ public class MountSpell extends TargetedSpell implements TargetedEntitySpell {
 		caster.eject();
 		target.addPassenger(caster);
 		if (duration > 0) {
-			LivingEntity finalTarget1 = target;
+			Entity finalTarget1 = target;
 			MagicSpells.scheduleDelayedTask(() -> finalTarget1.removePassenger(caster), duration);
 		}
 

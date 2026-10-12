@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.castmodifiers.conditions.util;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.SpellData;
@@ -38,19 +39,19 @@ public abstract class SpellDataCondition extends Condition implements IModifier 
 
 	@Override
 	@Deprecated
-	public ModifierResult apply(LivingEntity caster, SpellData data) {
+	public ModifierResult apply(Entity caster, SpellData data) {
 		return apply(data.caster(caster));
 	}
 
 	@Override
 	@Deprecated
-	public ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data) {
+	public ModifierResult apply(Entity caster, Entity target, SpellData data) {
 		return applyTarget(data.caster(caster).target(target));
 	}
 
 	@Override
 	@Deprecated
-	public ModifierResult apply(LivingEntity caster, Location target, SpellData data) {
+	public ModifierResult apply(Entity caster, Location target, SpellData data) {
 		return applyLocation(data.caster(caster).location(target));
 	}
 
@@ -97,6 +98,24 @@ public abstract class SpellDataCondition extends Condition implements IModifier 
 	@Override
 	public boolean check(LivingEntity livingEntity, Location location) {
 		return evaluate(new SpellData(livingEntity, location));
+	}
+
+	@Override
+	@Deprecated
+	public boolean check(Entity entity) {
+		return evaluate(new SpellData(entity));
+	}
+
+	@Override
+	@Deprecated
+	public boolean check(Entity entity, Entity target) {
+		return evaluate(new SpellData(entity, target));
+	}
+
+	@Override
+	@Deprecated
+	public boolean check(Entity entity, Location location) {
+		return evaluate(new SpellData(entity, location));
 	}
 
 }

@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
@@ -88,7 +89,7 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -104,7 +105,7 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 
-    private boolean createFalsePlayer(LivingEntity caster, Location loc, float basePower, String[] args) {
+    private boolean createFalsePlayer(Entity caster, Location loc, float basePower, String[] args) {
         final int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer((Player) caster, loc, this.pose.get(caster, null, basePower, args).toUpperCase(), this.cloneEquipment.get(caster, null, basePower, args));
 
     	cloneMap.put(cloneID, loc);

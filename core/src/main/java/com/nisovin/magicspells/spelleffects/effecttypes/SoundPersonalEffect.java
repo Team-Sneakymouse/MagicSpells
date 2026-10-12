@@ -78,14 +78,14 @@ public class SoundPersonalEffect extends SoundEffect {
 				if (data == null)
 					yield null;
 
-				LivingEntity caster = data.caster();
+				Entity caster = data.caster();
 				yield caster instanceof Player player ? player : null;
 			}
 			case TARGET -> {
 				if (data == null)
 					yield null;
 
-				LivingEntity target = data.target();
+				Entity target = data.target();
 				yield target instanceof Player player ? player : null;
 			}
 			case POSITION -> entity instanceof Player player ? player : null;

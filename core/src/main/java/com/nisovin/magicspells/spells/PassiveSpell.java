@@ -12,6 +12,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.EventPriority;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -51,8 +52,8 @@ public class PassiveSpell extends Spell {
 	private ConfigData<Boolean> requireCancelledEvent;
 	private ConfigData<Boolean> cancelDefaultActionWhenCastFails;
 
-	public Map<LivingEntity, Map<String, Long>> cooldownsPerSubject = new HashMap<>();
-	private final Map<LivingEntity, Map<String, Integer>> chargesPerSubjectRemaining = new HashMap<>();
+	public Map<Entity, Map<String, Long>> cooldownsPerSubject = new HashMap<>();
+	private final Map<Entity, Map<String, Integer>> chargesPerSubjectRemaining = new HashMap<>();
 
 	public PassiveSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -178,7 +179,7 @@ public class PassiveSpell extends Spell {
 		return Boolean.TRUE.equals(cancelDefaultAction.get(null, null, null, 1f, null));
 	}
 
-	public boolean cancelDefaultAction(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public boolean cancelDefaultAction(Entity caster, Entity target, float power, String[] args) {
 		return Boolean.TRUE.equals(cancelDefaultAction.get(caster, target, power, args));
 	}
 
@@ -191,7 +192,7 @@ public class PassiveSpell extends Spell {
 		return Boolean.TRUE.equals(cancelDefaultActionWhenCastFails.get(null, null, null, 1f, null));
 	}
 
-	public boolean cancelDefaultActionWhenCastFails(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public boolean cancelDefaultActionWhenCastFails(Entity caster, Entity target, float power, String[] args) {
 		return Boolean.TRUE.equals(cancelDefaultActionWhenCastFails.get(caster, target, power, args));
 	}
 
@@ -204,7 +205,7 @@ public class PassiveSpell extends Spell {
 		return Boolean.TRUE.equals(ignoreCancelled.get(null, null, null, 1f, null));
 	}
 
-	public boolean ignoreCancelled(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public boolean ignoreCancelled(Entity caster, Entity target, float power, String[] args) {
 		return Boolean.TRUE.equals(ignoreCancelled.get(caster, target, power, args));
 	}
 
@@ -217,7 +218,7 @@ public class PassiveSpell extends Spell {
 		return Boolean.TRUE.equals(requireCancelledEvent.get(null, null, null, 1f, null));
 	}
 
-	public boolean requireCancelledEvent(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public boolean requireCancelledEvent(Entity caster, Entity target, float power, String[] args) {
 		return Boolean.TRUE.equals(requireCancelledEvent.get(caster, target, power, args));
 	}
 
@@ -272,33 +273,33 @@ public class PassiveSpell extends Spell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
 	}
 
-	public boolean activate(LivingEntity caster) {
+	public boolean activate(Entity caster) {
 		return activate(caster, null, null);
 	}
 
-	public boolean activate(LivingEntity caster, float power) {
+	public boolean activate(Entity caster, float power) {
 		return activate(caster, null, null, power);
 	}
 
-	public boolean activate(LivingEntity caster, LivingEntity target) {
+	public boolean activate(Entity caster, Entity target) {
 		return activate(caster, target, null, 1F);
 	}
 
-	public boolean activate(LivingEntity caster, Location location) {
+	public boolean activate(Entity caster, Location location) {
 		return activate(caster, null, location, 1F);
 	}
 
-	public boolean activate(final LivingEntity caster, final LivingEntity target, final Location location) {
+	public boolean activate(final Entity caster, final Entity target, final Location location) {
 		return activate(caster, target, location, 1F);
 	}
 
-	public boolean activate(final LivingEntity caster, final LivingEntity target, final Location location,
+	public boolean activate(final Entity caster, final Entity target, final Location location,
 			final float power) {
 		int delay = this.delay.get(caster, target, power, null);
 		if (delay < 0)
@@ -319,7 +320,7 @@ public class PassiveSpell extends Spell {
 	// DEBUG INFO: level 3, target cancelled (UE)
 	// DEBUG INFO: level 3, target cancelled (UL)
 	// DEBUG INFO: level 3, passive spell cancelled
-	private boolean activateSpells(LivingEntity caster, LivingEntity target, Location location, float power) {
+	private boolean activateSpells(Entity caster, Entity target, Location location, float power) {
 		try (var scope = PerformanceDiagnostics.EXECUTION
 				.enter(Operation.PASSIVE, getInternalName(), "")) {
 			if (!triggerList.canTarget(caster, true))
@@ -383,7 +384,12 @@ public class PassiveSpell extends Spell {
 					}
 
 					power = targetEvent.getPower();
-					target = targetEvent.getTarget();
+					Entity eventTarget = targetEvent.getTarget();
+					if (!(eventTarget instanceof LivingEntity livingTarget)) {
+						MagicSpells.debug(3, "    Target cancelled (TE non-living)");
+						return false;
+					}
+					target = livingTarget;
 				}
 
 				if (location != null) {
@@ -463,7 +469,7 @@ public class PassiveSpell extends Spell {
 		}
 	}
 
-	public void setCooldownPerSubject(LivingEntity caster, LivingEntity target, String subject) {
+	public void setCooldownPerSubject(Entity caster, Entity target, String subject) {
 		float cooldown = cooldownPerSubject.get(caster, target, 1F, null);
 		float serverCooldown = serverCooldownPerSubject.get(caster, target, 1F, null);
 		int charges = chargesPerSubject.get(caster, target, 1F, null);
@@ -474,7 +480,7 @@ public class PassiveSpell extends Spell {
 			setSubjectCooldown(null, subject, serverCooldown, charges);
 	}
 
-	private void setSubjectCooldown(LivingEntity key, String subject, float cooldown, int charges) {
+	private void setSubjectCooldown(Entity key, String subject, float cooldown, int charges) {
 		Map<String, Long> cooldowns = cooldownsPerSubject.computeIfAbsent(key, k -> new HashMap<>());
 		Long existing = cooldowns.get(subject);
 		if (existing != null && System.currentTimeMillis() < existing)
@@ -486,7 +492,7 @@ public class PassiveSpell extends Spell {
 		}
 	}
 
-	public boolean isOnCooldownPerSubject(LivingEntity caster, String subject) {
+	public boolean isOnCooldownPerSubject(Entity caster, String subject) {
 		if (cooldownsPerSubject.containsKey(caster)) {
 			if (cooldownsPerSubject.get(caster).containsKey(subject)) {
 				if (System.currentTimeMillis() < cooldownsPerSubject.get(caster).get(subject)) {
@@ -504,7 +510,7 @@ public class PassiveSpell extends Spell {
 		return false;
 	}
 
-	private boolean consumeCharge(LivingEntity key, String subject) {
+	private boolean consumeCharge(Entity key, String subject) {
 		Map<String, Integer> charges = chargesPerSubjectRemaining.get(key);
 		if (charges == null)
 			return false;

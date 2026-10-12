@@ -10,6 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -85,7 +86,7 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -108,8 +109,8 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 
 
 	private void stunLivingEntity(SpellData data) {
-		LivingEntity caster = data.caster();
-		LivingEntity target = data.target();
+		Entity caster = data.caster();
+		Entity target = data.target();
 		float power = data.power();
 		String[] args = data.args();
 		long duration = this.duration.get(caster, target, power, args) * TimeUtil.MILLISECONDS_PER_SECOND / 20;
@@ -133,11 +134,11 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 		return stunnedLivingEntities.containsKey(entity.getUniqueId());
 	}
 
-	public void removeStun(LivingEntity entity) {
+	public void removeStun(Entity entity) {
 		stunnedLivingEntities.remove(entity.getUniqueId());
 	}
 
-	private record StunnedInfo(LivingEntity caster, LivingEntity target, Long until, Location targetLocation) {
+	private record StunnedInfo(Entity caster, Entity target, Long until, Location targetLocation) {
 	}
 
 	private class StunListener implements Listener {
@@ -191,13 +192,13 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private class StunMonitor implements Runnable {
 
-		private final Set<LivingEntity> toRemove = new HashSet<>();
+		private final Set<Entity> toRemove = new HashSet<>();
 
 		@Override
 		public void run() {
 			for (UUID id : stunnedLivingEntities.keySet()) {
 				StunnedInfo info = stunnedLivingEntities.get(id);
-				LivingEntity entity = info.target;
+				Entity entity = info.target;
 				Long until = info.until;
 				if (entity instanceof Player) continue;
 
@@ -209,7 +210,7 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 				toRemove.add(entity);
 			}
 
-			for (LivingEntity entity : toRemove) {
+			for (Entity entity : toRemove) {
 				removeStun(entity);
 			}
 

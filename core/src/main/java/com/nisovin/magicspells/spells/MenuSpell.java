@@ -18,6 +18,7 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -245,7 +246,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		Player opener = player;
 		float power = data.power();
 		String[] args = data.args();
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 
 		boolean requireEntity = Boolean.TRUE.equals(requireEntityTarget.get(caster, power, args));
 		boolean requireLocation = Boolean.TRUE.equals(requireLocationTarget.get(caster, power, args));
@@ -285,7 +286,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -299,7 +300,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			if (!(data.caster() instanceof Player casterPlayer))
 				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 			Player opener = casterPlayer;
-			LivingEntity target = data.target();
+			Entity target = data.target();
 			if (Boolean.TRUE.equals(targetOpensMenuInstead.get(data.caster(), data.target(), data.power(),
 					data.args()))) {
 				if (!(data.target() instanceof Player player))
@@ -307,7 +308,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				opener = player;
 				target = null;
 			}
-			open(casterPlayer, opener, target, null, data.power(), data.args());
+			LivingEntity livingTarget = target instanceof LivingEntity lt ? lt : null;
+			if (target != null && livingTarget == null)
+				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+			open(casterPlayer, opener, livingTarget, null, data.power(), data.args());
 			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
 		if (!Boolean.TRUE.equals(targetOpensMenuInstead.get(null, data.target(), data.power(), data.args())))

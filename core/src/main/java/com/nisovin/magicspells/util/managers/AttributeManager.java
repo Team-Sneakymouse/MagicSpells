@@ -8,6 +8,7 @@ import java.util.Collection;
 
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -181,7 +182,7 @@ public class AttributeManager {
 
 		return new ConfigData<>() {
 			@Override
-			public Set<AttributeInfo> get(LivingEntity caster, LivingEntity target, Location location, float power,
+			public Set<AttributeInfo> get(Entity caster, Entity target, Location location, float power,
 					String[] args) {
 				Set<AttributeInfo> resolved = new HashSet<>();
 				for (ConfigData<AttributeInfo> supplier : suppliers) {

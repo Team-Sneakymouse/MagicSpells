@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -95,7 +96,7 @@ public class ParseSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -120,7 +121,7 @@ public class ParseSpell extends TargetedSpell implements TargetedEntitySpell {
 
 
 
-	private void parse(LivingEntity target) {
+	private void parse(Entity target) {
 		if (!(target instanceof Player)) return;
 		String receivedValue;
 		switch (operation) {

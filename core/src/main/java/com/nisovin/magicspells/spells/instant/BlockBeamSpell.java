@@ -180,7 +180,7 @@ public class BlockBeamSpell extends InstantSpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -213,12 +213,12 @@ public class BlockBeamSpell extends InstantSpell
 
 	@EventHandler(ignoreCancelled = true)
 	public void onSpellTarget(SpellTargetEvent e) {
-		LivingEntity target = e.getTarget();
-		if (EntityPdc.hasFlag(target, BLOCK_BEAM_FLAG))
+		Entity target = e.getTarget();
+		if (target != null && EntityPdc.hasFlag(target, BLOCK_BEAM_FLAG))
 			e.setCancelled(true);
 	}
 
-	private void shootBeam(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
+	private void shootBeam(Entity caster, Entity target, Location from, float power, String[] args) {
 		if (headItem == null)
 			return;
 
@@ -361,7 +361,7 @@ public class BlockBeamSpell extends InstantSpell
 				if (!event.callEvent())
 					continue;
 
-				LivingEntity subTarget = event.getTarget();
+				Entity subTarget = event.getTarget();
 
 				if (hitSpell != null)
 					hitSpell.subcast(event.getSpellData());

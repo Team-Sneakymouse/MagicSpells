@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive.util;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventPriority;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -30,11 +31,11 @@ public abstract class PassiveListener implements Listener {
 		this.priority = priority;
 	}
 
-	public boolean canTrigger(LivingEntity livingEntity) {
+	public boolean canTrigger(Entity livingEntity) {
 		return passiveSpell.getTriggerList().canTarget(livingEntity, true);
 	}
 
-	public boolean canTrigger(LivingEntity livingEntity, boolean ignoreGameMode) {
+	public boolean canTrigger(Entity livingEntity, boolean ignoreGameMode) {
 		return passiveSpell.getTriggerList().canTarget(livingEntity, ignoreGameMode);
 	}
 		
@@ -42,11 +43,11 @@ public abstract class PassiveListener implements Listener {
 		return cancelDefaultAction(null, null, casted);
 	}
 
-	public boolean cancelDefaultAction(LivingEntity caster, boolean casted) {
+	public boolean cancelDefaultAction(Entity caster, boolean casted) {
 		return cancelDefaultAction(caster, null, casted);
 	}
 
-	public boolean cancelDefaultAction(LivingEntity caster, LivingEntity target, boolean casted) {
+	public boolean cancelDefaultAction(Entity caster, Entity target, boolean casted) {
 		if (passiveSpell == null) return true;
 		if (casted && passiveSpell.cancelDefaultAction(caster, target, 1f, null)) return true;
 		if (!casted && passiveSpell.cancelDefaultActionWhenCastFails(caster, target, 1f, null)) return true;
@@ -57,11 +58,11 @@ public abstract class PassiveListener implements Listener {
 		return isCancelStateOk(null, null, cancelled);
 	}
 
-	public boolean isCancelStateOk(LivingEntity caster, boolean cancelled) {
+	public boolean isCancelStateOk(Entity caster, boolean cancelled) {
 		return isCancelStateOk(caster, null, cancelled);
 	}
 
-	public boolean isCancelStateOk(LivingEntity caster, LivingEntity target, boolean cancelled) {
+	public boolean isCancelStateOk(Entity caster, Entity target, boolean cancelled) {
 		if (passiveSpell == null) return false;
 		// require-cancelled-event means we only want cancelled triggers; ignore-cancelled
 		// must not reject those or the two options can never both be satisfied.
@@ -73,6 +74,10 @@ public abstract class PassiveListener implements Listener {
 	public boolean hasSpell(LivingEntity entity) {
 		if (entity instanceof Player player) return MagicSpells.getSpellbook(player).hasSpell(passiveSpell);
 		return true;
+	}
+
+	public boolean hasSpell(Entity entity) {
+		return entity instanceof LivingEntity living && hasSpell(living);
 	}
 	
 	public abstract void initialize(String var);
@@ -86,11 +91,11 @@ public abstract class PassiveListener implements Listener {
 		return this == other; // Don't want to make things equal unless they are the same object
 	}
 
-	protected void setCooldownPerSubject(LivingEntity caster, LivingEntity target, String subject) {
+	protected void setCooldownPerSubject(Entity caster, Entity target, String subject) {
 		passiveSpell.setCooldownPerSubject(caster, target, subject);
 	}
 
-	protected boolean isOnCooldownPerSubject(LivingEntity caster, String subject) {
+	protected boolean isOnCooldownPerSubject(Entity caster, String subject) {
 		return passiveSpell.isOnCooldownPerSubject(caster, subject);
 	}
 	

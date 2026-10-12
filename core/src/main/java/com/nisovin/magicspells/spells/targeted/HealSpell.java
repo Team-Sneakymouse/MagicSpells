@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 
@@ -63,7 +64,7 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -73,15 +74,18 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 	
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		LivingEntity caster = data.caster() instanceof LivingEntity livingCaster ? livingCaster : null;
 		if (data.hasCaster()) {
-			if (validTargetList.canTarget(data.caster(), data.target()) && (!cancelIfFull || data.target().getHealth() < Util.getMaxHealth(data.target()))) {
-				boolean ok = heal(data.caster(), data.target(), data.power(), data.args());
+			if (validTargetList.canTarget(data.caster(), data.target()) && (!cancelIfFull || target.getHealth() < Util.getMaxHealth(target))) {
+				boolean ok = heal(caster, target, data.power(), data.args());
 				return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 			}
 			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		}
-		if (validTargetList.canTarget(data.target()) && (!cancelIfFull || data.target().getHealth() < Util.getMaxHealth(data.target()))) {
-			boolean ok = heal(null, data.target(), data.power(), data.args());
+		if (validTargetList.canTarget(data.target()) && (!cancelIfFull || target.getHealth() < Util.getMaxHealth(target))) {
+			boolean ok = heal(null, target, data.power(), data.args());
 			return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 		}
 		return new CastResult(PostCastAction.ALREADY_HANDLED, data);
@@ -94,7 +98,7 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 		return checker;
 	}
 
-	private boolean heal(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private boolean heal(Entity caster, LivingEntity target, float power, String[] args) {
 		double health = target.getHealth();
 		double amount;
 
@@ -102,7 +106,7 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 		if (healPercent == 0) {
 			amount = this.healAmount.get(caster, target, power, args);
 			if (Boolean.TRUE.equals(powerAffectsHealAmount.get(caster, target, power, args))) amount *= power;
-		} else amount = (Util.getMaxHealth(caster) - health) * (healPercent / 100);
+		} else amount = (Util.getMaxHealth(target) - health) * (healPercent / 100);
 
 		if (checkPlugins) {
 			MagicSpellsEntityRegainHealthEvent event = new MagicSpellsEntityRegainHealthEvent(target, amount, RegainReason.CUSTOM);

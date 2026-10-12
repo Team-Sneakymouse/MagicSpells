@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
@@ -52,7 +53,7 @@ public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -79,19 +80,21 @@ public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, T
 
 		@Override
 	public CastResult castAtLocation(SpellData data) {
-		spin(data.caster(), data.location());
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		spin(caster, data.location());
 		playSpellEffects(data.caster(), data.location(), data.power(), data.args());
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	
 	}
 @Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 
 
-	private void spinTarget(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void spinTarget(Entity caster, Entity target, float power, String[] args) {
 		Location loc = target.getLocation();
 		if (random) {
 			loc.setYaw(Util.getRandomInt(360));
@@ -103,7 +106,7 @@ public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, T
 		target.teleportAsync(loc);
 	}
 
-	private void spinFace(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void spinFace(Entity caster, Entity target, float power, String[] args) {
 		Location targetLoc = target.getLocation();
 		Location casterLoc = caster.getLocation();
 

@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventPriority;
 import org.bukkit.inventory.EquipmentSlot;
@@ -96,7 +97,7 @@ public class RitualSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (spellToCast == null || !(caster instanceof Player player))
 			return PostCastAction.ALREADY_HANDLED;
 		if (activeRituals.containsKey(player)) {

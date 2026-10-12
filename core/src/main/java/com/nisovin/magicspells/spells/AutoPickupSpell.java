@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Sound;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -96,7 +97,7 @@ public class AutoPickupSpell extends Spell {
     }
 
     @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+    public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
         return cast(new SpellData(caster, power, args)).action();
     }
 

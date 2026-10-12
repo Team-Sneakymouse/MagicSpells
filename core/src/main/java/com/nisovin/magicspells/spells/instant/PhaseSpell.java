@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.util.BlockIterator;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
@@ -57,16 +58,18 @@ public class PhaseSpell extends InstantSpell {
 
 	@Override
 	public CastResult cast(SpellData data) {
-		int r = getRange(data.caster(), data.power(), data.args());
+		if (!(data.caster() instanceof LivingEntity livingCaster))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		int r = getRange(livingCaster, data.power(), data.args());
 		
-					int distance = maxDistance.get(data.caster(), null, data.power(), data.args());
-					if (Boolean.TRUE.equals(powerAffectsMaxDistance.get(data.caster(), null, data.power(), data.args()))) distance = Math.round(distance * data.power());
+					int distance = maxDistance.get(livingCaster, null, data.power(), data.args());
+					if (Boolean.TRUE.equals(powerAffectsMaxDistance.get(livingCaster, null, data.power(), data.args()))) distance = Math.round(distance * data.power());
 		
 					BlockIterator iter;
 					try {
-						iter = new BlockIterator(data.caster(), distance << 1);
+						iter = new BlockIterator(livingCaster, distance << 1);
 					} catch (IllegalStateException e) {
-						sendMessage(strCantPhase, data.caster(), data.args());
+						sendMessage(strCantPhase, livingCaster, data.args());
 						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 					}
 		
@@ -96,7 +99,7 @@ public class PhaseSpell extends InstantSpell {
 					}
 		
 					if (location == null) {
-						sendMessage(strCantPhase, data.caster(), data.args());
+						sendMessage(strCantPhase, livingCaster, data.args());
 						return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 					}
 		
@@ -110,7 +113,7 @@ public class PhaseSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();

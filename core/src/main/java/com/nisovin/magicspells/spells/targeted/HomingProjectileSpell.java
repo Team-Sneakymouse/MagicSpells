@@ -192,7 +192,7 @@ public class HomingProjectileSpell extends TargetedSpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -272,8 +272,8 @@ public class HomingProjectileSpell extends TargetedSpell
 		private Location currentLocation;
 		private Location previousLocation;
 		private Location startLocation;
-		private LivingEntity caster;
-		private LivingEntity target;
+		private Entity caster;
+		private Entity target;
 		private BoundingBox hitBox;
 		private Vector currentVelocity;
 		private SpellData data;
@@ -292,7 +292,7 @@ public class HomingProjectileSpell extends TargetedSpell
 		private int taskId;
 		private int counter = 0;
 
-		private HomingProjectileMonitor(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		private HomingProjectileMonitor(Entity caster, Entity target, float power, String[] args) {
 			this.caster = caster;
 			this.target = target;
 			this.power = power;
@@ -301,7 +301,7 @@ public class HomingProjectileSpell extends TargetedSpell
 			initialize(caster, target, power, args);
 		}
 
-		private HomingProjectileMonitor(LivingEntity caster, Location startLocation, LivingEntity target, float power,
+		private HomingProjectileMonitor(Entity caster, Location startLocation, Entity target, float power,
 				String[] args) {
 			this.caster = caster;
 			this.target = target;
@@ -312,7 +312,7 @@ public class HomingProjectileSpell extends TargetedSpell
 			initialize(caster, target, power, args);
 		}
 
-		private void initialize(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		private void initialize(Entity caster, Entity target, float power, String[] args) {
 			startTime = System.currentTimeMillis();
 
 			data = new SpellData(caster, target, power, args);
@@ -447,7 +447,7 @@ public class HomingProjectileSpell extends TargetedSpell
 				if (!targetEvent.callEvent())
 					return;
 
-				LivingEntity subTarget = targetEvent.getTarget();
+				Entity subTarget = targetEvent.getTarget();
 				float subPower = targetEvent.getPower();
 
 				SpellData hitData = data.target(subTarget).power(subPower).location(targetLoc);

@@ -7,6 +7,7 @@ import java.util.HashSet;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -71,7 +72,7 @@ public class ImpactRecordSpell extends BuffSpell {
 	public void onSpellTarget(SpellTargetEvent event) {
 		if (event.isCancelled() && !recordCancelled) return;
 		
-		LivingEntity target = event.getTarget();
+		Entity target = event.getTarget();
 		if (!(target instanceof Player playerTarget)) return;
 		if (!isActive(playerTarget)) return;
 		

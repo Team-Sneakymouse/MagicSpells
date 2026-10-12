@@ -18,6 +18,7 @@ import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
@@ -94,7 +95,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -108,7 +109,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 	}
 
 
-    private boolean removeClones(LivingEntity caster, Location loc, float power, String[] args) {
+    private boolean removeClones(Entity caster, Location loc, float power, String[] args) {
 		float radSq = radius.get(caster, null, power, args);
 		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) radSq *= power;
 

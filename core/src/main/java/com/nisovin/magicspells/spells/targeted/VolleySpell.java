@@ -101,7 +101,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -134,7 +134,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 
 
 
-	private void volley(LivingEntity caster, LivingEntity target, Location from, Location targetLoc, float power,
+	private void volley(Entity caster, Entity target, Location from, Location targetLoc, float power,
 			String[] args) {
 		Location spawn = from.clone().add(0, yOffset.get(caster, target, power, args), 0);
 		Vector v;
@@ -176,8 +176,8 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 				if (fire > 0)
 					arrow.setFireTicks(fire);
 
-				if (caster != null)
-					arrow.setShooter(caster);
+				if (caster instanceof org.bukkit.projectiles.ProjectileSource shooter)
+					arrow.setShooter(shooter);
 
 				if (removeDelay > 0)
 					arrowList.add(arrow);
@@ -256,8 +256,8 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 
 		private final Map<Integer, Arrow> arrowMap;
 
-		private final LivingEntity caster;
-		private final LivingEntity target;
+		private final Entity caster;
+		private final Entity target;
 		private final SpellData data;
 		private final Location spawn;
 		private final String[] args;
@@ -270,7 +270,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 
 		private int count;
 
-		private ArrowShooter(LivingEntity caster, LivingEntity target, Location spawn, Vector dir, float power,
+		private ArrowShooter(Entity caster, Entity target, Location spawn, Vector dir, float power,
 				String[] args) {
 			this.caster = caster;
 			this.target = target;
@@ -320,8 +320,8 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 				if (fire > 0)
 					arrow.setFireTicks(fire);
 
-				if (caster != null)
-					arrow.setShooter(caster);
+				if (caster instanceof org.bukkit.projectiles.ProjectileSource shooter)
+					arrow.setShooter(shooter);
 
 				if (removeDelay > 0)
 					arrowMap.put(count, arrow);

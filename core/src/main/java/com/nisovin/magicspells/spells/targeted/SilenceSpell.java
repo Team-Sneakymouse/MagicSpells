@@ -10,6 +10,7 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
@@ -114,7 +115,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -138,7 +139,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 
 
 
-	private void silence(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void silence(Entity caster, Entity target, float power, String[] args) {
 		Unsilencer u = silenced.get(target.getUniqueId());
 		if (u != null) u.cancel();
 
@@ -148,11 +149,11 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		silenced.put(target.getUniqueId(), new Unsilencer(target, duration));
 	}
 
-	public boolean isSilenced(LivingEntity target) {
+	public boolean isSilenced(Entity target) {
 		return silenced.containsKey(target.getUniqueId());
 	}
 
-	public void removeSilence(LivingEntity target) {
+	public void removeSilence(Entity target) {
 		if (!isSilenced(target)) return;
 		Unsilencer unsilencer = silenced.get(target.getUniqueId());
 		unsilencer.cancel();
@@ -208,7 +209,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		private int taskId;
 		private boolean canceled = false;
 
-		private Unsilencer(LivingEntity livingEntity, int delay) {
+		private Unsilencer(Entity livingEntity, int delay) {
 			id = livingEntity.getUniqueId();
 			taskId = MagicSpells.scheduleDelayedTask(this, delay);
 		}

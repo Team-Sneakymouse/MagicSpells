@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.block.BlockBreakEvent;
 
@@ -126,7 +127,7 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 		if (materials == null || materials.isEmpty())
 			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		float power = data.power();
 		String[] args = data.args();
 
@@ -142,7 +143,7 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -155,7 +156,7 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 
-	private void makeWall(LivingEntity caster, Location location, Vector direction, float power, String[] args) {
+	private void makeWall(Entity caster, Location location, Vector direction, float power, String[] args) {
 		if (blockSets.containsKey(caster.getUniqueId())) return;
 		if (materials == null || materials.isEmpty()) return;
 		if (location == null || direction == null) return;

@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.TargetInfo;
@@ -35,7 +36,7 @@ public class EntitySilenceSpell extends TargetedSpell implements TargetedEntityS
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();

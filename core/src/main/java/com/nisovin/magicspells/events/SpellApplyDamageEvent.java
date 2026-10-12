@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.events;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
@@ -13,7 +14,7 @@ public class SpellApplyDamageEvent extends SpellEvent {
 	private final long timestamp;
 	private float modifier;
 
-	public SpellApplyDamageEvent(Spell spell, LivingEntity caster, LivingEntity target, double damage, DamageCause cause, String spellDamageType) {
+	public SpellApplyDamageEvent(Spell spell, Entity caster, LivingEntity target, double damage, DamageCause cause, String spellDamageType) {
 		super(spell, caster);
 
 		this.target = target;

@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
@@ -24,18 +25,20 @@ public class SwitchHealthSpell extends TargetedSpell implements TargetedEntitySp
 
 	@Override
 	public CastResult cast(SpellData data) {
-		TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), data.args());
-					if (target.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), target), data);
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+		TargetInfo<LivingEntity> target = getTargetedEntity(caster, data.power(), data.args());
+					if (target.noTarget()) return new CastResult(noTarget(caster, data.args(), target), data);
 		
-					boolean ok = switchHealth(data.caster(), target.target(), target.power(), data.args());
-					if (!ok) return new CastResult(noTarget(data.caster(), data.args()), data);
+					boolean ok = switchHealth(caster, target.target(), target.power(), data.args());
+					if (!ok) return new CastResult(noTarget(caster, data.args()), data);
 		
-					sendMessages(data.caster(), target.target(), data.args());
+					sendMessages(caster, target.target(), data.args());
 					return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -45,8 +48,12 @@ public class SwitchHealthSpell extends TargetedSpell implements TargetedEntitySp
 	
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-				boolean ok = switchHealth(data.caster(), data.target(), data.power(), data.args());
+				boolean ok = switchHealth(caster, target, data.power(), data.args());
 		return new CastResult(ok ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED, data);
 	}
 

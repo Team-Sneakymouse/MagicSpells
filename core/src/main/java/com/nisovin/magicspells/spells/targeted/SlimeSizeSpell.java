@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.entity.Slime;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
@@ -56,7 +57,7 @@ public class SlimeSizeSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -77,7 +78,7 @@ public class SlimeSizeSpell extends TargetedSpell implements TargetedEntitySpell
 		return isSlimeChecker;
 	}
 
-	private boolean setSize(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private boolean setSize(Entity caster, Entity target, float power, String[] args) {
 		if (!(target instanceof Slime slime) || !(caster instanceof Player player)) return false;
 
 		int minSize = this.minSize.get(caster, target, power, args);

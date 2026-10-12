@@ -172,26 +172,32 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 
 	@Override
 	public final CastResult cast(SpellData data) {
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+
 		if (targeted) {
-			TargetInfo<LivingEntity> info = getTargetedEntity(data.caster(), data.power(), data.args());
+			TargetInfo<LivingEntity> info = getTargetedEntity(caster, data.power(), data.args());
 			if (info.noTarget())
-				return new CastResult(noTarget(data.caster(), data.args(), info), data);
+				return new CastResult(noTarget(caster, data.args(), info), data);
 			if (!targetList.canTarget(info.target()))
-				return new CastResult(noTarget(data.caster(), data.args()), data);
+				return new CastResult(noTarget(caster, data.args()), data);
 			data = data.target(info.target()).power(info.power());
 		}
 
-		PostCastAction action = activate(data.caster(), targeted ? data.target() : data.caster(), data.power(),
-				data.args(), true);
+		LivingEntity buffTarget = targeted ? (data.target() instanceof LivingEntity living ? living : null) : caster;
+		if (buffTarget == null)
+			return new CastResult(noTarget(caster, data.args()), data);
+
+		PostCastAction action = activate(caster, buffTarget, data.power(), data.args(), true);
 		if (targeted && action == PostCastAction.HANDLE_NORMALLY) {
-			sendMessages(data.caster(), data.target(), data.args());
+			sendMessages(caster, buffTarget, data.args());
 			return new CastResult(PostCastAction.NO_MESSAGES, data);
 		}
 		return new CastResult(action, data);
 	}
 
 	@Override
-	public final PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public final PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL)
 			return cast(new SpellData(caster, power, args)).action();
 
@@ -204,10 +210,14 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 				return noTarget(caster, args);
 			target = info.target();
 			power = info.power();
-		} else
-			target = caster;
+		} else {
+			if (!(caster instanceof LivingEntity livingCaster))
+				return PostCastAction.ALREADY_HANDLED;
+			target = livingCaster;
+		}
 
-		PostCastAction action = activate(caster, target, power, args, false);
+		LivingEntity livingCaster = caster instanceof LivingEntity lc ? lc : null;
+		PostCastAction action = activate(livingCaster, target, power, args, false);
 		if (targeted && action == PostCastAction.HANDLE_NORMALLY) {
 			sendMessages(caster, target, args);
 			return PostCastAction.NO_MESSAGES;
@@ -222,7 +232,10 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		} else if (!validTargetList.canTarget(data.target()))
 			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-		PostCastAction action = activate(data.caster(), data.target(), data.power(), data.args(), true);
+		LivingEntity caster = data.caster() instanceof LivingEntity livingCaster ? livingCaster : null;
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		PostCastAction action = activate(caster, target, data.power(), data.args(), true);
 		return new CastResult(action, data);
 	}
 
@@ -285,12 +298,12 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		if (manager != null) manager.addBuff(target, this);
 	}
 
-	public void setDuration(LivingEntity livingEntity, float duration) {
+	public void setDuration(Entity livingEntity, float duration) {
 		long endTime = System.currentTimeMillis() + Math.round(duration * TimeUtil.MILLISECONDS_PER_SECOND);
 		durationEndTime.put(livingEntity.getUniqueId(), endTime);
 	}
 
-	public float getDuration(LivingEntity livingEntity) {
+	public float getDuration(Entity livingEntity) {
 		if (durationEndTime == null) return 0;
 		if (!durationEndTime.containsKey(livingEntity.getUniqueId())) return 0;
 		return (durationEndTime.get(livingEntity.getUniqueId()) - System.currentTimeMillis()) / 1000F;
@@ -300,7 +313,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		return duration;
 	}
 
-	public LivingEntity getLastCaster(LivingEntity target) {
+	public LivingEntity getLastCaster(Entity target) {
 		return lastCaster.get(target.getUniqueId());
 	}
 
@@ -328,6 +341,23 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	 * @return true if the spell is active, false otherwise
 	 */
 	public abstract boolean isActive(LivingEntity entity);
+
+	public final boolean isActive(Entity entity) {
+		return entity instanceof LivingEntity living && isActive(living);
+	}
+
+	public final boolean isActiveAndNotExpired(Entity entity) {
+		return entity instanceof LivingEntity living && isActiveAndNotExpired(living);
+	}
+
+	public final void turnOff(Entity entity) {
+		if (entity instanceof LivingEntity living) turnOff(living);
+	}
+
+	public final void addUseAndChargeCost(Entity entity) {
+		if (entity instanceof LivingEntity living) addUseAndChargeCost(living);
+	}
+
 
 	/**
 	 * Adds a use to the spell for the livingEntity. If the number of uses exceeds the amount allowed, the spell will immediately expire.
@@ -422,7 +452,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		lastCaster.remove(entity.getUniqueId());
 	}
 
-	public void stopEffects(LivingEntity livingEntity) {
+	public void stopEffects(Entity livingEntity) {
 		Iterator<EffectTracker> trackerIterator = getEffectTrackers().iterator();
 		EffectTracker tracker;
 		while(trackerIterator.hasNext()) {
@@ -469,9 +499,12 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		return targeted;
 	}
 
-	private LivingEntity getWhoToCancel(LivingEntity livingEntity) {
+	private LivingEntity getWhoToCancel(Entity livingEntity) {
 		// If the target was affected by the event, cancel them.
-		if (!targeted || cancelAffectsTarget) return isActiveAndNotExpired(livingEntity) ? livingEntity : null;
+		if (!targeted || cancelAffectsTarget) {
+			if (!(livingEntity instanceof LivingEntity living)) return null;
+			return isActiveAndNotExpired(living) ? living : null;
+		}
 
 		// targeted && !cancelAffectsTarget
 		// If the caster was affected by the event, cancel the target if they have the buff.

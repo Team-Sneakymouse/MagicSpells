@@ -2,7 +2,7 @@ package com.nisovin.magicspells.events;
 
 import org.jetbrains.annotations.Nullable;
 
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
@@ -12,16 +12,16 @@ public class ConjureItemEvent extends Event {
 
 	private static final HandlerList handlers = new HandlerList();
 
-    private final LivingEntity entity;
+    private final Entity entity;
     private final ItemStack itemStack;
 
-    public ConjureItemEvent(@Nullable LivingEntity entity, @NotNull ItemStack itemStack) {
+    public ConjureItemEvent(@Nullable Entity entity, @NotNull ItemStack itemStack) {
         this.entity = entity;
         this.itemStack = itemStack;
     }
 
     @Nullable
-    public LivingEntity getEntity() {
+    public Entity getEntity() {
         return entity;
     }
     

@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
@@ -82,7 +83,7 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -92,13 +93,15 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 	
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (data.hasCaster()) {
 			if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							applyDot(data.caster(), data.target(), data.power(), data.args());
+							applyDot(data.caster(), target, data.power(), data.args());
 							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		} else {
 			if (!validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							applyDot(null, data.target(), data.power(), data.args());
+							applyDot(null, target, data.power(), data.args());
 							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
 	}
@@ -120,7 +123,7 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 		dot.cancel();
 	}
 
-	private void applyDot(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void applyDot(Entity caster, LivingEntity target, float power, String[] args) {
 		Dot dot = activeDots.get(target.getUniqueId());
 		if (dot != null) {
 			dot.caster = caster;
@@ -146,7 +149,7 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 	private class Dot implements Runnable {
 
 		private final LivingEntity target;
-		private LivingEntity caster;
+		private Entity caster;
 		private String[] args;
 		private float power;
 
@@ -155,7 +158,7 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 		private int interval;
 		private int dur = 0;
 
-		private Dot(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		private Dot(Entity caster, LivingEntity target, float power, String[] args) {
 			this.caster = caster;
 			this.target = target;
 			this.power = power;

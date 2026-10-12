@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityToggleSwimEvent;
 
@@ -33,7 +34,7 @@ public class StartSwimListener extends PassiveListener {
 	}
 
 	@SuppressWarnings("deprecation") // EntityToggleSwimEvent#setCancelled is a documented no-op
-	private static boolean cancelSwim(EntityToggleSwimEvent event, LivingEntity caster) {
+	private static boolean cancelSwim(EntityToggleSwimEvent event, Entity caster) {
 		event.setCancelled(true);
 		if (caster instanceof Player player) player.setSprinting(false);
 		return true;

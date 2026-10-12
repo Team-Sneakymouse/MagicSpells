@@ -188,7 +188,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -234,7 +234,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 
 
-	private void createPulser(LivingEntity caster, Block block, Location from, float power, String[] args) {
+	private void createPulser(Entity caster, Block block, Location from, float power, String[] args) {
 		if (blockData == null)
 			return;
 		AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, block, blockData,
@@ -354,7 +354,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 	public class Pulser {
 
-		final LivingEntity caster;
+		final Entity caster;
 		private final Block block;
 		private final Location location;
 		private final SpellData data;
@@ -374,7 +374,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			TICK, CLICK;
 		}
 
-		private Pulser(LivingEntity caster, Block block, Location from, float power, String[] args,
+		private Pulser(Entity caster, Block block, Location from, float power, String[] args,
 				AlteredBlockManager.Change change) {
 			this.caster = caster;
 			this.block = block;
@@ -426,7 +426,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 					() -> list.add(effect.playEntityEffectLocationReal(location, finalData)), delay);
 		}
 
-		private boolean pulse(ActivationType activationType, @Nullable LivingEntity caster) {
+		private boolean pulse(ActivationType activationType, @Nullable Entity caster) {
 			if (caster == null) {
 				if (blockData.equals(block.getBlockData())
 						&& block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4))
@@ -452,9 +452,9 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			return true;
 		}
 
-		public boolean activate(ActivationType activationType, @Nullable LivingEntity _caster) {
+		public boolean activate(ActivationType activationType, @Nullable Entity _caster) {
 			boolean activated = false;
-			LivingEntity spellCaster = caster;
+			Entity spellCaster = caster;
 			if (_caster != null)
 				spellCaster = _caster;
 			if (activationType.equals(ActivationType.TICK)) {

@@ -5,6 +5,7 @@ import java.util.*;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.NumberConversions;
 
@@ -124,7 +125,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -140,7 +141,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 
 
 	private boolean doAoe(SpellData data) {
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		Location location = data.location();
 		float basePower = data.power();
 		String[] args = data.args();
@@ -178,7 +179,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (caster == null)
 				return false;
 
-			LivingEntity target = caster;
+			Entity target = caster;
 			power = basePower;
 
 			if (!target.getWorld().equals(location.getWorld()))
@@ -214,26 +215,32 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			return true;
 		}
 
-		List<LivingEntity> entities = new ArrayList<>(
-				location.getWorld().getNearbyLivingEntities(location, hRadius, vRadius, hRadius));
+		List<Entity> entities;
+		if (validTargetList.canTargetNonLivingEntities()) {
+			entities = new ArrayList<>(location.getWorld().getNearbyEntities(location, hRadius, vRadius, hRadius));
+		} else {
+			entities = new ArrayList<>(location.getWorld().getNearbyLivingEntities(location, hRadius, vRadius, hRadius));
+		}
 
 		if (useProximity) {
 			// check world before distance
-			for (LivingEntity entity : new ArrayList<>(entities)) {
+			for (Entity entity : new ArrayList<>(entities)) {
 				if (entity.getWorld().equals(location.getWorld()))
 					continue;
 				entities.remove(entity);
 			}
 			Location finalLocation = location;
-			Comparator<LivingEntity> comparator = Comparator
+			Comparator<Entity> comparator = Comparator
 					.comparingDouble(entity -> entity.getLocation().distanceSquared(finalLocation));
 			if (reverseProximity)
 				comparator = comparator.reversed();
 			entities.sort(comparator);
 		}
 
-		for (LivingEntity target : entities) {
-			if (target.isDead())
+		for (Entity target : entities) {
+			if (target instanceof LivingEntity living && living.isDead())
+				continue;
+			if (!target.isValid())
 				continue;
 			if (!validTargetList.canTarget(caster, target))
 				continue;
@@ -294,7 +301,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		return success;
 	}
 
-	private void castSpells(LivingEntity caster, Location location, LivingEntity target, float power, String[] args,
+	private void castSpells(Entity caster, Location location, Entity target, float power, String[] args,
 			boolean spellSourceInCenter, boolean passTargeting) {
 		Location source = spellSourceInCenter ? location : (caster == null ? null : caster.getLocation());
 		for (Subspell spell : spells) {

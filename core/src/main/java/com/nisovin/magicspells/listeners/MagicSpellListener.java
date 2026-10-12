@@ -30,11 +30,11 @@ public class MagicSpellListener implements Listener {
 	@EventHandler
 	public void onSpellTarget(SpellTargetEvent event) {
 		// Check if target has noTarget permission / spectator gamemode / is in noMagicZone / is an invisible marker armorstand
-		LivingEntity target = event.getTarget();
+		Entity target = event.getTarget();
 		Spell spell = event.getSpell();
 		if (target == null) return;
 
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		boolean selfTarget = caster != null && target.equals(caster);
 
 		// notarget means "others cannot target me", not "I cannot target myself" (menus, self-buffs).
@@ -50,7 +50,7 @@ public class MagicSpellListener implements Listener {
 	@EventHandler
 	public void onProjectileHit(ParticleProjectileHitEvent event) {
 		// Check if target is an armor stand with the specified tag
-		LivingEntity target = event.getTarget();
+		Entity target = event.getTarget();
 
 		if (target == null) return;
 		if (isMSEntity(target)) event.setCancelled(true);

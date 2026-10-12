@@ -84,7 +84,7 @@ public class ProjectileTracker implements Runnable, Tracker {
 	private Location previousLocation;
 	private Location currentLocation;
 	private Location startLocation;
-	private LivingEntity caster;
+	private Entity caster;
 	private Vector currentVelocity;
 	private SpellData spellData;
 	private String[] args;
@@ -98,7 +98,7 @@ public class ProjectileTracker implements Runnable, Tracker {
 
 	private boolean stopped = false;
 
-	public ProjectileTracker(LivingEntity caster, Location startLocation, float power, String[] args) {
+	public ProjectileTracker(Entity caster, Location startLocation, float power, String[] args) {
 		this.caster = caster;
 		this.power = power;
 		this.args = args;
@@ -140,7 +140,8 @@ public class ProjectileTracker implements Runnable, Tracker {
 		projectile.setVisibleByDefault(visible);
 		projectile.setVelocity(currentVelocity);
 		projectile.setGravity(gravity);
-		projectile.setShooter(caster);
+		if (caster instanceof org.bukkit.projectiles.ProjectileSource shooter)
+			projectile.setShooter(shooter);
 		if (projectileName != null && !Util.getPlainString(projectileName).isEmpty()) {
 			projectile.customName(projectileName);
 			projectile.setCustomNameVisible(true);
@@ -630,11 +631,11 @@ public class ProjectileTracker implements Runnable, Tracker {
 		this.startLocation = startLocation;
 	}
 
-	public LivingEntity getCaster() {
+	public Entity getCaster() {
 		return caster;
 	}
 
-	public void setCaster(LivingEntity caster) {
+	public void setCaster(Entity caster) {
 		this.caster = caster;
 	}
 

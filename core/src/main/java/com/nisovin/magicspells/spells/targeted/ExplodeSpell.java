@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Animals;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -46,7 +47,7 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 	private long currentTick = 0;
 	private String[] currentArgs;
 	private float currentPower = 0;
-	private LivingEntity currentCaster;
+	private Entity currentCaster;
 
 	public ExplodeSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -98,18 +99,19 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
 	}
 	
-	private boolean explode(LivingEntity caster, Location target, float power, String[] args) {
+	private boolean explode(Entity caster, Location target, float power, String[] args) {
 		float explosionSize = this.explosionSize.get(caster, null, power, args);
 		if (Boolean.TRUE.equals(powerAffectsExplosionSize.get(caster, null, power, args))) explosionSize *= power;
 
 		if (simulateTnt) {
-			boolean cancelled = MagicSpells.getVolatileCodeHandler().simulateTnt(target, caster, explosionSize, addFire);
+			if (!(caster instanceof LivingEntity livingCaster)) return false;
+			boolean cancelled = MagicSpells.getVolatileCodeHandler().simulateTnt(target, livingCaster, explosionSize, addFire);
 			if (cancelled) return false;
 		}
 

@@ -9,6 +9,7 @@ import com.google.common.collect.LinkedListMultimap;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import ru.xezard.glow.data.glow.Glow;
@@ -87,7 +88,7 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity livingEntity, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity livingEntity, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(livingEntity, power, args)).action();
@@ -105,7 +106,7 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 
 
 	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
+	public boolean castAtEntity(Entity target, float power, String[] args) {
 		return false;
 	}
 
@@ -114,7 +115,7 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 		glowing.values().forEach(glowData -> glowData.getGlow().destroy());
 	}
 
-	private void glow(Player caster, LivingEntity target, float power, String[] args) {
+	private void glow(Player caster, Entity target, float power, String[] args) {
 		int duration = this.duration.get(caster, target, power, args);
 		if (Boolean.TRUE.equals(powerAffectsDuration.get(caster, target, power, args))) duration = Math.round(duration * power);
 
@@ -130,7 +131,7 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 			glowData.setTaskId(MagicSpells.scheduleDelayedTask(() -> {
 				// Make the target hidden if it has an invisibility spell active
 				if (target instanceof Player targetPlayer) {
-					Set<BuffSpell> buffSpells = MagicSpells.getBuffManager().getActiveBuffs(target);
+					Set<BuffSpell> buffSpells = MagicSpells.getBuffManager().getActiveBuffs(targetPlayer);
 					if (buffSpells != null) {
 						for (BuffSpell buffSpell : buffSpells) {
 							if (!(buffSpell instanceof InvisibilitySpell)) continue;

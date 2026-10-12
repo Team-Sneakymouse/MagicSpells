@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
@@ -69,7 +70,7 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -83,7 +84,7 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 
 
 
-	private void knockback(LivingEntity caster, Location location, float basePower, String[] args) {
+	private void knockback(Entity caster, Location location, float basePower, String[] args) {
 		if (location == null)
 			return;
 		if (location.getWorld() == null)
@@ -123,7 +124,7 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 			playSpellEffects(EffectPosition.CASTER, caster, data);
 	}
 
-	private void bomb(LivingEntity caster, LivingEntity target, Location location, float basePower, String[] args) {
+	private void bomb(Entity caster, Entity target, Location location, float basePower, String[] args) {
 		float power = basePower;
 		if (callTargetEvents && caster != null) {
 			SpellTargetEvent event = new SpellTargetEvent(this, caster, target, power, args);

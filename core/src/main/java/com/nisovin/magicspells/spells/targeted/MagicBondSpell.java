@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -24,7 +25,7 @@ import com.nisovin.magicspells.spells.TargetedEntitySpell;
 
 public class MagicBondSpell extends TargetedSpell implements TargetedEntitySpell {
 
-	private Map<LivingEntity, LivingEntity> bondTarget;
+	private Map<Entity, Entity> bondTarget;
 
 	private ConfigData<Integer> duration;
 
@@ -54,7 +55,7 @@ public class MagicBondSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -70,7 +71,7 @@ public class MagicBondSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 
-	private void bond(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void bond(Entity caster, Entity target, float power, String[] args) {
 		bondTarget.put(caster, target);
 		playSpellEffects(caster, target, power, args);
 		SpellMonitor monitorBond = new SpellMonitor(caster, target, power);
@@ -89,11 +90,11 @@ public class MagicBondSpell extends TargetedSpell implements TargetedEntitySpell
 
 	private class SpellMonitor implements Listener {
 
-		private LivingEntity caster;
-		private LivingEntity target;
+		private Entity caster;
+		private Entity target;
 		private float power;
 
-		private SpellMonitor(LivingEntity caster, LivingEntity target, float power) {
+		private SpellMonitor(Entity caster, Entity target, float power) {
 			this.caster = caster;
 			this.target = target;
 			this.power = power;

@@ -7,6 +7,7 @@ import java.util.HashSet;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageEvent;
 
@@ -41,19 +42,19 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		powerAffectsSpeed = getConfigDataBoolean("power-affects-speed", true);
 	}
 
-	public boolean isJumping(LivingEntity livingEntity) {
+	public boolean isJumping(Entity livingEntity) {
 		return jumping.contains(livingEntity.getUniqueId());
 	}
 
 	@Override
 	public CastResult cast(SpellData data) {
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		launch(data.target(caster));
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -88,11 +89,11 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 
 
 	private boolean launch(SpellData data) {
-		LivingEntity target = data.target();
+		Entity target = data.target();
 		if (target == null)
 			return false;
 
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		float power = data.power();
 		String[] args = data.args();
 

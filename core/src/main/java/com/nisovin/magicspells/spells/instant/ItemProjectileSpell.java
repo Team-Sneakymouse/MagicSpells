@@ -155,7 +155,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -171,7 +171,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	}
 
 
-	private void setupTracker(ItemProjectileTracker tracker, LivingEntity caster, float power, String[] args) {
+	private void setupTracker(ItemProjectileTracker tracker, Entity caster, float power, String[] args) {
 		tracker.setSpell(this);
 
 		tracker.setItemName(Util.getMiniMessage((itemName.get(caster, power, args))));
@@ -299,7 +299,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 		playSpellEffects(position, entity, data);
 	}
 
-	public void playTrackingLineEffects(EffectPosition position, Location startLocation, Location location, LivingEntity caster, Projectile projectile, SpellData data) {
+	public void playTrackingLineEffects(EffectPosition position, Location startLocation, Location location, Entity caster, Projectile projectile, SpellData data) {
 		playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, startLocation, projectile.getLocation(), caster, projectile, data);
 	}
 

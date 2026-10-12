@@ -54,7 +54,7 @@ public class UpdateCloneSpell extends TargetedSpell implements TargetedLocationS
     }
 
     @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+    public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
         if (state != SpellCastState.NORMAL)
             return PostCastAction.HANDLE_NORMALLY;
         return cast(new SpellData(caster, power, args)).action();
@@ -67,13 +67,13 @@ public class UpdateCloneSpell extends TargetedSpell implements TargetedLocationS
     
 	}
 @Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 
 
-    private void updateDisplays(LivingEntity caster, Location location, float power){
+    private void updateDisplays(Entity caster, Location location, float power){
         Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.getInstance(), () ->{
             Collection<Entity> nearbyEntities = location.getNearbyEntities(
                     maxX.get(caster, null, power, null),

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import org.bukkit.World;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -70,7 +71,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -83,14 +84,14 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 	
 	}
 @Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 
 
 
-	private boolean undo(LivingEntity caster, Location loc, float power, String[] args) {
+	private boolean undo(Entity caster, Location loc, float power, String[] args) {
 		int rad = radius.get(caster, null, power, args);
 		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args)))
 			rad *= power;

@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.MultipleFacing;
 
@@ -46,14 +47,14 @@ public class VinesSpell extends TargetedSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
 	}
 
 	
-	private boolean growVines(LivingEntity caster, Block air, Block solid, float power, String[] args) {
+	private boolean growVines(Entity caster, Block air, Block solid, float power, String[] args) {
 		BlockFace face = air.getFace(solid);
 		int x = 0;
 		int z = 0;

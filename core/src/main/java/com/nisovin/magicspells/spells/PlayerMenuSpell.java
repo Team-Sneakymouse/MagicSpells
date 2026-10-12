@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -133,7 +134,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -176,7 +177,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		return item;
 	}
 
-	private void openDelay(LivingEntity caster, Player opener, float power, String[] args) {
+	private void openDelay(Entity caster, Player opener, float power, String[] args) {
 		MenuData data = new MenuData(new SpellData(caster, opener, power, args), 0);
 		menuData.put(opener.getUniqueId(), data);
 

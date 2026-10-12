@@ -10,6 +10,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.PitcherCrop;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
@@ -99,7 +100,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -115,7 +116,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 
 
 
-	private boolean farm(LivingEntity caster, Block center, float power, String[] args) {
+	private boolean farm(Entity caster, Block center, float power, String[] args) {
 		int radius = this.radius.get(caster, null, power, args);
 		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args))) radius = Math.round(radius * power);
 

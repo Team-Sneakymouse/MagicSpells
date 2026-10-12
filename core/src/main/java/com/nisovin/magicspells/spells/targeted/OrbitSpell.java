@@ -168,7 +168,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -193,7 +193,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	}
 
 
-	public boolean hasOrbit(LivingEntity target) {
+	public boolean hasOrbit(Entity target) {
 		for (OrbitTracker orbitTracker : trackerSet) {
 			if (orbitTracker.target == null) continue;
 			if (orbitTracker.target.equals(target)) return true;
@@ -201,7 +201,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		return false;
 	}
 
-	public void removeOrbits(LivingEntity target) {
+	public void removeOrbits(Entity target) {
 		Set<OrbitTracker> toRemove = new HashSet<>();
 		for (OrbitTracker tracker : trackerSet) {
 			if (tracker.target == null) continue;
@@ -223,8 +223,8 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		private Map<SpellEffect, Entity> entityMap;
 		private Set<ArmorStand> armorStandSet;
 
-		private LivingEntity caster;
-		private LivingEntity target;
+		private Entity caster;
+		private Entity target;
 		private SpellData data;
 		private Location targetLoc;
 		private Vector currentPosition;
@@ -246,7 +246,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 		private long startTime;
 
-		private OrbitTracker(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		private OrbitTracker(Entity caster, Entity target, float power, String[] args) {
 			this.caster = caster;
 			this.target = target;
 			this.power = power;
@@ -256,7 +256,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			initialize(caster, target, power, args);
 		}
 
-		private OrbitTracker(LivingEntity caster, Location targetLoc, float power, String[] args) {
+		private OrbitTracker(Entity caster, Location targetLoc, float power, String[] args) {
 			this.caster = caster;
 			this.targetLoc = targetLoc;
 			this.power = power;
@@ -264,7 +264,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			initialize(caster, null, power, args);
 		}
 
-		private void initialize(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		private void initialize(Entity caster, Entity target, float power, String[] args) {
 			data = new SpellData(caster, target, power, args);
 
 			internalName = OrbitSpell.this.internalName;
@@ -375,12 +375,13 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				EventUtil.call(event);
 				if (event.isCancelled()) continue;
 
-				immune.add(event.getTarget());
-				SpellData hitData = new SpellData(caster, event.getTarget(), event.getPower(), args);
+				if (!(event.getTarget() instanceof LivingEntity hitTarget)) continue;
+				immune.add(hitTarget);
+				SpellData hitData = new SpellData(caster, hitTarget, event.getPower(), args);
 				if (entitySpell != null) entitySpell.subcast(hitData);
 
-				playSpellEffects(EffectPosition.TARGET, event.getTarget(), hitData);
-				playSpellEffectsTrail(targetLoc, event.getTarget().getLocation(), hitData);
+				playSpellEffects(EffectPosition.TARGET, hitTarget, hitData);
+				playSpellEffectsTrail(targetLoc, hitTarget.getLocation(), hitData);
 
 				if (stopOnHitEntity) {
 					stop(true);

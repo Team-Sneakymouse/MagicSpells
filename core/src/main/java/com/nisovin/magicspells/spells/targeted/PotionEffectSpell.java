@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -178,12 +179,14 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 	public CastResult cast(SpellData data) {
 		LivingEntity target;
 		if (targeted) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data.caster(), data.power(), data.args());
+			if (!(data.caster() instanceof LivingEntity livingCaster))
+				return new CastResult(noTarget(data.caster(), data.args()), data);
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(livingCaster, data.power(), data.args());
 			if (targetInfo.noTarget())
 				return new CastResult(noTarget(data.caster(), data.args(), targetInfo), data);
 
 			data = data.target(targetInfo.target()).power(targetInfo.power());
-			target = data.target();
+			target = targetInfo.target();
 		} else {
 			SpellTargetEvent targetEvent = new SpellTargetEvent(this, data.caster(), data.caster(), data.power(),
 					data.args());
@@ -194,7 +197,9 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 			if (targetEvent.isCancelled())
 				return new CastResult(noTarget(data.caster(), data.args()), data);
 
-			target = targetEvent.getTarget();
+			if (!(targetEvent.getTarget() instanceof LivingEntity livingTarget))
+				return new CastResult(noTarget(data.caster(), data.args()), data);
+			target = livingTarget;
 			data = data.target(target).power(targetEvent.getPower());
 		}
 
@@ -207,7 +212,7 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -215,15 +220,17 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (data.hasCaster()) {
 			if (!validTargetList.canTarget(data.caster(), data.target()))
 				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-			handlePotionEffects(data.caster(), data.target(), data.power(), data.args());
+			handlePotionEffects(data.caster(), target, data.power(), data.args());
 			playSpellEffects(data.caster(), data.target(), data);
 		} else {
 			if (!validTargetList.canTarget(data.target()))
 				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-			handlePotionEffects(null, data.target(), data.power(), data.args());
+			handlePotionEffects(null, target, data.power(), data.args());
 			playSpellEffects(EffectPosition.TARGET, data.target(), data);
 		}
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
@@ -231,7 +238,7 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 
 
-	public void handlePotionEffects(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public void handlePotionEffects(Entity caster, LivingEntity target, float power, String[] args) {
 		if (potionEffects == null) {
 			PotionEffectType type = this.type.get(caster, target, power, args);
 
@@ -269,7 +276,7 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 		}
 	}
 
-	private void callDamageEvent(LivingEntity caster, LivingEntity target, PotionEffect effect) {
+	private void callDamageEvent(Entity caster, LivingEntity target, PotionEffect effect) {
 		DamageCause cause = null;
 		if (effect.getType() == PotionEffectType.POISON)
 			cause = DamageCause.POISON;

@@ -62,7 +62,7 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -85,7 +85,7 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 
 
 
-	private boolean combust(LivingEntity caster, final LivingEntity target, float power, String[] args) {
+	private boolean combust(Entity caster, final Entity target, float power, String[] args) {
 		if (caster != null && Boolean.TRUE.equals(checkPlugins.get(caster, target, power, args))) {
 			MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, DamageCause.MAGIC, 1, this);
 			EventUtil.call(event);
@@ -127,6 +127,6 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 		}
 	}
 
-	private record CombustData(LivingEntity caster, float power, String[] args) {}
+	private record CombustData(Entity caster, float power, String[] args) {}
 
 }

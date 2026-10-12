@@ -9,6 +9,7 @@ import org.bukkit.TreeType;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.BlockUtils;
@@ -68,13 +69,13 @@ public class TreeSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
 	}
 
-	private boolean growTree(LivingEntity caster, Block target, float power, String[] args) {
+	private boolean growTree(Entity caster, Block target, float power, String[] args) {
 		target = target.getRelative(BlockFace.UP);
 		if (!BlockUtils.isAir(target.getType())) return false;
 

@@ -15,6 +15,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -235,17 +236,20 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		boolean pointBlank = Boolean.TRUE.equals(this.pointBlank.get(data));
 
 		if (targeted) {
+			if (!(data.caster() instanceof LivingEntity livingCaster))
+				return new CastResult(noTarget(data.caster(), data.args()), data);
+
 			if (requireEntityTarget) {
-				TargetInfo<LivingEntity> info = getTargetedEntity(data.caster(), data.power());
+				TargetInfo<LivingEntity> info = getTargetedEntity(livingCaster, data.power());
 				if (info.noTarget())
-					return new CastResult(noTarget(data.caster(), data.args(), info), data);
+					return new CastResult(noTarget(livingCaster, data.args(), info), data);
 
 				entityTarget = info.target();
 				data = data.target(entityTarget).power(info.power());
 			} else if (pointBlank) {
-				locationTarget = data.caster().getLocation();
+				locationTarget = livingCaster.getLocation();
 			} else {
-				Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+				Block block = getTargetedBlock(livingCaster, data.power(), data.args());
 
 				if (block != null) {
 					locationTarget = block.getLocation();
@@ -276,7 +280,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -328,7 +332,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		activeLoops.clear();
 	}
 
-	private void initLoop(LivingEntity caster, LivingEntity targetEntity, Location targetLocation, float power,
+	private void initLoop(Entity caster, Entity targetEntity, Location targetLocation, float power,
 			String[] args) {
 		Loop loop = new Loop(caster, targetEntity, targetLocation, power, args);
 
@@ -342,9 +346,9 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	public class Loop implements Runnable {
 
-		private final LivingEntity caster;
+		private final Entity caster;
 
-		private final LivingEntity targetEntity;
+		private final Entity targetEntity;
 		private final Location targetLocation;
 
 		private final long iterations;
@@ -354,7 +358,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		private long count;
 		private boolean cancelled;
 
-		private Loop(LivingEntity caster, LivingEntity targetEntity, Location targetLocation, float power,
+		private Loop(Entity caster, Entity targetEntity, Location targetLocation, float power,
 				String[] args) {
 			this.caster = caster;
 
@@ -518,7 +522,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			return LoopSpell.this;
 		}
 
-		public LivingEntity getCaster() {
+		public Entity getCaster() {
 			return caster;
 		}
 

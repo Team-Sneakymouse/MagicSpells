@@ -369,7 +369,7 @@ public class ParticleProjectileSpell extends InstantSpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -474,7 +474,7 @@ public class ParticleProjectileSpell extends InstantSpell
 		return playSpellArmorStandEffects(position, location, data);
 	}
 
-	private void setupTracker(ParticleProjectileTracker tracker, LivingEntity caster, LivingEntity target, float power,
+	private void setupTracker(ParticleProjectileTracker tracker, Entity caster, Entity target, float power,
 			String[] args) {
 		tracker.setSpell(this);
 

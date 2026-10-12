@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import java.util.function.Function;
 
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -59,7 +60,7 @@ public class DataSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -71,7 +72,8 @@ public class DataSpell extends TargetedSpell implements TargetedEntitySpell {
 	public CastResult castAtEntity(SpellData data) {
 		if (!(data.caster() instanceof Player) || !validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 				playSpellEffects(data.caster(), data.target(), data.power(), data.args());
-				String value = dataElement.apply(data.target());
+				if (!(data.target() instanceof LivingEntity livingTarget)) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+				String value = dataElement.apply(livingTarget);
 				MagicSpells.getVariableManager().set(variableName, (Player) data.caster(), value);
 				return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}

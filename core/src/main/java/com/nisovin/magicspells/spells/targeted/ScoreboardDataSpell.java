@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.scoreboard.Objective;
 
@@ -67,7 +68,7 @@ public class ScoreboardDataSpell extends TargetedSpell implements TargetedEntity
 		return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -85,7 +86,7 @@ public class ScoreboardDataSpell extends TargetedSpell implements TargetedEntity
 	}
 
 
-	private void setScore(Player caster, LivingEntity target) {
+	private void setScore(Player caster, Entity target) {
 		if (objective == null) return;
 
 		Variable variable = MagicSpells.getVariableManager().getVariable(variableName);

@@ -76,7 +76,7 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -90,8 +90,8 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	
 	}
-@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	@Override
+	public boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
@@ -202,7 +202,7 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 		}		
 	}
 	
-	public UUID getKey(LivingEntity livingEntity) {
+	public UUID getKey(Entity livingEntity) {
 		if (livingEntity == null) return null;
 		return livingEntity.getUniqueId();
 	}
@@ -211,7 +211,7 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 		return enableDefaultMarks;
 	}
 	
-	public Location getEffectiveMark(LivingEntity livingEntity) {
+	public Location getEffectiveMark(Entity livingEntity) {
 		MagicLocation m = marks.get(getKey(livingEntity));
 		if (m == null) {
 			if (enableDefaultMarks) return defaultMark.getLocation();

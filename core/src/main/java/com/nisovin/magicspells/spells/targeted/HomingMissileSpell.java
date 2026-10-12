@@ -202,7 +202,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -246,8 +246,8 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 		private Map<SpellEffect, Entity> entityMap;
 		private Set<ArmorStand> armorStandSet;
 
-		private LivingEntity caster;
-		private LivingEntity target;
+		private Entity caster;
+		private Entity target;
 		private SpellData data;
 		private Location currentLocation;
 		private Vector currentVelocity;
@@ -273,14 +273,14 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 
 		private int counter = 0;
 
-		private MissileTracker(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		private MissileTracker(Entity caster, Entity target, float power, String[] args) {
 			currentLocation = caster.getLocation().clone();
 			currentVelocity = currentLocation.getDirection();
 			init(caster, target, power, args);
 			playSpellEffects(EffectPosition.CASTER, caster, data);
 		}
 
-		private MissileTracker(LivingEntity caster, Location startLocation, LivingEntity target, float power,
+		private MissileTracker(Entity caster, Location startLocation, Entity target, float power,
 				String[] args) {
 			currentLocation = startLocation.clone();
 			if (Float.isNaN(currentLocation.getPitch()))
@@ -294,7 +294,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 				playSpellEffects(EffectPosition.CASTER, startLocation, data);
 		}
 
-		private void init(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		private void init(Entity caster, Entity target, float power, String[] args) {
 			this.caster = caster;
 			this.target = target;
 			this.power = power;
@@ -550,7 +550,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 		}
 
 		private void redirect() {
-			LivingEntity temp = target;
+			Entity temp = target;
 			target = caster;
 			caster = temp;
 			currentVelocity.multiply(-1F);

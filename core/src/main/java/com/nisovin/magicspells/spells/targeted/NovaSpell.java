@@ -11,6 +11,7 @@ import org.bukkit.util.Vector;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.BlockData;
 
@@ -119,7 +120,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState spellCastState, float power, String[] strings) {
+	public PostCastAction castSpell(Entity caster, SpellCastState spellCastState, float power, String[] strings) {
 		if (spellCastState != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, strings)).action();
@@ -141,11 +142,11 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity livingEntity, Location location, float v, String[] args) {
+	public boolean castAtLocation(Entity livingEntity, Location location, float v, String[] args) {
 		return castAtLocation(new SpellData(livingEntity, null, location, v, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
-	private void createNova(LivingEntity caster, LivingEntity target, Location loc, float power, String[] args) {
+	private void createNova(Entity caster, Entity target, Location loc, float power, String[] args) {
 		if (blockData == null)
 			return;
 		// Relative offset
@@ -187,7 +188,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		private BlockData blockData;
 		private Collection<Player> nearby;
 		private Set<Block> blocks;
-		private LivingEntity caster;
+		private Entity caster;
 		private Block center;
 		private float power;
 		private String[] args;
@@ -199,7 +200,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		private int count;
 		private int temp;
 
-		private NovaTrackerSquare(Collection<Player> nearby, Block center, BlockData blockData, LivingEntity caster,
+		private NovaTrackerSquare(Collection<Player> nearby, Block center, BlockData blockData, Entity caster,
 				int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange, float power,
 				String[] args) {
 			this.nearby = nearby;
@@ -299,7 +300,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		private BlockData blockData;
 		private Collection<Player> nearby;
 		private Set<Block> blocks;
-		private LivingEntity caster;
+		private Entity caster;
 		private Block center;
 		private float power;
 		private String[] args;
@@ -311,7 +312,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		private int count;
 		private int temp;
 
-		private NovaTrackerCircle(Collection<Player> nearby, Block center, BlockData blockData, LivingEntity caster,
+		private NovaTrackerCircle(Collection<Player> nearby, Block center, BlockData blockData, Entity caster,
 				int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange, float power,
 				String[] args) {
 			this.nearby = nearby;

@@ -4,6 +4,7 @@ import java.util.regex.Pattern;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -115,7 +116,7 @@ public class Modifier implements IModifier {
 
 	@Override
 	public boolean apply(SpellCastEvent event) {
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		boolean check;
 		if (alertCondition) check = ((IModifier) condition).apply(event);
 		else check = condition.check(caster);
@@ -135,7 +136,7 @@ public class Modifier implements IModifier {
 
 	@Override
 	public boolean apply(SpellTargetEvent event) {
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		boolean check;
 		if (alertCondition) check = ((IModifier) condition).apply(event);
 		else check = condition.check(caster, event.getTarget());
@@ -145,7 +146,7 @@ public class Modifier implements IModifier {
 
 	@Override
 	public boolean apply(SpellCastedEvent event) {
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		boolean check;
 		if (alertCondition) check = ((IModifier) condition).apply(event);
 		else check = condition.check(caster);
@@ -155,7 +156,7 @@ public class Modifier implements IModifier {
 
 	@Override
 	public boolean apply(SpellTargetLocationEvent event) {
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		boolean check;
 		if (alertCondition) check = ((IModifier) condition).apply(event);
 		else check = condition.check(caster, event.getTargetLocation());
@@ -202,19 +203,19 @@ public class Modifier implements IModifier {
 
 	@Override
 	@Deprecated
-	public ModifierResult apply(LivingEntity caster, SpellData data) {
+	public ModifierResult apply(Entity caster, SpellData data) {
 		return apply(data.caster(caster));
 	}
 
 	@Override
 	@Deprecated
-	public ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data) {
+	public ModifierResult apply(Entity caster, Entity target, SpellData data) {
 		return applyTarget(data.caster(caster).target(target));
 	}
 
 	@Override
 	@Deprecated
-	public ModifierResult apply(LivingEntity caster, Location target, SpellData data) {
+	public ModifierResult apply(Entity caster, Location target, SpellData data) {
 		return applyLocation(data.caster(caster).location(target));
 	}
 
@@ -235,19 +236,19 @@ public class Modifier implements IModifier {
 
 	@Override
 	@Deprecated
-	public boolean check(LivingEntity livingEntity) {
+	public boolean check(Entity livingEntity) {
 		return check(new SpellData(livingEntity));
 	}
 
 	@Override
 	@Deprecated
-	public boolean check(LivingEntity livingEntity, LivingEntity entity) {
+	public boolean check(Entity livingEntity, Entity entity) {
 		return checkTarget(new SpellData(livingEntity, entity));
 	}
 
 	@Override
 	@Deprecated
-	public boolean check(LivingEntity livingEntity, Location location) {
+	public boolean check(Entity livingEntity, Location location) {
 		return checkLocation(new SpellData(livingEntity, location));
 	}
 

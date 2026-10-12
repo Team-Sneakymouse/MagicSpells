@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.conversations.Conversation;
 import org.bukkit.conversations.ConversationFactory;
@@ -39,7 +40,7 @@ public class ConversationSpell extends TargetedSpell implements TargetedEntitySp
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -62,7 +63,7 @@ public class ConversationSpell extends TargetedSpell implements TargetedEntitySp
 
 
 
-	private void conversate(LivingEntity caster, Player target, float power, String[] args) {
+	private void conversate(Entity caster, Player target, float power, String[] args) {
 		Conversation conversation = conversationFactory.buildConversation(target);
 		ConversationContextUtil.setConversable(conversation.getContext(), target);
 		conversation.begin();

@@ -57,7 +57,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -71,7 +71,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 
-	private List<Item> getNearbyItems(LivingEntity caster, Location center, float power, String[] args) {
+	private List<Item> getNearbyItems(Entity caster, Location center, float power, String[] args) {
 		int maxTargets = this.maxTargets.get(caster, null, power, args);
 		if (maxTargets <= 0)
 			return List.of();
@@ -102,7 +102,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 		return buckets.select();
 	}
 
-	private void magnet(LivingEntity caster, Location location, Collection<Item> items, float power, String[] args) {
+	private void magnet(Entity caster, Location location, Collection<Item> items, float power, String[] args) {
 		double velocity = 0;
 		if (!resolveVelocityPerItem) {
 			velocity = this.velocity.get(caster, null, power, args);
@@ -115,7 +115,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 			magnet(caster, location, i, power, args, data, velocity);
 	}
 
-	private void magnet(LivingEntity caster, Location origin, Item item, float power, String[] args, SpellData data,
+	private void magnet(Entity caster, Location origin, Item item, float power, String[] args, SpellData data,
 			double velocity) {
 		if (forcePickup)
 			item.setPickupDelay(0);

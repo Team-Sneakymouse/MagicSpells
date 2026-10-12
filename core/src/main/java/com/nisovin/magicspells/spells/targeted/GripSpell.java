@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.SpellData;
@@ -53,7 +54,7 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -84,7 +85,7 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 
 
-	private boolean grip(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
+	private boolean grip(Entity caster, Entity target, Location from, float power, String[] args) {
 		Location loc = from.clone();
 
 		Vector startDir = loc.clone().getDirection().normalize();

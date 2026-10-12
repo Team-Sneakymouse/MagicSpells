@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -40,11 +41,11 @@ public class SpellReagents {
         reagents.add(reagent);
     }
 
-    public static SpellReagents fromList(List<String> costList, String internalName, LivingEntity livingEntity) {
+    public static SpellReagents fromList(List<String> costList, String internalName, Entity livingEntity) {
         return fromList(costList, internalName, livingEntity, false);
     }
 
-    public static SpellReagents fromList(List<String> costList, String internalName, LivingEntity livingEntity,
+    public static SpellReagents fromList(List<String> costList, String internalName, Entity livingEntity,
             boolean consumeFromBagOfHolding) {
         SpellReagents spellReagents = new SpellReagents();
         if (costList == null || costList.isEmpty()) return spellReagents;
@@ -148,7 +149,9 @@ public class SpellReagents {
                     };
 
                     if (reagent != null && reagent.get().doubleValue() != 0) {
-                        if (livingEntity == null || reagent.has(livingEntity) || i == alternatives.length - 1) {
+                        if (livingEntity == null
+                                || (livingEntity instanceof LivingEntity living && reagent.has(living))
+                                || i == alternatives.length - 1) {
                             selectedReagent = reagent;
                             break;
                         }
@@ -172,11 +175,12 @@ public class SpellReagents {
         return spellReagents;
     }
 
-    public boolean hasAll(LivingEntity livingEntity) {
+    public boolean hasAll(Entity livingEntity) {
         if (!parseSucceeded) return false;
+        if (!(livingEntity instanceof LivingEntity living)) return livingEntity == null;
         if (reagents != null && !reagents.isEmpty()) {
             for (Reagent reagent : reagents) {
-                if (!reagent.has(livingEntity)) {
+                if (!reagent.has(living)) {
                     return false;
                 }
             }
@@ -184,10 +188,11 @@ public class SpellReagents {
         return true;
     }
 
-    public void removeAll(LivingEntity livingEntity) {
+    public void removeAll(Entity livingEntity) {
+        if (!(livingEntity instanceof LivingEntity living)) return;
         if (reagents != null && !reagents.isEmpty()) {
             for (Reagent reagent : reagents) {
-                reagent.remove(livingEntity);
+                reagent.remove(living);
             }
         }
     }

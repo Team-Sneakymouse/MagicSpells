@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import java.util.Set;
 import java.util.HashSet;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
@@ -42,7 +43,7 @@ public class TagEntitySpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -67,7 +68,7 @@ public class TagEntitySpell extends TargetedSpell implements TargetedEntitySpell
 
 
 
-	private void tag(LivingEntity caster, LivingEntity target, String[] args) {
+	private void tag(Entity caster, Entity target, String[] args) {
 		String varTag = doReplacements ? MagicSpells.doReplacements(tag, caster, target, args) : tag;
 
 		switch (operation) {

@@ -2,6 +2,7 @@ package com.nisovin.magicspells.events;
 
 import org.bukkit.Location;
 import org.bukkit.event.Cancellable;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -24,17 +25,17 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	}
 
 	@Deprecated
-	public SpellTargetLocationEvent(Spell spell, LivingEntity caster, Location target, float power, String[] args) {
+	public SpellTargetLocationEvent(Spell spell, Entity caster, Location target, float power, String[] args) {
 		this(spell, new SpellData(caster, null, target, power, args));
 	}
 
 	@Deprecated
-	public SpellTargetLocationEvent(Spell spell, LivingEntity caster, Location target, float power) {
+	public SpellTargetLocationEvent(Spell spell, Entity caster, Location target, float power) {
 		this(spell, new SpellData(caster, target, power, null));
 	}
 
 	@Override
-	public LivingEntity getCaster() {
+	public Entity getCaster() {
 		return spellData.caster();
 	}
 

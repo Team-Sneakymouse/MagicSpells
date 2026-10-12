@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -118,7 +119,7 @@ public class PortalSpell extends InstantSpell {
 
 	@Override
 	public CastResult cast(SpellData data) {
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		String[] args = data.args();
 		float power = data.power();
 
@@ -181,7 +182,7 @@ public class PortalSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -285,7 +286,7 @@ public class PortalSpell extends InstantSpell {
 		private boolean teleportOtherPlayers;
 		private boolean chargeCostToTeleporter;
 
-		private LivingEntity caster;
+		private Entity caster;
 		private SpellData data;
 		private float power;
 
@@ -295,7 +296,7 @@ public class PortalSpell extends InstantSpell {
 		private int taskPortal = -1;
 		private int taskStop = -1;
 
-		private PortalLink(LivingEntity caster, Portal startPortal, Portal endPortal, float power, SpellData data) {
+		private PortalLink(Entity caster, Portal startPortal, Portal endPortal, float power, SpellData data) {
 			this.caster = caster;
 			this.startPortal = startPortal;
 			this.endPortal = endPortal;
@@ -403,7 +404,7 @@ public class PortalSpell extends InstantSpell {
 		}
 
 		private boolean checkCost(Player target, Portal portal) {
-			LivingEntity payer;
+			Entity payer;
 			if (portal.portalCost == null)
 				return true;
 

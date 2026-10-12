@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Subspell;
@@ -53,23 +54,23 @@ public abstract class TargetedSpell extends InstantSpell {
 		}
 	}
 
-	public void sendMessages(LivingEntity caster, LivingEntity target) {
+	public void sendMessages(Entity caster, Entity target) {
 		sendMessages(caster, target, null, null);
 	}
 
-	public void sendMessages(LivingEntity caster, LivingEntity target, Location location) {
+	public void sendMessages(Entity caster, Entity target, Location location) {
 		sendMessages(caster, target, location, null);
 	}
 
-	public void sendMessages(LivingEntity caster, LivingEntity target, String[] args) {
+	public void sendMessages(Entity caster, Entity target, String[] args) {
 		sendMessages(caster, target, null, args);
 	}
 
-	public void sendMessages(LivingEntity caster, Location location, String[] args) {
+	public void sendMessages(Entity caster, Location location, String[] args) {
 		sendMessages(caster, null, location, args);
 	}
 
-	public void sendMessages(LivingEntity caster, LivingEntity target, Location location, String[] args) {
+	public void sendMessages(Entity caster, Entity target, Location location, String[] args) {
 		String casterName = getTargetName(caster);
 		String targetName = getTargetName(target);
 
@@ -78,7 +79,7 @@ public abstract class TargetedSpell extends InstantSpell {
 		sendMessageNear(caster, target, strCastOthers, args, "%a", casterName, "%t", targetName);
 	}
 
-	protected String getTargetName(LivingEntity target) {
+	protected String getTargetName(Entity target) {
 		if (target == null)
 			return "none";
 		if (target instanceof Player)
@@ -104,28 +105,38 @@ public abstract class TargetedSpell extends InstantSpell {
 	/**
 	 * Plays the fizzle sound if it is enabled for this spell.
 	 */
-	protected void fizzle(LivingEntity livingEntity) {
+	protected void fizzle(Entity livingEntity) {
 		if (!playFizzleSound || !(livingEntity instanceof Player player))
 			return;
 		player.playEffect(livingEntity.getLocation(), Effect.EXTINGUISH, null);
 	}
 
 	@Override
-	protected TargetInfo<LivingEntity> getTargetedEntity(LivingEntity caster, float power, boolean forceTargetPlayers,
+	protected TargetInfo<LivingEntity> getTargetedEntity(Entity caster, float power, boolean forceTargetPlayers,
 			ValidTargetChecker checker) {
 		return getTargetedEntity(caster, power, forceTargetPlayers, checker, null);
 	}
 
 	@Override
-	protected TargetInfo<LivingEntity> getTargetedEntity(LivingEntity caster, float power, boolean forceTargetPlayers,
+	protected TargetInfo<LivingEntity> getTargetedEntity(Entity caster, float power, boolean forceTargetPlayers,
+			ValidTargetChecker checker, String[] args) {
+		TargetInfo<Entity> info = getTargetedEntityAsEntity(caster, power, forceTargetPlayers, checker, args);
+		Entity target = info.target();
+		if (target == null) return new TargetInfo<>(null, info.power(), info.cancelled());
+		if (!(target instanceof LivingEntity living)) return new TargetInfo<>(null, info.power(), false);
+		return new TargetInfo<>(living, info.power(), info.cancelled());
+	}
+
+	@Override
+	protected TargetInfo<Entity> getTargetedEntityAsEntity(Entity caster, float power, boolean forceTargetPlayers,
 			ValidTargetChecker checker, String[] args) {
 		if (targetSelf || validTargetList.canTargetSelf()) {
 			SpellTargetEvent event = new SpellTargetEvent(this, caster, caster, power, args);
-			return new TargetInfo<>(event.callEvent() ? event.getTarget() : null, event.getPower(),
-					event.isCastCancelled());
+			Entity target = event.callEvent() ? event.getTarget() : null;
+			return new TargetInfo<>(target, event.getPower(), event.isCastCancelled());
 		}
 
-		return super.getTargetedEntity(caster, power, forceTargetPlayers, checker, args);
+		return super.getTargetedEntityAsEntity(caster, power, forceTargetPlayers, checker, args);
 	}
 
 	/**
@@ -136,7 +147,7 @@ public abstract class TargetedSpell extends InstantSpell {
 	 * @param livingEntity the casting living entity
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity) {
+	protected PostCastAction noTarget(Entity livingEntity) {
 		return noTarget(livingEntity, strNoTarget, null, null);
 	}
 
@@ -149,7 +160,7 @@ public abstract class TargetedSpell extends InstantSpell {
 	 * @param args         arguments of spell
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String[] args) {
+	protected PostCastAction noTarget(Entity livingEntity, String[] args) {
 		return noTarget(livingEntity, strNoTarget, args, null);
 	}
 
@@ -162,7 +173,7 @@ public abstract class TargetedSpell extends InstantSpell {
 	 * @param info         targeting info
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, TargetInfo<?> info) {
+	protected PostCastAction noTarget(Entity livingEntity, TargetInfo<?> info) {
 		return noTarget(livingEntity, strNoTarget, null, info);
 	}
 
@@ -176,7 +187,7 @@ public abstract class TargetedSpell extends InstantSpell {
 	 * @param info         targeting info
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String[] args, TargetInfo<?> info) {
+	protected PostCastAction noTarget(Entity livingEntity, String[] args, TargetInfo<?> info) {
 		return noTarget(livingEntity, strNoTarget, args, info);
 	}
 
@@ -189,7 +200,7 @@ public abstract class TargetedSpell extends InstantSpell {
 	 * @param message      the message to send
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String message) {
+	protected PostCastAction noTarget(Entity livingEntity, String message) {
 		return noTarget(livingEntity, message, null, null);
 	}
 
@@ -203,7 +214,7 @@ public abstract class TargetedSpell extends InstantSpell {
 	 * @param args         arguments of spell
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String message, String[] args) {
+	protected PostCastAction noTarget(Entity livingEntity, String message, String[] args) {
 		return noTarget(livingEntity, message, args, null);
 	}
 
@@ -217,7 +228,7 @@ public abstract class TargetedSpell extends InstantSpell {
 	 * @param info         targeting info
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String message, TargetInfo<?> info) {
+	protected PostCastAction noTarget(Entity livingEntity, String message, TargetInfo<?> info) {
 		return noTarget(livingEntity, message, null, info);
 	}
 
@@ -232,7 +243,7 @@ public abstract class TargetedSpell extends InstantSpell {
 	 * @param info         targeting info
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String message, String[] args, TargetInfo<?> info) {
+	protected PostCastAction noTarget(Entity livingEntity, String message, String[] args, TargetInfo<?> info) {
 		if (info != null && info.cancelled())
 			return PostCastAction.ALREADY_HANDLED;
 		fizzle(livingEntity);

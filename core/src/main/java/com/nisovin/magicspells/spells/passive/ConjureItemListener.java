@@ -40,7 +40,7 @@ public class ConjureItemListener extends PassiveListener {
 	@OverridePriority
 	@EventHandler
 	public void conConjure(ConjureItemEvent event) {
-		LivingEntity caster = event.getEntity();
+		if (!(event.getEntity() instanceof LivingEntity caster)) return;
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
 		if (!items.isEmpty()) {

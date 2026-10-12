@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import net.kyori.adventure.text.Component;
@@ -88,7 +89,7 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 		return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();

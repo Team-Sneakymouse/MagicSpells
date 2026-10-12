@@ -1,7 +1,7 @@
 package com.nisovin.magicspells.spells;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Entity;
 
 import com.nisovin.magicspells.Spell.PostCastAction;
 import com.nisovin.magicspells.util.CastResult;
@@ -16,7 +16,7 @@ public interface TargetedLocationSpell {
 	CastResult castAtLocation(SpellData data);
 
 	@Deprecated
-	default boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	default boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
@@ -26,7 +26,7 @@ public interface TargetedLocationSpell {
 	}
 
 	@Deprecated
-	default boolean castAtLocation(LivingEntity caster, Location target, float power) {
+	default boolean castAtLocation(Entity caster, Location target, float power) {
 		return castAtLocation(caster, target, power, null);
 	}
 

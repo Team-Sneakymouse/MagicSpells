@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.HashSet;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -59,14 +60,14 @@ public class LocationVariableSpell extends TargetedSpell implements TargetedLoca
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
-	public PostCastAction cast(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public PostCastAction cast(Entity caster, Entity target, float power, String[] args) {
 		return castAtLocation(caster, target.getLocation(), power, args) ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED;
 	}
 
@@ -136,7 +137,7 @@ public class LocationVariableSpell extends TargetedSpell implements TargetedLoca
 	
 	}
 @Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 

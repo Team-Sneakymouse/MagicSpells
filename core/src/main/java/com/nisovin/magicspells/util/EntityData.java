@@ -99,10 +99,13 @@ public class EntityData {
 	// Item Display
 	private final ConfigData<MagicItem> item;
 
+	private final ConfigData<List<String>> scoreboardTags;
+
 	public EntityData(ConfigurationSection config) {
 		entityType = ConfigDataUtil.getEnum(config, "entity", EntityType.class, null);
 
 		relativeOffset = ConfigDataUtil.getVector(config, "relative-offset", new Vector(0, 0, 0));
+		scoreboardTags = ConfigDataUtil.getStringList(config, "scoreboard-tags");
 
 		Multimap<Class<?>, Transformer<?, ?>> transformers = MultimapBuilder.linkedHashKeys().arrayListValues().build();
 
@@ -433,6 +436,14 @@ public class EntityData {
 
 		if (entity == null)
 			return null;
+
+		List<String> tags = scoreboardTags.get(data);
+		if (tags != null) {
+			for (String tag : tags) {
+				if (tag == null || tag.isEmpty()) continue;
+				entity.addScoreboardTag(tag);
+			}
+		}
 
 		if (displayHack[0]) {
 			entity.teleport(startLoc);

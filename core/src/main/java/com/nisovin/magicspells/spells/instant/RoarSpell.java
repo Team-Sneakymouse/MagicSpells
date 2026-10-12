@@ -44,7 +44,8 @@ public class RoarSpell extends InstantSpell {
 			if (entity instanceof Player) continue;
 			if (!validTargetList.canTarget(data.caster(), entity)) continue;
 
-			MobUtil.setTarget(livingEntity, data.caster());
+			if (!(data.caster() instanceof LivingEntity livingCaster)) continue;
+			MobUtil.setTarget(livingEntity, livingCaster);
 			count++;
 
 			SpellData effectData = new SpellData(data.caster(), livingEntity, data.power(), data.args());
@@ -62,7 +63,7 @@ public class RoarSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();

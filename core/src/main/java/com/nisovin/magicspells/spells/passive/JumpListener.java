@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.destroystokyo.paper.event.entity.EntityJumpEvent;
@@ -35,7 +36,7 @@ public class JumpListener extends PassiveListener {
 		handleEvent(event.getPlayer(), event);
 	}
 
-	private void handleEvent(LivingEntity caster, Cancellable event) {
+	private void handleEvent(Entity caster, Cancellable event) {
 		if (!isCancelStateOk(event.isCancelled())) return;
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 

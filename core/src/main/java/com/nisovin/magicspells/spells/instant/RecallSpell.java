@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.instant;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -60,7 +61,7 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 
 	@Override
 	public CastResult cast(SpellData data) {
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		float power = data.power();
 		String[] args = data.args();
 
@@ -112,7 +113,7 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -132,7 +133,7 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 	}
 
 
-	private Location getRecallLocation(LivingEntity caster) {
+	private Location getRecallLocation(Entity caster) {
 		if (useBedLocation && caster instanceof Player)
 			return ((Player) caster).getRespawnLocation();
 		if (markSpell == null)

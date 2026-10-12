@@ -70,7 +70,7 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 
 	private ValidTargetList targetList;
 
-	private LivingEntity caster;
+	private Entity caster;
 	private Item entity;
 	private Vector velocity;
 	private Location startLocation;
@@ -87,7 +87,7 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 	private int taskId;
 	private int count = 0;
 
-	public ItemProjectileTracker(LivingEntity caster, Location startLocation, float power, String[] args) {
+	public ItemProjectileTracker(Entity caster, Location startLocation, float power, String[] args) {
 		this.caster = caster;
 		this.power = power;
 		this.args = args;
@@ -187,7 +187,9 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 			if (!event.callEvent())
 				continue;
 
-			target = event.getTarget();
+			if (!(event.getTarget() instanceof LivingEntity eventTarget))
+				continue;
+			target = eventTarget;
 			float subPower = event.getPower();
 
 			SpellData hitData = data.target(target).power(subPower);
@@ -259,11 +261,11 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 		stopped = true;
 	}
 
-	public LivingEntity getCaster() {
+	public Entity getCaster() {
 		return caster;
 	}
 
-	public void setCaster(LivingEntity caster) {
+	public void setCaster(Entity caster) {
 		this.caster = caster;
 	}
 

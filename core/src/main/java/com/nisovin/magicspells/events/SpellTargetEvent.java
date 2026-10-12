@@ -1,7 +1,7 @@
 package com.nisovin.magicspells.events;
 
 import org.bukkit.event.Cancellable;
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Entity;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.util.SpellData;
@@ -22,38 +22,38 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 		this.spellData = spellData;
 	}
 
-	public SpellTargetEvent(Spell spell, SpellData spellData, LivingEntity target) {
+	public SpellTargetEvent(Spell spell, SpellData spellData, Entity target) {
 		this(spell, spellData.target(target));
 	}
 
 	@Deprecated
-	public SpellTargetEvent(Spell spell, LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public SpellTargetEvent(Spell spell, Entity caster, Entity target, float power, String[] args) {
 		this(spell, new SpellData(caster, target, power, args));
 	}
 
 	@Deprecated
-	public SpellTargetEvent(Spell spell, LivingEntity caster, LivingEntity target, float power) {
+	public SpellTargetEvent(Spell spell, Entity caster, Entity target, float power) {
 		this(spell, new SpellData(caster, target, power, null));
 	}
 
 	@Override
-	public LivingEntity getCaster() {
+	public Entity getCaster() {
 		return spellData.caster();
 	}
 
 	/**
-	 * Gets the living entity that is being targeted by the spell.
-	 * @return the targeted living entity
+	 * Gets the entity that is being targeted by the spell.
+	 * @return the targeted entity
 	 */
-	public LivingEntity getTarget() {
+	public Entity getTarget() {
 		return spellData.target();
 	}
 
 	/**
-	 * Sets the spell's target to the provided living entity.
+	 * Sets the spell's target to the provided entity.
 	 * @param target the new target
 	 */
-	public void setTarget(LivingEntity target) {
+	public void setTarget(Entity target) {
 		spellData = spellData.target(target);
 	}
 

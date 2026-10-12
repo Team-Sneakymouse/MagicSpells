@@ -7,6 +7,7 @@ import java.util.HashSet;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageEvent;
 
@@ -66,13 +67,13 @@ public class LeapSpell extends InstantSpell {
 		}
 	}
 
-	public boolean isJumping(LivingEntity livingEntity) {
+	public boolean isJumping(Entity livingEntity) {
 		return jumping.contains(livingEntity.getUniqueId());
 	}
 
 	@Override
 	public CastResult cast(SpellData data) {
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		float power = data.power();
 		String[] args = data.args();
 
@@ -108,7 +109,7 @@ public class LeapSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();

@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -48,17 +49,17 @@ public class SpellBeneficialCondition extends Condition implements IModifier {
 	}
 
 	@Override
-	public ModifierResult apply(LivingEntity caster, SpellData data) {
+	public ModifierResult apply(Entity caster, SpellData data) {
 		return new ModifierResult(data, false);
 	}
 
 	@Override
-	public ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data) {
+	public ModifierResult apply(Entity caster, Entity target, SpellData data) {
 		return new ModifierResult(data, false);
 	}
 
 	@Override
-	public ModifierResult apply(LivingEntity caster, Location target, SpellData data) {
+	public ModifierResult apply(Entity caster, Location target, SpellData data) {
 		return new ModifierResult(data, false);
 	}
 
@@ -85,6 +86,27 @@ public class SpellBeneficialCondition extends Condition implements IModifier {
 	@Override
 	public boolean check(LivingEntity caster, Location location) {
 		return false;
+	}
+
+
+	@Override
+	@Deprecated
+	public boolean check(Entity entity) {
+		return entity instanceof LivingEntity living && check(living);
+	}
+
+	@Override
+	@Deprecated
+	public boolean check(Entity entity, Entity target) {
+		return entity instanceof LivingEntity living
+			&& target instanceof LivingEntity livingTarget
+			&& check(living, livingTarget);
+	}
+
+	@Override
+	@Deprecated
+	public boolean check(Entity entity, Location location) {
+		return entity instanceof LivingEntity living && check(living, location);
 	}
 
 }

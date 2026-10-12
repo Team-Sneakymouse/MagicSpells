@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.HashMap;
 
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.CastData;
@@ -58,7 +59,7 @@ public class ClaritySpell extends BuffSpell {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onSpellCast(SpellCastEvent event) {
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		if (!isActive(caster)) return;
 		if (!filter.check(event.getSpell())) return;
 

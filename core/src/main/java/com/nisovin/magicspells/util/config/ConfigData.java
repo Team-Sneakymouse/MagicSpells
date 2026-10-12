@@ -1,20 +1,20 @@
 package com.nisovin.magicspells.util.config;
 
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Entity;
 import org.bukkit.Location;
 
 import com.nisovin.magicspells.util.SpellData;
 
 public interface ConfigData<T> {
 
-	T get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args);
+	T get(Entity caster, Entity target, Location location, float power, String[] args);
 
-	default T get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	default T get(Entity caster, Entity target, float power, String[] args) {
 		return get(caster, target, target == null ? caster == null ? null : caster.getLocation() : target.getLocation(),
 				power, args);
 	}
 
-	default T get(LivingEntity caster, float power, String[] args) {
+	default T get(Entity caster, float power, String[] args) {
 		return get(caster, null, power, args);
 	}
 

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import com.nisovin.magicspells.util.CastData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.MagicConfig;
@@ -55,7 +56,7 @@ public class DamageEmpowerSpell extends BuffSpell {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSpellApplyDamage(SpellApplyDamageEvent event) {
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		if (!isActive(caster)) return;
 		if (!filter.check(event.getSpell())) return;
 

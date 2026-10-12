@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Subspell;
@@ -119,7 +120,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -212,7 +213,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 			playSpellEffects(EffectPosition.CASTER, player, data);
 	}
 
-	private record CarpetData(LivingEntity caster, float power, String[] args, AlteredBlockManager.Change change) {
+	private record CarpetData(Entity caster, float power, String[] args, AlteredBlockManager.Change change) {
 	}
 
 	private class TouchChecker implements Runnable {

@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.instant;
 import org.bukkit.World;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.MagicConfig;
@@ -33,7 +34,7 @@ public class TimeSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -47,14 +48,14 @@ public class TimeSpell extends InstantSpell implements TargetedLocationSpell {
 	
 	}
 @Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 
 
 
-	private void setTime(LivingEntity caster, World world, float power, String[] args) {
+	private void setTime(Entity caster, World world, float power, String[] args) {
 		world.setTime(timeToSet.get(caster, null, power, args));
 		for (Player p : world.getPlayers()) sendMessage(strAnnounce, p, args);
 	}

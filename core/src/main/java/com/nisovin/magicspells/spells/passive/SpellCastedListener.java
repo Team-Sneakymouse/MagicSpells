@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.spells.passive;
 
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -28,7 +29,7 @@ public class SpellCastedListener extends PassiveListener {
 		if (event.getSpellCastState() != SpellCastState.NORMAL) return;
 		if (event.getPostCastAction() == PostCastAction.ALREADY_HANDLED) return;
 
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
 		Spell spell = event.getSpell();

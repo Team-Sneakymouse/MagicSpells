@@ -41,7 +41,7 @@ public class MountJumpListener extends PassiveListener {
 		}
 	}
 
-	private void handleEvent(LivingEntity caster, Cancellable event) {
+	private void handleEvent(Entity caster, Cancellable event) {
 		if (!isCancelStateOk(event.isCancelled())) return;
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 

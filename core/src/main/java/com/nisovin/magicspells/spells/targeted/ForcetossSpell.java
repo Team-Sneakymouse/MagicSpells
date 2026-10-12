@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.util.Vector;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
@@ -57,7 +58,7 @@ public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -67,13 +68,15 @@ public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell
 	
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-				toss(data.caster(), data.target(), data.power(), data.args());
+				toss(data.caster(), target, data.power(), data.args());
 				return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 
-	private void toss(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void toss(Entity caster, LivingEntity target, float power, String[] args) {
 		if (target == null) return;
 		if (caster == null) return;
 		if (!caster.getLocation().getWorld().equals(target.getLocation().getWorld())) return;

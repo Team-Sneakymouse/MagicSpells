@@ -47,7 +47,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 	private Map<SpellEffect, Entity> entityMap;
 	private Set<ArmorStand> armorStandSet;
 
-	private LivingEntity caster;
+	private Entity caster;
 
 	private SpellData data;
 	private String[] args;
@@ -143,7 +143,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 	private static final double ANGLE_Y = AccurateMath.toRadians(-90);
 
-	public ParticleProjectileTracker(LivingEntity caster, float power, String[] args) {
+	public ParticleProjectileTracker(Entity caster, float power, String[] args) {
 		this.caster = caster;
 		this.power = power;
 		this.args = args;
@@ -168,7 +168,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		initialize();
 	}
 
-	public void startTarget(Location from, LivingEntity target) {
+	public void startTarget(Location from, Entity target) {
 		startTarget(from, target.getLocation());
 	}
 
@@ -619,7 +619,9 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			if (!target.isValid() || immune.contains(target) || !targetList.canTarget(caster, target))
 				continue;
 
-			ParticleProjectileHitEvent hitEvent = new ParticleProjectileHitEvent(caster, target, tracker, spell, power);
+			if (!(caster instanceof LivingEntity livingCaster))
+				continue;
+			ParticleProjectileHitEvent hitEvent = new ParticleProjectileHitEvent(livingCaster, target, tracker, spell, power);
 			hitEvent.callEvent();
 
 			if (stopped)
@@ -634,7 +636,10 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			if (!targetEvent.callEvent())
 				continue;
 
-			target = targetEvent.getTarget();
+			Entity eventTarget = targetEvent.getTarget();
+			if (!(eventTarget instanceof LivingEntity livingTarget))
+				continue;
+			target = livingTarget;
 			subPower = targetEvent.getPower();
 
 			SpellData hitData = new SpellData(caster, target, subPower, args);
@@ -707,11 +712,11 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		return stopped;
 	}
 
-	public LivingEntity getCaster() {
+	public Entity getCaster() {
 		return caster;
 	}
 
-	public void setCaster(LivingEntity caster) {
+	public void setCaster(Entity caster) {
 		this.caster = caster;
 	}
 

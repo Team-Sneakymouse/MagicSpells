@@ -7,6 +7,7 @@ import java.util.HashMap;
 import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Subspell;
@@ -67,7 +68,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 
 	@Override
 	public CastResult cast(SpellData data) {
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		CastData castData = casting.get(caster.getUniqueId());
 		if (castData != null && castData.isValid(caster)) {
 			castData.cast(caster);
@@ -95,7 +96,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -105,7 +106,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 	public CastResult castAtLocation(SpellData data) {
 		if (!targetLocation)
 			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		CastData castData = casting.get(caster.getUniqueId());
 		if (castData != null && castData.isValid(caster)) {
 			castData.cast(caster);
@@ -123,7 +124,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 	public CastResult castAtEntity(SpellData data) {
 		if (!targetEntity || !validTargetList.canTarget(data.caster(), data.target()))
 			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		CastData castData = casting.get(caster.getUniqueId());
 		if (castData != null && castData.isValid(caster)) {
 			castData.cast(caster);
@@ -140,7 +141,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 	private class CastData {
 
 		private Location targetLocation = null;
-		private LivingEntity targetEntity = null;
+		private Entity targetEntity = null;
 
 		private final float maxDistance;
 		private final float maxDuration;
@@ -151,7 +152,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 		private long start = System.currentTimeMillis();
 		private long lastCast = 0;
 
-		private CastData(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		private CastData(Entity caster, Entity target, float power, String[] args) {
 			targetEntity = target;
 			this.power = power;
 			this.args = args;
@@ -161,7 +162,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 			resetTime = HoldRightSpell.this.resetTime.get(caster, target, power, args);
 		}
 
-		private CastData(LivingEntity caster, Location target, float power, String[] args) {
+		private CastData(Entity caster, Location target, float power, String[] args) {
 			targetLocation = target;
 			this.power = power;
 			this.args = args;
@@ -171,7 +172,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 			resetTime = HoldRightSpell.this.resetTime.get(caster, null, power, args);
 		}
 
-		private CastData(LivingEntity caster, float power, String[] args) {
+		private CastData(Entity caster, float power, String[] args) {
 			this.power = power;
 			this.args = args;
 
@@ -180,7 +181,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 			resetTime = HoldRightSpell.this.resetTime.get(caster, null, power, args);
 		}
 
-		private boolean isValid(LivingEntity livingEntity) {
+		private boolean isValid(Entity livingEntity) {
 			if (lastCast < System.currentTimeMillis() - resetTime) return false;
 			if (maxDuration > 0 && System.currentTimeMillis() - start > maxDuration * TimeUtil.MILLISECONDS_PER_SECOND)
 				return false;
@@ -194,7 +195,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 			return true;
 		}
 
-		private void cast(LivingEntity caster) {
+		private void cast(Entity caster) {
 			lastCast = System.currentTimeMillis();
 			if (targetEntity != null) spellToCast.subcast(new SpellData(caster, targetEntity, power, args));
 			else if (targetLocation != null) spellToCast.subcast(new SpellData(caster, targetLocation, power, args));

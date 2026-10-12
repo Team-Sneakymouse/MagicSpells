@@ -14,6 +14,7 @@ import com.sk89q.worldedit.regions.factory.SphereRegionFactory;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
     }
 
     @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+    public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
         if (state != SpellCastState.NORMAL)
             return PostCastAction.HANDLE_NORMALLY;
         return cast(new SpellData(caster, power, args)).action();
@@ -69,13 +70,13 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
     
 	}
 @Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 
 
-    private void fillZone(LivingEntity caster, Location location){
+    private void fillZone(Entity caster, Location location){
         FillHandler _holder = new FillHandler(caster, location);
         scheduleDelayedTask(_holder::start, 0);
     }
@@ -93,11 +94,11 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
 
         List<BlockVector3> replaceLocations;
 
-        LivingEntity caster;
+        Entity caster;
 
         Location startLocation;
 
-        public FillHandler(LivingEntity caster, Location location){
+        public FillHandler(Entity caster, Location location){
             SphereRegionFactory sphereBuilder = new SphereRegionFactory();
             region = sphereBuilder.createCenteredAt(BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ()), radius);
             this.caster = caster;

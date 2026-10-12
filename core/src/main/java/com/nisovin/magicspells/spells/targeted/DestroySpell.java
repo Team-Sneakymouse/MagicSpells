@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.FallingBlock;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 
@@ -170,7 +171,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -198,7 +199,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 
 
-	private void doIt(LivingEntity caster, LivingEntity target, Location source, Location targetLocation, float power,
+	private void doIt(Entity caster, Entity target, Location source, Location targetLocation, float power,
 			String[] args) {
 		int centerX = targetLocation.getBlockX();
 		int centerY = targetLocation.getBlockY();

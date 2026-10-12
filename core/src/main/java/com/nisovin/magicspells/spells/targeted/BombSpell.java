@@ -7,6 +7,7 @@ import java.util.HashMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Subspell;
@@ -93,7 +94,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -109,7 +110,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 
 
 	private boolean bomb(SpellData data) {
-		LivingEntity livingEntity = data.caster();
+		Entity livingEntity = data.caster();
 		Location loc = data.location();
 		float power = data.power();
 		String[] args = data.args();

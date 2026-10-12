@@ -46,13 +46,13 @@ public class ForcepushSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
 	}
 
-	private void knockback(LivingEntity caster, float basePower, String[] args) {
+	private void knockback(Entity caster, float basePower, String[] args) {
 		double radius = Math.min(this.radius.get(caster, null, basePower, args), MagicSpells.getGlobalRadius());
 
 		List<Entity> entities = caster.getNearbyEntities(radius, radius, radius);
@@ -68,7 +68,9 @@ public class ForcepushSpell extends InstantSpell {
 			if (event.isCancelled()) continue;
 
 			float power = event.getPower();
-			target = event.getTarget();
+			Entity _t = event.getTarget();
+			if (!(_t instanceof LivingEntity _lt)) continue;
+			target = _lt;
 
 			double force = this.force.get(caster, target, power, args) / 10;
 			if (Boolean.TRUE.equals(powerAffectsForce.get(caster, target, basePower, args))) force *= power;

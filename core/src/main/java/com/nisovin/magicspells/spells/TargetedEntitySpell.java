@@ -1,6 +1,6 @@
 package com.nisovin.magicspells.spells;
 
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Entity;
 
 import com.nisovin.magicspells.Spell.PostCastAction;
 import com.nisovin.magicspells.util.CastResult;
@@ -15,22 +15,22 @@ public interface TargetedEntitySpell {
 	CastResult castAtEntity(SpellData data);
 
 	@Deprecated
-	default boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	default boolean castAtEntity(Entity caster, Entity target, float power, String[] args) {
 		return castAtEntity(new SpellData(caster, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Deprecated
-	default boolean castAtEntity(LivingEntity target, float power, String[] args) {
+	default boolean castAtEntity(Entity target, float power, String[] args) {
 		return castAtEntity(new SpellData(null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Deprecated
-	default boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
+	default boolean castAtEntity(Entity caster, Entity target, float power) {
 		return castAtEntity(caster, target, power, null);
 	}
 
 	@Deprecated
-	default boolean castAtEntity(LivingEntity target, float power) {
+	default boolean castAtEntity(Entity target, float power) {
 		return castAtEntity(target, power, null);
 	}
 

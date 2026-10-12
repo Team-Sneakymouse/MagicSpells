@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -48,7 +49,7 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -71,7 +72,7 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 
 
 
-	private void modifyCooldowns(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void modifyCooldowns(Entity caster, Entity target, float power, String[] args) {
 		float sec = seconds.get(caster, target, power, args);
 		if (Boolean.TRUE.equals(powerAffectsSeconds.get(caster, target, power, args))) sec *= power;
 

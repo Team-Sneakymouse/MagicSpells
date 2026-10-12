@@ -2,6 +2,7 @@ package com.nisovin.magicspells.events;
 
 import org.bukkit.Location;
 import org.bukkit.event.Cancellable;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -37,12 +38,12 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 	}
 
 	@Deprecated
-	public SpellCastEvent(Spell spell, LivingEntity caster, SpellCastState state, float power, String[] args, float cooldown, SpellReagents reagents, int castTime) {
+	public SpellCastEvent(Spell spell, Entity caster, SpellCastState state, float power, String[] args, float cooldown, SpellReagents reagents, int castTime) {
 		this(spell, state, new SpellData(caster, power, args), cooldown, reagents, castTime);
 	}
 
 	@Deprecated
-	public SpellCastEvent(Spell spell, LivingEntity caster, SpellCastState state, float power, String[] args, float cooldown, SpellReagents reagents, int castTime, Location location) {
+	public SpellCastEvent(Spell spell, Entity caster, SpellCastState state, float power, String[] args, float cooldown, SpellReagents reagents, int castTime, Location location) {
 		this(spell, state, new SpellData(caster, null, location, power, args), cooldown, reagents, castTime);
 	}
 
@@ -55,7 +56,7 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 	}
 
 	@Override
-	public LivingEntity getCaster() {
+	public Entity getCaster() {
 		return spellData.caster();
 	}
 

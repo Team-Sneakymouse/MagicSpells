@@ -129,14 +129,14 @@ public class ParticlesEffect extends SpellEffect {
 
 			Destination destination = switch (vibrationDestination.get(data)) {
 				case CASTER -> {
-					LivingEntity caster = data == null ? null : data.caster();
+					Entity caster = data == null ? null : data.caster();
 					if (caster == null) yield null;
 
 					yield staticDestination ? new BlockDestination(applyOffsets(caster.getLocation(), vibrationOffset,
 						vibrationRelativeOffset, 0, 0, 0, 0, 0)) : new EntityDestination(caster);
 				}
 				case TARGET -> {
-					LivingEntity target = data == null ? null : data.target();
+					Entity target = data == null ? null : data.target();
 					if (target == null) yield null;
 
 					yield staticDestination ? new BlockDestination(applyOffsets(target.getLocation(), vibrationOffset,
@@ -190,11 +190,11 @@ public class ParticlesEffect extends SpellEffect {
 	protected Location getLocation(Location location, SpellData data, ConfigData<ParticlePosition> position) {
 		return switch (position.get(data)) {
 			case CASTER -> {
-				LivingEntity caster = data == null ? null : data.caster();
+				Entity caster = data == null ? null : data.caster();
 				yield caster == null ? null : caster.getLocation();
 			}
 			case TARGET -> {
-				LivingEntity target = data == null ? null : data.target();
+				Entity target = data == null ? null : data.target();
 				yield target == null ? null : target.getLocation();
 			}
 			case POSITION -> location.clone();

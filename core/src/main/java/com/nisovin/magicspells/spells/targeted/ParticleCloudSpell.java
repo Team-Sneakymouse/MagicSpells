@@ -11,6 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -176,7 +177,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -186,12 +187,13 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 	public CastResult castAtLocation(SpellData data) {
 		if (!canTargetLocation) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		AreaEffectCloud cloud = spawnCloud(data.caster(), null, data.location(), data.power(), data.args());
-		cloud.setSource(data.caster());
+		if (data.caster() instanceof org.bukkit.projectiles.ProjectileSource source)
+			cloud.setSource(source);
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	
 	}
 @Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(Entity caster, Location target, float power, String[] args) {
 		return castAtLocation(new SpellData(caster, null, target, power, args)).action() != PostCastAction.ALREADY_HANDLED;
 	}
 
@@ -204,7 +206,8 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		if (data.hasCaster()) {
 			if (!canTargetEntities || !validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 							AreaEffectCloud cloud = spawnCloud(data.caster(), data.target(), data.target().getLocation(), data.power(), data.args());
-							cloud.setSource(data.caster());
+							if (data.caster() instanceof org.bukkit.projectiles.ProjectileSource source)
+								cloud.setSource(source);
 							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		} else {
 			if (!canTargetEntities || !validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
@@ -215,7 +218,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 
 
 
-	private AreaEffectCloud spawnCloud(LivingEntity caster, LivingEntity target, Location loc, float power, String[] args) {
+	private AreaEffectCloud spawnCloud(Entity caster, Entity target, Location loc, float power, String[] args) {
 		Location location = loc.clone();
 		Vector startDir = loc.getDirection().normalize();
 

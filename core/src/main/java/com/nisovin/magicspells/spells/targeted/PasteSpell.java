@@ -19,6 +19,7 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
@@ -290,7 +291,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -314,7 +315,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 
 
-	private boolean pasteInstant(LivingEntity caster, Location target, float power, String[] args) {
+	private boolean pasteInstant(Entity caster, Location target, float power, String[] args) {
 		if (clipboard == null) return false;
 
 		int yOffset = this.yOffset.get(caster, null, power, args);
@@ -349,7 +350,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			// Capture locals — originals/undoDelay are not effectively final.
 			Map<Block, BlockData> capturedOriginals = originals;
 			int capturedUndoDelay = undoDelay;
-			LivingEntity capturedCaster = caster;
+			Entity capturedCaster = caster;
 			MagicSpells.scheduleDelayedTask(
 					() -> registerInstantUndo(capturedCaster, capturedOriginals, capturedUndoDelay),
 					1);
@@ -358,7 +359,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		return true;
 	}
 
-	private void registerInstantUndo(LivingEntity caster, Map<Block, BlockData> originals, int undoDelay) {
+	private void registerInstantUndo(Entity caster, Map<Block, BlockData> originals, int undoDelay) {
 		InstantPaste paste = new InstantPaste();
 		AlteredBlockManager manager = MagicSpells.getAlteredBlockManager();
 		for (Map.Entry<Block, BlockData> entry : originals.entrySet()) {
@@ -416,7 +417,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		return originals;
 	}
 
-	private boolean pasteOverTime(LivingEntity caster, Location target, float power, String[] args) {
+	private boolean pasteOverTime(Entity caster, Location target, float power, String[] args) {
 		try {
 			Builder builder = new Builder(caster, target, power, args);
 			builders.add(builder);
@@ -467,11 +468,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    private List<BlockDisplay> blockDisplays;
 
 	    boolean stop = false;
-	    private LivingEntity caster;
+	    private Entity caster;
 		private boolean onlyReplaceAir;
 		private boolean pasteAir;
 
-		public Builder(LivingEntity caster, Location target, float power, String[] args) {
+		public Builder(Entity caster, Location target, float power, String[] args) {
 			this.target = target.clone();
 			this.clipboard = PasteSpell.this.clipboard;
 			this.caster = caster;

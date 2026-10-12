@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.CastData;
@@ -67,7 +68,7 @@ public class EmpowerSpell extends BuffSpell {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSpellCast(SpellCastEvent event) {
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		if (caster == null || !isActive(caster)) return;
 		if (!filter.check(event.getSpell())) return;
 

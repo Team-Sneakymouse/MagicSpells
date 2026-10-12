@@ -65,7 +65,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -103,7 +103,8 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 
 
-	private void chain(LivingEntity caster, Location start, LivingEntity target, float power, String[] args) {
+	private void chain(Entity caster, Location start, Entity targetEntity, float power, String[] args) {
+		if (!(targetEntity instanceof LivingEntity target)) return;
 		List<LivingEntity> targets = new ArrayList<>();
 		List<Float> targetPowers = new ArrayList<>();
 		targets.add(target);
@@ -133,7 +134,9 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 					if (!event.callEvent())
 						continue;
 
-					livingEntity = event.getTarget();
+					if (!(event.getTarget() instanceof LivingEntity eventTarget))
+						continue;
+					livingEntity = eventTarget;
 					subPower = event.getPower();
 				}
 
@@ -174,7 +177,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			new ChainBouncer(caster, start, targets, targetPowers, interval, args);
 	}
 
-	private void castSpellAt(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
+	private void castSpellAt(Entity caster, Location from, Entity target, float power, String[] args) {
 		if (from != null)
 			spellToCast.subcast(new SpellData(caster, target, from, power, args));
 		else
@@ -183,7 +186,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 	private class ChainBouncer implements Runnable {
 
-		private final LivingEntity caster;
+		private final Entity caster;
 		private final Location start;
 		private final String[] args;
 		private final int taskId;
@@ -193,7 +196,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 		private int current = 0;
 
-		private ChainBouncer(LivingEntity caster, Location start, List<LivingEntity> targets, List<Float> targetPowers,
+		private ChainBouncer(Entity caster, Location start, List<LivingEntity> targets, List<Float> targetPowers,
 				int interval, String[] args) {
 			this.caster = caster;
 			this.start = start;

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffectType;
 
@@ -191,17 +192,19 @@ public class CleanseSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	@Override
 	public CastResult cast(SpellData data) {
-		TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), checker, data.args());
-					if (target.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), target), data);
-		
-					cleanse(data.caster(), target.target(), target.power(), data.args());
-					sendMessages(data.caster(), target.target(), data.args());
-		
-					return new CastResult(PostCastAction.NO_MESSAGES, data);
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+		TargetInfo<LivingEntity> target = getTargetedEntity(caster, data.power(), checker, data.args());
+		if (target.noTarget()) return new CastResult(noTarget(caster, data.args(), target), data);
+
+		cleanse(caster, target.target(), target.power(), data.args());
+		sendMessages(caster, target.target(), data.args());
+
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -211,15 +214,17 @@ public class CleanseSpell extends TargetedSpell implements TargetedEntitySpell {
 	
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		LivingEntity caster = data.caster() instanceof LivingEntity livingCaster ? livingCaster : null;
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (data.hasCaster()) {
 			if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							cleanse(data.caster(), data.target(), data.power(), data.args());
-							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
-		} else {
-			if (!validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							cleanse(null, data.target(), data.power(), data.args());
-							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+			cleanse(caster, target, data.power(), data.args());
+			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}
+		if (!validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		cleanse(null, target, data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 

@@ -87,17 +87,19 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 
 	@Override
 	public CastResult cast(SpellData data) {
-		TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), data.args());
-					if (target.noTarget()) return new CastResult(noTarget(data.caster(), data.args(), target), data);
-		
-					levitate(data.caster(), target.target(), target.power(), data.args());
-					sendMessages(data.caster(), target.target(), data.args());
-		
-					return new CastResult(PostCastAction.NO_MESSAGES, data);
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+		TargetInfo<LivingEntity> target = getTargetedEntity(caster, data.power(), data.args());
+		if (target.noTarget()) return new CastResult(noTarget(caster, data.args(), target), data);
+
+		levitate(caster, target.target(), target.power(), data.args());
+		sendMessages(caster, target.target(), data.args());
+
+		return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -108,8 +110,9 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 	@Override
 	public CastResult castAtEntity(SpellData data) {
 		if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-				levitate(data.caster(), data.target(), data.power(), data.args());
-				return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
+		if (!(data.caster() instanceof LivingEntity caster)) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		levitate(caster, data.target(), data.power(), data.args());
+		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}
 
 
@@ -121,23 +124,23 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 	}
 
 	public void removeLevitate(LivingEntity entity) {
-		List<LivingEntity> toRemove = new ArrayList<>();
+		List<Entity> toRemove = new ArrayList<>();
 		for (Levitator levitator : levitating.values()) {
 			if (!levitator.target.equals(entity)) continue;
 			toRemove.add(levitator.caster);
 			levitator.stop();
 		}
-		for (LivingEntity caster : toRemove) {
+		for (Entity caster : toRemove) {
 			levitating.remove(caster.getUniqueId());
 		}
 		toRemove.clear();
 	}
 
-	private boolean isLevitating(LivingEntity entity) {
+	private boolean isLevitating(Entity entity) {
 		return levitating.containsKey(entity.getUniqueId());
 	}
 
-	private void levitate(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void levitate(LivingEntity caster, Entity target, float power, String[] args) {
 		int duration = this.duration.get(caster, target, power, args);
 		int tickRate = this.tickRate.get(caster, target, power, args);
 		if (duration < tickRate) duration = tickRate;
@@ -182,7 +185,7 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 
 		@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 		public void onSpellCast(SpellCastEvent event) {
-			LivingEntity caster = event.getCaster();
+			Entity caster = event.getCaster();
 			if (!isLevitating(caster)) return;
 			if (!filter.check(event.getSpell())) return;
 			levitating.remove(caster.getUniqueId()).stop();
@@ -204,7 +207,7 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 
 	private class Levitator implements Runnable {
 
-		private LivingEntity caster;
+		private Entity caster;
 		private Entity target;
 		private double distance;
 		private int duration;
@@ -218,7 +221,7 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 		private final double yOffset;
 		private final int tickRate;
 
-		private Levitator(LivingEntity caster, LivingEntity target, int duration, int tickRate, double distance, float power, String[] args) {
+		private Levitator(Entity caster, Entity target, int duration, int tickRate, double distance, float power, String[] args) {
 			this.caster = caster;
 			this.target = target;
 			this.duration = duration;
@@ -261,8 +264,12 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 				if (distance < minDistance) distance = minDistance;
 			}
 
+			if (!(caster instanceof LivingEntity livingCaster)) {
+				stop();
+				return;
+			}
 			target.setFallDistance(0);
-			Vector wantedLocation = caster.getEyeLocation().toVector().add(caster.getLocation().getDirection().multiply(distance)).add(new Vector(0, yOffset, 0));
+			Vector wantedLocation = livingCaster.getEyeLocation().toVector().add(livingCaster.getLocation().getDirection().multiply(distance)).add(new Vector(0, yOffset, 0));
 			Vector v = wantedLocation.subtract(target.getLocation().toVector()).multiply(tickRate / 25F + 0.1);
 			target.setVelocity(v);
 		}

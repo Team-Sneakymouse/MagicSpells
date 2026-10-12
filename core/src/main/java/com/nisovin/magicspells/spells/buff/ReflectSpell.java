@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.ArrayList;
 
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -70,7 +71,7 @@ public class ReflectSpell extends BuffSpell {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onSpellTarget(SpellTargetEvent event) {
-		LivingEntity target = event.getTarget();
+		Entity target = event.getTarget();
 		if (target == null) return;
 		if (!target.isValid()) return;
 		if (!isActive(target)) return;
@@ -94,7 +95,7 @@ public class ReflectSpell extends BuffSpell {
 
 	@EventHandler
 	public void onSpellPreImpact(SpellPreImpactEvent event) {
-		LivingEntity target = event.getTarget();
+		Entity target = event.getTarget();
 
 		if (target == null) {
 			MagicSpells.plugin.getLogger().warning("Spell preimpact event had a null target, the spell cannot be reflected.");

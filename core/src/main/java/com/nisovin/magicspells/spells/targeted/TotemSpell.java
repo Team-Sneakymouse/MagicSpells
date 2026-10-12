@@ -15,6 +15,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -257,7 +258,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -295,7 +296,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 
 
 
-	private void createTotem(LivingEntity caster, Location loc, float power, String[] args) {
+	private void createTotem(Entity caster, Location loc, float power, String[] args) {
 		Location loc2 = loc.clone();
 		if (centerStand)
 			loc2 = loc.clone().add(0.5, 0, 0.5);
@@ -337,7 +338,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	@EventHandler
 	public void onSpellTarget(SpellTargetEvent e) {
-		LivingEntity target = e.getTarget();
+		Entity target = e.getTarget();
 		if (totems.isEmpty())
 			return;
 		for (Totem t : totems) {
@@ -360,7 +361,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private class Totem {
 
-		private final LivingEntity caster;
+		private final Entity caster;
 		private final ArmorStand armorStand;
 		private Location totemLocation;
 
@@ -371,7 +372,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 		private final float power;
 		private int pulseCount;
 
-		private Totem(LivingEntity caster, Location loc, float power, String[] args) {
+		private Totem(Entity caster, Location loc, float power, String[] args) {
 			this.caster = caster;
 			this.power = power;
 			this.args = args;

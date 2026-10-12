@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Damageable;
@@ -175,14 +176,14 @@ public class RepairSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
-	private ItemStack repair(LivingEntity caster, ItemStack item, float power, String[] args) {
+	private ItemStack repair(Entity caster, ItemStack item, float power, String[] args) {
 		if (item == null) return null;
 		if (!isRepairable(item)) return null;
 		Damageable meta = (Damageable) item.getItemMeta();
@@ -201,7 +202,7 @@ public class RepairSpell extends InstantSpell {
 		return allowedItems == null || allowedItems.contains(item.getType());
 	}
 
-	private int newDurability(LivingEntity caster, ItemStack item, float power, String[] args) {
+	private int newDurability(Entity caster, ItemStack item, float power, String[] args) {
 		Damageable meta = (Damageable) item.getItemMeta();
 
 		int durability = meta.getDamage() - repairAmt.get(caster, null, power, args);

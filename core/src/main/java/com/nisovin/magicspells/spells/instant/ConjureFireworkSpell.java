@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.FireworkEffect;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.FireworkEffect.Type;
 import org.bukkit.inventory.ItemStack;
@@ -150,7 +151,7 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 	}
 
 		@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();

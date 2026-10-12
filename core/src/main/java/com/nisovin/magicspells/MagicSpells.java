@@ -42,6 +42,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.server.PluginEnableEvent;
@@ -1595,11 +1596,12 @@ public class MagicSpells extends JavaPlugin {
 	 * @param message   the message to send
 	 * @param args      spell arguments
 	 */
-	public static void sendMessage(String message, LivingEntity recipient, String[] args) {
-		sendMessageAndFormat(message, recipient, recipient, null, null, args);
+	public static void sendMessage(String message, Entity recipient, String[] args) {
+		if (!(recipient instanceof LivingEntity living)) return;
+		sendMessageAndFormat(message, living, recipient, null, null, args);
 	}
 
-	public static void sendMessage(String message, LivingEntity recipient, LivingEntity caster, LivingEntity target, Location location, String[] args) {
+	public static void sendMessage(String message, LivingEntity recipient, Entity caster, Entity target, Location location, String[] args) {
 		sendMessageAndFormat(message, recipient, caster, target, location, args);
 	}
 
@@ -1614,7 +1616,13 @@ public class MagicSpells extends JavaPlugin {
 	 */
 	public static void sendMessageAndFormat(String message, LivingEntity recipient, String[] args,
 			String... replacements) {
-		sendMessageAndFormat(message, recipient, recipient, null, args, replacements);
+		sendMessageAndFormat(message, recipient, (Entity) recipient, null, args, replacements);
+	}
+
+	public static void sendMessageAndFormat(String message, Entity recipient, String[] args,
+			String... replacements) {
+		if (!(recipient instanceof LivingEntity living)) return;
+		sendMessageAndFormat(message, living, recipient, null, args, replacements);
 	}
 
 	/**
@@ -1629,8 +1637,8 @@ public class MagicSpells extends JavaPlugin {
 	 * @param args         the arguments of associated spell cast
 	 * @param replacements the replacements to be made, in pairs
 	 */
-	public static void sendMessageAndFormat(String message, LivingEntity recipient, LivingEntity caster,
-			LivingEntity target, String[] args, String... replacements) {
+	public static void sendMessageAndFormat(String message, LivingEntity recipient, Entity caster,
+			Entity target, String[] args, String... replacements) {
 		sendMessageAndFormat(message, recipient, caster, target, null, args, replacements);
 	}
 
@@ -1646,8 +1654,8 @@ public class MagicSpells extends JavaPlugin {
 	 * @param args         the arguments of associated spell cast
 	 * @param replacements the replacements to be made, in pairs
 	 */
-	public static void sendMessageAndFormat(String message, LivingEntity recipient, LivingEntity caster,
-			LivingEntity target, Location location, String[] args, String... replacements) {
+	public static void sendMessageAndFormat(String message, LivingEntity recipient, Entity caster,
+			Entity target, Location location, String[] args, String... replacements) {
 		if (!(recipient instanceof Player) || message == null || message.isEmpty())
 			return;
 
@@ -1781,24 +1789,24 @@ public class MagicSpells extends JavaPlugin {
 		return doReplacements(message, data.caster(), data.target(), data.location(), data.args(), (String[]) null);
 	}
 
-	public static String doReplacements(String message, LivingEntity caster) {
+	public static String doReplacements(String message, Entity caster) {
 		return doReplacements(message, caster, null, null, null, (String[]) null);
 	}
 
-	public static String doReplacements(String message, LivingEntity caster, LivingEntity target) {
+	public static String doReplacements(String message, Entity caster, Entity target) {
 		return doReplacements(message, caster, target, null, null, (String[]) null);
 	}
 
-	public static String doReplacements(String message, LivingEntity caster, String[] args, String... replacements) {
+	public static String doReplacements(String message, Entity caster, String[] args, String... replacements) {
 		return doReplacements(message, caster, null, null, args, replacements);
 	}
 
-	public static String doReplacements(String message, LivingEntity caster, LivingEntity target, String[] args,
+	public static String doReplacements(String message, Entity caster, Entity target, String[] args,
 			String... replacements) {
 		return doReplacements(message, caster, target, null, args, replacements);
 	}
 
-	public static String doReplacements(String message, LivingEntity caster, LivingEntity target, Location location,
+	public static String doReplacements(String message, Entity caster, Entity target, Location location,
 			String[] args, String... replacements) {
 		if (message == null || message.isEmpty())
 			return message;
@@ -1839,11 +1847,11 @@ public class MagicSpells extends JavaPlugin {
 					+ RegexUtil.USERNAME_REGEXP + ")):(\\w+)(?::(\\w+))?%",
 			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
-	public static String doVariableReplacements(String message, LivingEntity caster, LivingEntity target) {
+	public static String doVariableReplacements(String message, Entity caster, Entity target) {
 		return doVariableReplacements(message, caster, target, null);
 	}
 
-	public static String doVariableReplacements(String message, LivingEntity caster, LivingEntity target,
+	public static String doVariableReplacements(String message, Entity caster, Entity target,
 			Location location) {
 		if (message == null || message.isEmpty())
 			return message;
@@ -1984,7 +1992,7 @@ public class MagicSpells extends JavaPlugin {
 			"%(papi|casterpapi|targetpapi|playerpapi:(" + RegexUtil.USERNAME_REGEXP + ")):([^%]+)%",
 			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
-	public static String doPlaceholderReplacements(String message, LivingEntity caster, LivingEntity target) {
+	public static String doPlaceholderReplacements(String message, Entity caster, Entity target) {
 		if (message == null || message.isEmpty() || !Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"))
 			return message;
 

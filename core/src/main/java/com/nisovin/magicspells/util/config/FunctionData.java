@@ -15,6 +15,7 @@ import de.slikey.exp4j.ExpressionBuilder;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.Location;
 
@@ -258,7 +259,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 	}
 
 	@Override
-	public T get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+	public T get(Entity caster, Entity target, Location location, float power, String[] args) {
 		for (Map.Entry<String, ConfigData<Double>> entry : variables.entrySet())
 			expression.setVariable(entry.getKey(), entry.getValue().get(caster, target, location, power, args));
 
@@ -296,7 +297,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (args != null && args.length > index) {
 				try {
 					return Double.parseDouble(args[index]);
@@ -325,7 +326,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!(caster instanceof Player player))
 				return 0d;
 
@@ -364,7 +365,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!(target instanceof Player player))
 				return 0d;
 
@@ -403,7 +404,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (location == null && target == null && caster == null)
 				return 0d;
 
@@ -438,7 +439,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (caster == null)
 				return 0d;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
@@ -468,7 +469,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (target == null && location == null)
 				return 0d;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
@@ -500,7 +501,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null)
 				return 0d;
@@ -534,7 +535,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null)
 				return 0d;
@@ -559,7 +560,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(caster instanceof Player player))
 				return 0d;
 
@@ -588,7 +589,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(target instanceof Player player))
 				return 0d;
 
@@ -619,7 +620,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public Double get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"))
 				return 0d;
 

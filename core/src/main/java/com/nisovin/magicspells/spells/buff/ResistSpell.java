@@ -92,7 +92,7 @@ public class ResistSpell extends BuffSpell {
 		if (spellDamageType == null) return;
 		if (!spellDamageTypes.contains(spellDamageType)) return;
 
-		LivingEntity caster = event.getTarget();
+		Entity caster = event.getTarget();
 		CastData data = entities.get(caster.getUniqueId());
 
 		float modifier = multiplier.get(caster, event.getCaster(), data.power(), data.args());

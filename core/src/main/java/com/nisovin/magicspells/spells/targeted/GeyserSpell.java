@@ -71,14 +71,14 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
 	}
 
 
-	private boolean geyser(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private boolean geyser(Entity caster, LivingEntity target, float power, String[] args) {
 		double damage = this.damage.get(caster, target, power, args);
 		if (Boolean.TRUE.equals(powerAffectsDamage.get(caster, target, power, args))) damage *= power;
 
@@ -128,14 +128,17 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 	
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		LivingEntity caster = data.caster() instanceof LivingEntity livingCaster ? livingCaster : null;
 		if (data.hasCaster()) {
 			if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							geyser(data.caster(), data.target(), data.power(), data.args());
+							geyser(caster, target, data.power(), data.args());
 							playSpellEffects(data.caster(), data.target(), data.power(), data.args());
 							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		} else {
 			if (!validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							geyser(null, data.target(), data.power(), data.args());
+							geyser(null, target, data.power(), data.args());
 							playSpellEffects(EffectPosition.TARGET, data.target(), data.power(), data.args());
 							return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		}

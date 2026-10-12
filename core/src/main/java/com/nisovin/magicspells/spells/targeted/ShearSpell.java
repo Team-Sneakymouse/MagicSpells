@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Sheep;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 
@@ -74,7 +75,7 @@ public class ShearSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -108,7 +109,7 @@ public class ShearSpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
-	private boolean shear(LivingEntity caster, Sheep sheep, float power, String[] args) {
+	private boolean shear(Entity caster, Sheep sheep, float power, String[] args) {
 		if (!configuredCorrectly || sheep.isSheared() || !sheep.isAdult()) return false;
 
 		DyeColor color = null;

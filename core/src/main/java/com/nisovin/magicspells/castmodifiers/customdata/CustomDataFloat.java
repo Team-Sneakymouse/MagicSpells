@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.castmodifiers.customdata;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.SpellData;
@@ -48,7 +49,7 @@ public class CustomDataFloat extends CustomData {
 		return invalidText;
 	}
 
-	public float get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public float get(Entity caster, Entity target, float power, String[] args) {
 		return customData.get(caster, target, power, args);
 	}
 

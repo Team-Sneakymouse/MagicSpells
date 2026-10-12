@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Subspell;
@@ -120,7 +121,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -152,8 +153,8 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 
 
 	private boolean runSpells(SpellData data, Location center) {
-		LivingEntity caster = data.caster();
-		LivingEntity targetEnt = data.target();
+		Entity caster = data.caster();
+		Entity targetEnt = data.target();
 		Location targetLoc = targetEnt != null ? null : data.location();
 		float power = data.power();
 		String[] args = data.args();
@@ -211,7 +212,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 		return somethingWasDone;
 	}
 
-	private boolean castTargetedSpells(Subspell spell, LivingEntity caster, Location center, LivingEntity targetEnt, Location targetLoc, float power, String[] args, boolean passTargeting) {
+	private boolean castTargetedSpells(Subspell spell, Entity caster, Location center, Entity targetEnt, Location targetLoc, float power, String[] args, boolean passTargeting) {
 		if (targetEnt != null && center != null) return spell.subcast(new SpellData(caster, targetEnt, center, power, args), passTargeting);
 		if (targetEnt != null) return spell.subcast(new SpellData(caster, targetEnt, power, args), passTargeting);
 		if (targetLoc != null) return spell.subcast(new SpellData(caster, targetLoc, power, args));
@@ -232,7 +233,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
+	public boolean castAtEntityFromLocation(Entity caster, Location from, Entity target, float power, String[] args) {
 		return castAtEntityFromLocation(new SpellData(caster, target, from, power, args)).action()
 				!= PostCastAction.ALREADY_HANDLED;
 	}
@@ -274,9 +275,9 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 	private class DelayedSpell implements Runnable {
 
 		private final Subspell spell;
-		private final LivingEntity caster;
+		private final Entity caster;
 		private final Location center;
-		private final LivingEntity targetEnt;
+		private final Entity targetEnt;
 		private final Location targetLoc;
 		private final String[] args;
 		private final float power;
@@ -286,7 +287,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 		private List<DelayedSpell> delayedSpells;
 		private boolean cancelled;
 
-		private DelayedSpell(Subspell spell, LivingEntity caster, Location center, LivingEntity targetEnt, Location targetLoc, float power, String[] args, List<DelayedSpell> delayedSpells, boolean passTargeting, boolean stopOnFail) {
+		private DelayedSpell(Subspell spell, Entity caster, Location center, Entity targetEnt, Location targetLoc, float power, String[] args, List<DelayedSpell> delayedSpells, boolean passTargeting, boolean stopOnFail) {
 			this.spell = spell;
 			this.caster = caster;
 			this.center = center;

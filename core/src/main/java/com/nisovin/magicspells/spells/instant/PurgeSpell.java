@@ -59,7 +59,7 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -80,7 +80,7 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 				!= PostCastAction.ALREADY_HANDLED;
 	}
 
-	private boolean purge(LivingEntity caster, Location loc, float power, String[] args) {
+	private boolean purge(Entity caster, Location loc, float power, String[] args) {
 		double castingRange = radius.get(caster, null, power, args);
 		if (Boolean.TRUE.equals(powerAffectsRadius.get(caster, null, power, args)))
 			castingRange *= power;

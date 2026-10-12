@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.DyeColor;
 import org.bukkit.entity.Sheep;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -60,7 +61,7 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -83,7 +84,7 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 
 
 
-	private boolean grow(LivingEntity caster, Sheep target, float power, String[] args) {
+	private boolean grow(Entity caster, Sheep target, float power, String[] args) {
 		if (!configuredCorrectly) return false;
 		if (!target.isSheared()) return false;
 		if (!target.isAdult()) return false;

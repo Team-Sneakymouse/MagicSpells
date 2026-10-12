@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
@@ -84,7 +85,7 @@ public class MagicLogger implements Listener {
 	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onSpellTarget(SpellTargetEvent event) {
-		LivingEntity caster = event.getCaster();
+		Entity caster = event.getCaster();
 		log("TARGET ENTITY" +
 				"; spell=" + event.getSpell().getInternalName() + 
 				"; caster=" + (caster != null ? caster.getName() : "null") + 
@@ -119,7 +120,7 @@ public class MagicLogger implements Listener {
 		return location.getWorld().getName() + ',' + location.getBlockX() + ',' + location.getBlockY() + ',' + location.getBlockZ();
 	}
 	
-	private String getTargetName(LivingEntity target) {
+	private String getTargetName(Entity target) {
 		if (target instanceof Player) return target.getName();
 		return target.getType().name();
 	}

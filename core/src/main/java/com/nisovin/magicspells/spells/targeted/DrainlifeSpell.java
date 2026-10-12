@@ -99,21 +99,23 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 
 	@Override
 	public CastResult cast(SpellData data) {
-		TargetInfo<LivingEntity> target = getTargetedEntity(data.caster(), data.power(), data.args());
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(noTarget(data.caster(), data.args()), data);
+		TargetInfo<LivingEntity> target = getTargetedEntity(caster, data.power(), data.args());
 		if (target.noTarget())
-			return new CastResult(noTarget(data.caster(), data.args(), target), data);
+			return new CastResult(noTarget(caster, data.args(), target), data);
 
 		data = data.target(target.target()).power(target.power());
 		CastResult result = castAtEntity(data);
 		if (result.action() == PostCastAction.ALREADY_HANDLED)
-			return new CastResult(noTarget(data.caster(), data.args()), data);
+			return new CastResult(noTarget(caster, data.args()), data);
 
-		sendMessages(data.caster(), data.target(), data.args());
+		sendMessages(caster, data.target(), data.args());
 		return new CastResult(PostCastAction.NO_MESSAGES, data);
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(org.bukkit.entity.Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -123,7 +125,11 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 	public CastResult castAtEntity(SpellData data) {
 		if (!validTargetList.canTarget(data.caster(), data.target()))
 			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-		if (!drain(data.caster(), data.target(), data.power(), data.args()))
+		if (!(data.caster() instanceof LivingEntity caster))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
+		if (!drain(caster, target, data.power(), data.args()))
 			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 	}

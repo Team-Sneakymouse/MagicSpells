@@ -9,6 +9,7 @@ import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityExplodeEvent;
 
@@ -80,7 +81,7 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -97,7 +98,7 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 
 
 
-	private void spawnTnt(LivingEntity caster, Location loc, float power, String[] args) {
+	private void spawnTnt(Entity caster, Location loc, float power, String[] args) {
 		TNTPrimed tnt = loc.getWorld().spawn(loc, TNTPrimed.class);
 		if (cancelGravity)
 			tnt.setGravity(false);
@@ -144,7 +145,7 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 		if (spellToCast == null)
 			return;
 
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		if (caster == null || !caster.isValid())
 			return;
 

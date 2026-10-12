@@ -364,7 +364,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	@Override
 	public CastResult cast(SpellData data) {
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		float power = data.power();
 		String[] args = data.args();
 		{
@@ -452,7 +452,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -460,7 +460,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	@Override
 	public CastResult castAtLocation(SpellData data) {
-		LivingEntity caster = data.caster();
+		Entity caster = data.caster();
 		Location target = data.location();
 		float power = data.power();
 		String[] args = data.args();
@@ -540,7 +540,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return null;
 	}
 
-	private void spawnMob(LivingEntity caster, Location source, Location loc, LivingEntity target, float power,
+	private void spawnMob(Entity caster, Location source, Location loc, Entity target, float power,
 			String[] args) {
 		if (entityData == null || entityData.getEntityType() == null)
 			return;
@@ -582,8 +582,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					preSpawned.setAI(!noAI);
 					preSpawned.setInvulnerable(invulnerable);
 
-					if (target != null)
-						MobUtil.setTarget(preSpawned, target);
+					if (target instanceof LivingEntity livingTarget)
+						MobUtil.setTarget(preSpawned, livingTarget);
 				});
 
 		if (entity == null) {
@@ -670,7 +670,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		totalEntities++;
 	}
 
-	private void prepMob(LivingEntity caster, LivingEntity target, LivingEntity entity, float power, String[] args,
+	private void prepMob(Entity caster, Entity target, LivingEntity entity, float power, String[] args,
 			int duration) {
 		entity.setGravity(gravity);
 
@@ -729,7 +729,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		entity.setRemoveWhenFarAway(false);
 	}
 
-	private void createMounts(LivingEntity caster, LivingEntity target, float power, String[] args, LivingEntity head,
+	private void createMounts(Entity caster, Entity target, float power, String[] args, LivingEntity head,
 			int duration) {
 
 		List<Entity> ents = new ArrayList<>();
@@ -771,8 +771,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					preSpawned.setAI(!noAI);
 					preSpawned.setInvulnerable(invulnerable);
 
-					if (target != null)
-						MobUtil.setTarget(preSpawned, target);
+					if (target instanceof LivingEntity livingTarget)
+						MobUtil.setTarget(preSpawned, livingTarget);
 				}
 			});
 			ents.add(mount);
@@ -858,15 +858,15 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private class AttackMonitor implements Listener {
 
-		private final LivingEntity caster;
+		private final Entity caster;
 		private final LivingEntity monster;
 		private final String[] args;
 		private final float power;
 
-		private LivingEntity target;
+		private Entity target;
 		private boolean inAttackSpell;
 
-		private AttackMonitor(LivingEntity caster, LivingEntity monster, LivingEntity target, float power,
+		private AttackMonitor(Entity caster, LivingEntity monster, Entity target, float power,
 				String[] args) {
 			this.caster = caster;
 			this.monster = monster;
@@ -915,8 +915,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					event.setCancelled(true);
 				else if (event.getTarget() == null)
 					retarget(null);
-				else if (target != null && event.getTarget() != target)
-					event.setTarget(target);
+				else if (target instanceof LivingEntity livingTarget && event.getTarget() != livingTarget)
+					event.setTarget(livingTarget);
 			}
 		}
 
@@ -967,13 +967,13 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private class Targeter implements Runnable {
 
-		private final LivingEntity caster;
+		private final Entity caster;
 		private final LivingEntity entity;
 		private final String[] args;
 		private final float power;
 		private final int taskId;
 
-		private Targeter(LivingEntity caster, LivingEntity entity, float power, String[] args) {
+		private Targeter(Entity caster, LivingEntity entity, float power, String[] args) {
 			this.caster = caster;
 			this.entity = entity;
 			this.power = power;
@@ -1063,12 +1063,12 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private class EntityPulser {
 
-		private final LivingEntity caster;
+		private final Entity caster;
 		private final LivingEntity entity;
 		private final float power;
 		private final int delay = random.nextInt(SpawnEntitySpell.this.spellInterval);
 
-		private EntityPulser(LivingEntity caster, LivingEntity entity, float power, String[] args) {
+		private EntityPulser(Entity caster, LivingEntity entity, float power, String[] args) {
 			this.caster = caster;
 			this.entity = entity;
 			this.power = power;

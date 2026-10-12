@@ -11,6 +11,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.EntityEquipment;
@@ -82,7 +83,7 @@ public class DisarmSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -92,15 +93,17 @@ public class DisarmSpell extends TargetedSpell implements TargetedEntitySpell {
 	
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (data.hasCaster()) {
 			if (!validTargetList.canTarget(data.caster(), data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							boolean disarmed =  disarm(data.caster(), data.target(), data.power(), data.args());
+							boolean disarmed =  disarm(data.caster(), target, data.power(), data.args());
 							if (disarmed) playSpellEffects(data.caster(), data.target(), data.power(), data.args());
 			if (!(disarmed)) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
 		} else {
 			if (!validTargetList.canTarget(data.target())) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-							boolean disarmed = disarm(null, data.target(), data.power(), data.args());
+							boolean disarmed = disarm(null, target, data.power(), data.args());
 							if (disarmed) playSpellEffects(EffectPosition.TARGET, data.target(), data.power(), data.args());
 			if (!(disarmed)) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 			return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
@@ -109,7 +112,7 @@ public class DisarmSpell extends TargetedSpell implements TargetedEntitySpell {
 
 
 
-	private boolean disarm(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private boolean disarm(Entity caster, LivingEntity target, float power, String[] args) {
 		final ItemStack inHand = getItemInHand(target);
 		if (inHand == null) return false;
 

@@ -25,8 +25,8 @@ public final class ItemPdcUtil {
 		if (slot == null) return null;
 		return switch (slot) {
 			case CAST -> data != null && data.hasCastItem() ? data.castItem() : null;
-			case MAINHAND -> hand(data != null ? data.caster() : null, true);
-			case OFFHAND -> hand(data != null ? data.caster() : null, false);
+			case MAINHAND -> hand(data != null ? EntityUtil.asLiving(data.caster()) : null, true);
+			case OFFHAND -> hand(data != null ? EntityUtil.asLiving(data.caster()) : null, false);
 		};
 	}
 

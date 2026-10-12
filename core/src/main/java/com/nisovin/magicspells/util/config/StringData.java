@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.Location;
 
@@ -154,7 +155,7 @@ public class StringData implements ConfigData<String> {
 	}
 
 	@Override
-	public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+	public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 		if (values.isEmpty())
 			return fragments.get(0);
 
@@ -222,7 +223,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (args != null && args.length > index)
 				return args[index];
 			else
@@ -249,7 +250,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!(caster instanceof Player player))
 				return placeholder;
 
@@ -282,7 +283,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!(target instanceof Player player))
 				return placeholder;
 
@@ -314,7 +315,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (location == null && target == null && caster == null)
 				return placeholder;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
@@ -348,7 +349,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (caster == null)
 				return placeholder;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
@@ -378,7 +379,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (target == null && location == null)
 				return placeholder;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
@@ -406,7 +407,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null)
 				return placeholder;
@@ -430,7 +431,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null)
 				return placeholder;
@@ -458,7 +459,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(caster instanceof Player player))
 				return placeholder;
 
@@ -478,7 +479,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(target instanceof Player player))
 				return placeholder;
 
@@ -500,7 +501,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"))
 				return placeholder;
 			return PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(player), papiPlaceholder);
@@ -515,7 +516,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			return caster != null ? caster.getName() : placeholder;
 		}
 	}
@@ -527,7 +528,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			return target != null ? target.getName() : placeholder;
 		}
 	}
@@ -539,7 +540,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		public String get(Entity caster, Entity target, Location location, float power, String[] args) {
 			return placeholder;
 		}
 

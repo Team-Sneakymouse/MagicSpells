@@ -140,7 +140,7 @@ public class TicksListener extends PassiveListener {
 
 	private static class Ticker implements Runnable {
 
-		private final Set<LivingEntity> entities;
+		private final Set<Entity> entities;
 
 		private final PassiveSpell passiveSpell;
 
@@ -154,11 +154,11 @@ public class TicksListener extends PassiveListener {
 			entities = new HashSet<>();
 		}
 
-		public void add(LivingEntity livingEntity) {
+		public void add(Entity livingEntity) {
 			entities.add(livingEntity);
 		}
 
-		public void remove(LivingEntity livingEntity) {
+		public void remove(Entity livingEntity) {
 			entities.remove(livingEntity);
 		}
 
@@ -166,7 +166,7 @@ public class TicksListener extends PassiveListener {
 		public void run() {
 			long start = System.nanoTime();
 
-			for (LivingEntity entity : new HashSet<>(entities)) {
+			for (Entity entity : new HashSet<>(entities)) {
 				if (entity == null || !entity.isValid()) {
 					entities.remove(entity);
 					continue;

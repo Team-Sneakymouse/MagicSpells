@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -75,8 +76,8 @@ public class NoMagicZoneManager {
 		MagicSpells.debug(1, "No-magic zones loaded: " + zones.size());
 	}
 
-	public boolean willFizzle(LivingEntity livingEntity, Spell spell) {
-		return willFizzle(livingEntity.getLocation(), spell);
+	public boolean willFizzle(Entity entity, Spell spell) {
+		return entity != null && willFizzle(entity.getLocation(), spell);
 	}
 
 	public boolean willFizzle(Location location, Spell spell) {
@@ -99,7 +100,7 @@ public class NoMagicZoneManager {
 		return zone != null && zone.inZone(loc);
 	}
 
-	public void sendNoMagicMessage(LivingEntity livingEntity, Spell spell) {
+	public void sendNoMagicMessage(Entity livingEntity, Spell spell) {
 		for (NoMagicZone zone : zonesOrdered) {
 			ZoneCheckResult result = zone.check(livingEntity.getLocation(), spell);
 			if (result != ZoneCheckResult.DENY) continue;

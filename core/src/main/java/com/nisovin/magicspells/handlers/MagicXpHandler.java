@@ -12,6 +12,7 @@ import java.text.NumberFormat;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -117,7 +118,7 @@ public class MagicXpHandler implements Listener {
 		dirty.add(event.getCaster().getName());
 
 		if (!autoLearn) return;
-		final LivingEntity caster = event.getCaster();
+		final Entity caster = event.getCaster();
 		if (!(caster instanceof Player player)) return;
 
 		final Spell castedSpell = event.getSpell();

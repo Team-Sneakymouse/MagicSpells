@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.castmodifiers;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.SpellData;
@@ -46,19 +47,19 @@ public interface IModifier {
 	 * @deprecated use {@link #apply(SpellData)}
 	 */
 	@Deprecated
-	ModifierResult apply(LivingEntity caster, SpellData data);
+	ModifierResult apply(Entity caster, SpellData data);
 
 	/**
 	 * @deprecated use {@link #applyTarget(SpellData)} after putting the target on {@code data}
 	 */
 	@Deprecated
-	ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data);
+	ModifierResult apply(Entity caster, Entity target, SpellData data);
 
 	/**
 	 * @deprecated use {@link #applyLocation(SpellData)} after putting the location on {@code data}
 	 */
 	@Deprecated
-	ModifierResult apply(LivingEntity caster, Location target, SpellData data);
+	ModifierResult apply(Entity caster, Location target, SpellData data);
 
 	/**
 	 * Caster-only required/denied check using {@code data.caster()}.
@@ -85,18 +86,18 @@ public interface IModifier {
 	 * @deprecated use {@link #check(SpellData)}
 	 */
 	@Deprecated
-	boolean check(LivingEntity livingEntity);
+	boolean check(Entity livingEntity);
 
 	/**
 	 * @deprecated use {@link #checkTarget(SpellData)}
 	 */
 	@Deprecated
-	boolean check(LivingEntity livingEntity, LivingEntity entity);
+	boolean check(Entity livingEntity, Entity entity);
 
 	/**
 	 * @deprecated use {@link #checkLocation(SpellData)}
 	 */
 	@Deprecated
-	boolean check(LivingEntity livingEntity, Location location);
+	boolean check(Entity livingEntity, Location location);
 
 }

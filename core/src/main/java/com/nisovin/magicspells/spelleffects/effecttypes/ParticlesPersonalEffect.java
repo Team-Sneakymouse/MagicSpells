@@ -65,11 +65,11 @@ public class ParticlesPersonalEffect extends ParticlesEffect {
 	private Player getTarget(Entity entity, SpellData data) {
 		return switch (target.get(data)) {
 			case CASTER -> {
-				LivingEntity caster = data.caster();
+				Entity caster = data.caster();
 				yield caster instanceof Player player ? player : null;
 			}
 			case TARGET -> {
-				LivingEntity target = data.target();
+				Entity target = data.target();
 				yield target instanceof Player player ? player : null;
 			}
 			case POSITION -> entity instanceof Player player ? player : null;

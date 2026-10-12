@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -27,7 +28,7 @@ import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 
-	private Map<LivingEntity, Rewinder> entities;
+	private Map<Entity, Rewinder> entities;
 
 	private ConfigData<Integer> tickInterval;
 	private ConfigData<Integer> startDuration;
@@ -88,7 +89,7 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(Entity caster, SpellCastState state, float power, String[] args) {
 		if (state != SpellCastState.NORMAL)
 			return PostCastAction.HANDLE_NORMALLY;
 		return cast(new SpellData(caster, power, args)).action();
@@ -96,15 +97,17 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	@Override
 	public CastResult castAtEntity(SpellData data) {
+		if (!(data.target() instanceof LivingEntity target))
+			return new CastResult(PostCastAction.ALREADY_HANDLED, data);
 		if (data.hasCaster()) {
 			if (!validTargetList.canTarget(data.caster(), data.target()))
 				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-			new Rewinder(data.caster(), data.target(), data.power(), data.args());
+			new Rewinder(data.caster(), target, data.power(), data.args());
 			playSpellEffects(data.caster(), data.target(), data);
 		} else {
 			if (!validTargetList.canTarget(data.target()))
 				return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-			new Rewinder(null, data.target(), data.power(), data.args());
+			new Rewinder(null, target, data.power(), data.args());
 			playSpellEffects(EffectPosition.TARGET, data.target(), data);
 		}
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);
@@ -116,7 +119,7 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 	public void onSpellCast(SpellCastEvent e) {
 		if (!allowForceRewind)
 			return;
-		LivingEntity caster = e.getCaster();
+		Entity caster = e.getCaster();
 		if (!entities.containsKey(caster))
 			return;
 		if (!e.getSpell().getInternalName().equals(internalName))
@@ -140,7 +143,7 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 		private int startMana;
 		private double startHealth;
 
-		private LivingEntity caster;
+		private Entity caster;
 		private float power;
 		private String[] args;
 		private SpellData data;
@@ -150,7 +153,7 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 		private final int startDuration;
 		private final int specialEffectInterval;
 
-		private Rewinder(LivingEntity caster, LivingEntity entity, float power, String[] args) {
+		private Rewinder(Entity caster, LivingEntity entity, float power, String[] args) {
 			this.locations = new ArrayList<>();
 			this.entity = entity;
 			this.caster = caster;
@@ -217,7 +220,7 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 
 		private final int delayedEffectInterval;
 
-		private ForceRewinder(LivingEntity caster, LivingEntity entity, List<Location> locations, double startHealth,
+		private ForceRewinder(Entity caster, LivingEntity entity, List<Location> locations, double startHealth,
 				int startMana, float power, String[] args) {
 			this.locations = locations;
 			this.entity = entity;
