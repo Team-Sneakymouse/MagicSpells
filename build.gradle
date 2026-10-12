@@ -148,6 +148,10 @@ subprojects {
                 ?: "scm:git:git@github.com:Team-Sneakymouse/MagicSpells.git")
             }
 
+            if (file("src/main/resources/plugin.yml").exists()) {
+              properties.put("sneakyrp.deployment.type", "paper-plugin")
+            }
+
             // Keep published POMs free of plugin-only / SNAPSHOT deps consumers cannot resolve.
             withXml {
               def dependenciesNode = asNode().get("dependencies")
