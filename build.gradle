@@ -148,7 +148,7 @@ subprojects {
                 ?: "scm:git:git@github.com:Team-Sneakymouse/MagicSpells.git")
             }
 
-            if (file("src/main/resources/plugin.yml").exists()) {
+            if (project.path == ":core") {
               properties.put("sneakyrp.deployment.type", "paper-plugin")
             }
 
