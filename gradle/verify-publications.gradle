@@ -1,0 +1,35 @@
+// Check the actual publication model, not source text or archive filenames.
+tasks.register("verifyPublications") {
+    group = "verification"
+    description = "Checks that only the shaded MagicSpells plugin is marked for deployment."
+    doLast {
+        def deployable = subprojects.collectMany { p ->
+            p.publishing.publications.withType(MavenPublication).findAll {
+                it.pom.properties.get().get("sneakyrp.deployment.type") == "paper-plugin"
+            }.collect { [project: p, publication: it] }
+        }
+        if (deployable.size() != 1) {
+            throw new GradleException("Expected exactly one deployable publication, found ${deployable.size()}")
+        }
+        def entry = deployable[0]
+        def publication = entry.publication
+        if (entry.project.path != ":core" || publication.artifactId != "magicspells") {
+            throw new GradleException("Deployment must select :core's shaded magicspells publication, not ${publication.artifactId}")
+        }
+        def mainJars = publication.artifacts.findAll { it.extension == "jar" && !it.classifier }
+        def shadowFile = project(":core").tasks.named("shadowJar").get().archiveFile.get().asFile
+        if (mainJars.size() != 1 || mainJars[0].file != shadowFile) {
+            throw new GradleException("Deployable publication must use shadowJar as its sole unclassified JAR")
+        }
+        def library = project(":core").publishing.publications.named("maven").get()
+        if (library.artifactId != "magicspells-core" ||
+                !library.artifacts.any { !it.classifier && it.file == project(":core").tasks.named("jar").get().archiveFile.get().asFile }) {
+            throw new GradleException("Keep the unshaded magicspells-core library publication for API consumers")
+        }
+        logger.lifecycle("Publication verified: magicspells -> shadowJar; magicspells-core remains an unmarked library")
+    }
+}
+
+tasks.named("check") {
+    dependsOn(tasks.named("verifyPublications"))
+}
