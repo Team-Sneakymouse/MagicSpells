@@ -1,11 +1,16 @@
 package com.nisovin.magicspells.spelleffects.effecttypes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Vibration;
 import org.bukkit.util.Vector;
+import org.bukkit.util.BoundingBox;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
@@ -109,10 +114,22 @@ public class ParticlesEffect extends SpellEffect {
 				.extra(speed.get(data))
 				.data(getParticleData(particle, location, data))
 				.force(force)
-				.receivers(radius.get(data), true)
+				.receivers(getReceivers(location, radius.get(data)))
 				.spawn();
 
 		return null;
+	}
+
+	private static List<Player> getReceivers(Location location, int radius) {
+		BoundingBox bounds = BoundingBox.of(location, radius, radius, radius);
+		List<Player> receivers = new ArrayList<>();
+		for (Player player : location.getWorld().getPlayers()) {
+			// Keep Paper's strict broad-phase overlap and inclusive sqrt distance (also for radius 0).
+			if (bounds.overlaps(player.getBoundingBox()) && location.distance(player.getLocation()) <= radius)
+				receivers.add(player);
+		}
+		// Never return null: ParticleBuilder interprets it as all world players.
+		return receivers;
 	}
 
 	protected Object getParticleData(Particle particle, Entity entity, Location location, SpellData data) {
