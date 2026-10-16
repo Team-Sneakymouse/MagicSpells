@@ -1471,6 +1471,51 @@ public class ConfigDataUtil {
 	}
 
 	@NotNull
+	public static ConfigData<Particle.Spell> getSpellOptions(@NotNull ConfigurationSection config,
+			@NotNull String colorPath,
+			@NotNull String powerPath,
+			@Nullable Particle.Spell def) {
+		ConfigData<Color> color = getColor(config, colorPath, def == null ? null : def.getColor());
+		ConfigData<Float> power = def == null ? getFloat(config, powerPath) : getFloat(config, powerPath, def.getPower());
+
+		if (color.isConstant() && power.isConstant()) {
+			Color c = color.get(null);
+			if (c == null)
+				return (caster, target, location, castPower, args) -> def;
+
+			Float p = power.get(null);
+			if (p == null)
+				return (caster, target, location, castPower, args) -> def;
+
+			Particle.Spell options = new Particle.Spell(c, p);
+			return (caster, target, location, castPower, args) -> options;
+		}
+
+		return new ConfigData<>() {
+
+			@Override
+			public Particle.Spell get(Entity caster, Entity target, Location location, float castPower,
+					String[] args) {
+				Color c = color.get(caster, target, location, castPower, args);
+				if (c == null)
+					return def;
+
+				Float p = power.get(caster, target, location, castPower, args);
+				if (p == null)
+					return def;
+
+				return new Particle.Spell(c, p);
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+
+		};
+	}
+
+	@NotNull
 	public static ConfigData<DustOptions> getDustOptions(@NotNull ConfigurationSection config,
 			@NotNull String colorPath,
 			@NotNull String sizePath,
