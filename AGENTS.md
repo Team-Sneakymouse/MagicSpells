@@ -2,6 +2,8 @@
 
 Paper MagicSpells fork for Lords of Minecraft. Prefer this file plus workspace rules under `MagicSpells-Workspace/.cursor/rules/`.
 
+**Branches / sneakyrp publish:** live vs milestone vs feature — see **Branch roles** in `MagicSpells-Workspace/.cursor/rules/workspace-overview.mdc`; publisher list is `/.github/workflows/publish.yml`.
+
 For **gameplay YAML packs** (not this plugin), edit sibling `MagicSpells_Scripting/` via workspace symlink `Ms_Scripts`. Scripting agent rules live in `MagicSpells-Workspace/.cursor/rules/` (**script mode**); packs are not their own git repo.
 
 ## Commands

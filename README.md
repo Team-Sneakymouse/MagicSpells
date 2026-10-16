@@ -128,7 +128,7 @@ See [COMPILE-WARNINGS.md](COMPILE-WARNINGS.md) for the for-removal / deprecation
 
 ### CI
 
-GitHub Actions builds and publishes on every push to **`DvZ`**, using the version derived from the checked-out Git commit. The workflow runs `./gradlew build`, then fetches `MAVEN_USERNAME` and `MAVEN_PASSWORD` from `/Maven` in the Infisical `lords-of-minecraft` project, `prod` environment, via OIDC. Make `INFISICAL_IDENTITY_ID` and `INFISICAL_DOMAIN` available as GitHub Actions secrets for this repository, and ensure the identity's OIDC policy allows this repository's `DvZ` branch and access to `/Maven`.
+GitHub Actions builds and publishes on every push to the branch(es) listed in [`.github/workflows/publish.yml`](.github/workflows/publish.yml) (`on.push.branches` — often live `DvZ`, sometimes a temporary **milestone** branch for the dev server). The version is derived from the checked-out Git commit. The workflow runs `./gradlew build`, then fetches `MAVEN_USERNAME` and `MAVEN_PASSWORD` from `/Maven` in the Infisical `lords-of-minecraft` project, `prod` environment, via OIDC. Make `INFISICAL_IDENTITY_ID` and `INFISICAL_DOMAIN` available as GitHub Actions secrets for this repository, and ensure the identity's OIDC policy allows the publishing branch(es) and access to `/Maven`.
 
 ### Using published artifacts
 
