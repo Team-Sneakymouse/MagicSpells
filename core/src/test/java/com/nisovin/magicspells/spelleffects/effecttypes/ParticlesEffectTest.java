@@ -103,6 +103,66 @@ class ParticlesEffectTest {
     }
 
     @Test
+    void suppliesColorDataForParticlesThatRequireIt() {
+        Effect effect = new Effect(5);
+        effect.color = constant(org.bukkit.Color.BLUE);
+        effect.argbColor = constant(org.bukkit.Color.fromARGB(0x80, 0xFF, 0x00, 0x00));
+
+        assertEquals(org.bukkit.Color.fromARGB(0x80, 0xFF, 0x00, 0x00),
+                effect.getParticleData(Particle.ENTITY_EFFECT, new Location(null, 0, 0, 0), null));
+        assertEquals(org.bukkit.Color.BLUE,
+                effect.getParticleData(Particle.FLASH, new Location(null, 0, 0, 0), null));
+        assertEquals(org.bukkit.Color.BLUE,
+                effect.getParticleData(Particle.TINTED_LEAVES, new Location(null, 0, 0, 0), null));
+    }
+
+    @Test
+    void suppliesSpellDataForEffectParticles() {
+        Effect effect = new Effect(5);
+        Particle.Spell spell = new Particle.Spell(org.bukkit.Color.AQUA, 0.75f);
+        effect.spellOptions = constant(spell);
+
+        assertSame(spell, effect.getParticleData(Particle.EFFECT, new Location(null, 0, 0, 0), null));
+        assertSame(spell, effect.getParticleData(Particle.INSTANT_EFFECT, new Location(null, 0, 0, 0), null));
+    }
+
+    @Test
+    void suppliesTrailDataWithTargetColorAndDuration() {
+        Effect effect = new Effect(5);
+        effect.trailColor = constant(org.bukkit.Color.YELLOW);
+        effect.trailDuration = constant(40);
+        effect.trailTarget = constant(ParticlesEffect.ParticlePosition.POSITION);
+        effect.trailTargetOffset = constant(new org.bukkit.util.Vector(1, 2, 3));
+        effect.trailTargetRelativeOffset = constant(new org.bukkit.util.Vector());
+
+        Location origin = new Location(null, 10, 20, 30);
+        Object data = effect.getParticleData(Particle.TRAIL, origin, null);
+        assertInstanceOf(Particle.Trail.class, data);
+        Particle.Trail trail = (Particle.Trail) data;
+        assertEquals(org.bukkit.Color.YELLOW, trail.getColor());
+        assertEquals(40, trail.getDuration());
+        assertEquals(11.0, trail.getTarget().getX(), 1e-9);
+        assertEquals(22.0, trail.getTarget().getY(), 1e-9);
+        assertEquals(33.0, trail.getTarget().getZ(), 1e-9);
+    }
+
+    @Test
+    void skipsSpawnWhenRequiredParticleDataIsMissing() {
+        Scene scene = new Scene();
+        Effect effect = new Effect(5);
+        effect.particle = constant(Particle.TRAIL);
+        effect.trailColor = constant(null);
+        effect.trailDuration = constant(20);
+        effect.trailTarget = constant(ParticlesEffect.ParticlePosition.POSITION);
+        effect.trailTargetOffset = constant(new org.bukkit.util.Vector());
+        effect.trailTargetRelativeOffset = constant(new org.bukkit.util.Vector());
+        effect.trailOrigin = constant(ParticlesEffect.ParticlePosition.POSITION);
+
+        effect.playEffectLocation(new Location(scene.world, 0, 0, 0), null);
+        assertNull(scene.emission, "missing Trail data must not call spawnParticle");
+    }
+
+    @Test
     void selectsAtFinalOffsetLocationAndPreservesEmissionParameters() throws Exception {
         Scene scene = new Scene();
         scene.player(0, 0, 0);
