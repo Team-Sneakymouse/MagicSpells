@@ -76,7 +76,8 @@ Published modules and artifact ids:
 
 | Gradle project | Maven artifact id | Plugin / archive name |
 |----------------|-------------------|------------------------|
-| `:core` | `magicspells-core` | `MagicSpells-<version>.jar` (shaded plugin); plain library JAR `magicspells-core-<version>.jar` |
+| `:core` (`plugin` publication) | `magicspells` | Shaded deployable plugin; local archive `MagicSpells-<version>.jar` |
+| `:core` (`maven` publication) | `magicspells-core` | Plain library JAR `magicspells-core-<version>.jar` (API consumers only) |
 | `:shop` | `magicspells-shop` | `MagicSpellsShop-<version>.jar` |
 | `:factions` | `magicspells-factions` | `MagicSpellsFactions-<version>.jar` |
 | `:memory` | `magicspells-memory` | `MagicSpellsMemory-<version>.jar` |
@@ -86,7 +87,11 @@ Published modules and artifact ids:
 
 `:nms:v26_2` is excluded (Paperweight dev bundle only).
 
-**What is published:** plain library JARs, sources, Javadoc, and POMs — not the shaded plugin JAR from `./gradlew :core:shadowJar`. Published POMs only declare dependencies on `io.github.team-sneakymouse` artifacts and Kotlin; consumers add Paper and other deps themselves.
+**What is published:** `io.github.team-sneakymouse:magicspells` publishes the shaded plugin as its unclassified main JAR (`magicspells-<version>.jar` in Maven). Only this publication carries `sneakyrp.deployment.type=paper-plugin`; it has no dependency graph because its bundled dependencies are already in the JAR. Deployment consumers must select `magicspells`, not `magicspells-core`, and remove the old unshaded core JAR from the plugins folder when migrating.
+
+The existing library publications (including `magicspells-core`) remain available with sources, Javadoc, and POMs for API consumers. Their POMs only declare dependencies on `io.github.team-sneakymouse` artifacts and Kotlin; consumers add Paper and other deps themselves. None of these libraries is marked for automatic deployment.
+
+`./gradlew verifyPublications` checks the publication selection without compiling the plugin. `./gradlew :core:verifyPluginJar` also builds and inspects the shaded JAR for the plugin descriptor, relocated ACF/Kotlin, shared NMS, and the supported NMS implementation. Both checks run as part of `build`; direct core publication also checks publication selection, and direct plugin publication checks JAR contents.
 
 ### Credentials and publish commands
 
@@ -111,10 +116,10 @@ Publish all configured modules to sneakyrp:
 ./gradlew publishAllPublicationsToSneakyrpRepository
 ```
 
-Publish a single module:
+Publish only the deployable plugin (not the API library):
 
 ```bash
-./gradlew :core:publishMavenPublicationToSneakyrpRepository
+./gradlew :core:publishPluginPublicationToSneakyrpRepository
 ```
 
 ### Compile warnings

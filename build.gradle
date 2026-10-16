@@ -30,6 +30,8 @@ allprojects {
   version = gitDerivedVersion
 }
 
+apply from: "gradle/verify-publications.gradle"
+
 // Convenience aliases so ./gradlew runServer works from the MagicSpells root
 // (run-paper is applied on :core).
 tasks.register("runServer") {
@@ -117,7 +119,10 @@ subprojects {
         maven(MavenPublication) {
           from components.java
           artifactId = mavenArtifactIdFor(project)
+        }
 
+        withType(MavenPublication).configureEach {
+          def deployablePlugin = project.path == ":core" && name == "plugin"
           pom {
             name.set(findProperty("POM_NAME") ?: "MagicSpells")
             description.set(findProperty("POM_DESCRIPTION")
@@ -148,7 +153,7 @@ subprojects {
                 ?: "scm:git:git@github.com:Team-Sneakymouse/MagicSpells.git")
             }
 
-            if (file("src/main/resources/plugin.yml").exists()) {
+            if (deployablePlugin) {
               properties.put("sneakyrp.deployment.type", "paper-plugin")
             }
 

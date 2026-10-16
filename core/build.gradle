@@ -53,7 +53,9 @@ dependencies {
 
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    // Index + YAML fixtures for SpellSnippetValidator (no Paper on the test classpath).
+    testImplementation("io.papermc.paper:paper-api:26.2.build.116-stable")
+    testRuntimeOnly("com.github.Chronoken:EffectLib:477d459")
+    // Index + YAML fixtures for SpellSnippetValidator.
     testImplementation("com.google.code.gson:gson:2.11.0")
     testImplementation("org.yaml:snakeyaml:2.3")
     // Gradle 9 no longer provides the launcher transitively.
@@ -96,10 +98,59 @@ shadowJar {
     archiveFileName.set("MagicSpells-${project.version}.jar")
 }
 
-// Maven publishes the plain library JAR only; shadowJar is for the Paper plugins folder.
+// Keep the Java component unshaded for API consumers. Deployment uses a separate publication.
 components.named("java") {
     withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
         skip()
+    }
+}
+
+publishing {
+    publications {
+        plugin(MavenPublication) {
+            artifactId = "magicspells"
+            // Explicit artifact: no library dependency graph or duplicate plain/shaded main JARs.
+            artifact(tasks.named("shadowJar")) {
+                classifier = ""
+            }
+        }
+    }
+}
+
+def verifyPluginJar = tasks.register("verifyPluginJar") {
+    group = "verification"
+    description = "Checks that the deployable JAR bundles relocated ACF and the supported NMS implementation."
+    dependsOn(rootProject.tasks.named("verifyPublications"))
+    def pluginJar = tasks.named("shadowJar").flatMap { it.archiveFile }
+    inputs.file(pluginJar)
+    doLast {
+        new java.util.zip.ZipFile(pluginJar.get().asFile).withCloseable { jar ->
+            def required = [
+                "plugin.yml",
+                "com/nisovin/magicspells/MagicSpells.class",
+                "com/nisovin/magicspells/shaded/acf/BaseCommand.class",
+                "com/nisovin/magicspells/shaded/kotlin/jvm/internal/Intrinsics.class",
+                "com/nisovin/magicspells/volatilecode/VolatileCodeHandle.class",
+                "com/nisovin/magicspells/volatilecode/v26_2/VolatileCode_v26_2.class"
+            ]
+            def missing = required.findAll { jar.getEntry(it) == null }
+            if (!missing.isEmpty()) {
+                throw new GradleException("Deployable MagicSpells JAR is missing bundled entries: ${missing}")
+            }
+        }
+        logger.lifecycle("Deployable JAR verified: plugin descriptor, relocated ACF/Kotlin, shared NMS and v26_2")
+    }
+}
+
+tasks.named("check") {
+    dependsOn(verifyPluginJar)
+}
+
+// Publishing directly must not bypass the deployment guards (including publishToMavenLocal).
+tasks.withType(org.gradle.api.publish.maven.tasks.AbstractPublishToMaven).configureEach {
+    dependsOn(rootProject.tasks.named("verifyPublications"))
+    if (name.startsWith("publishPluginPublication")) {
+        dependsOn(verifyPluginJar)
     }
 }
 
