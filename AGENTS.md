@@ -2,6 +2,8 @@
 
 Paper MagicSpells fork for Lords of Minecraft. Prefer this file plus workspace rules under `MagicSpells-Workspace/.cursor/rules/`.
 
+For **gameplay YAML packs** (not this plugin), edit sibling `MagicSpells_Scripting/` via workspace symlink `Ms_Scripts`. Scripting agent rules live in `MagicSpells-Workspace/.cursor/rules/` (**script mode**); packs are not their own git repo.
+
 ## Commands
 
 | Task | Command |

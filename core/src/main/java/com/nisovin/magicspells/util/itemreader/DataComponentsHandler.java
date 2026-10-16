@@ -233,6 +233,11 @@ public class DataComponentsHandler {
 		if (section == null) return;
 
 		float seconds = (float) section.getDouble("seconds", 0);
+		if (seconds <= 0f) {
+			// Paper requires a positive cooldown; 0 is used in configs to mean "no component".
+			return;
+		}
+
 		NamespacedKey group = null;
 		if (section.isString("cooldown-group")) {
 			group = NamespacedKey.fromString(section.getString("cooldown-group"));

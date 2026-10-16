@@ -79,12 +79,11 @@ public class MagicSpellsTeams extends JavaPlugin implements Listener {
 	
 	@EventHandler(ignoreCancelled=true)
 	public void onSpellTarget(SpellTargetEvent event) {
-		LivingEntity caster = event.getCaster();
-		if (caster == null) return;
-		if (!(event.getTarget() instanceof Player)) return;
+		if (!(event.getCaster() instanceof LivingEntity caster)) return;
+		if (!(event.getTarget() instanceof Player target)) return;
 		
 		boolean beneficial = event.getSpell().isBeneficial();
-		if (!canTarget(caster, (Player)event.getTarget())) {
+		if (!canTarget(caster, target)) {
 			if (!beneficial) event.setCancelled(true);
 		} else {
 			if (beneficial) event.setCancelled(true);

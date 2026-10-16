@@ -22,6 +22,12 @@ public class PotionEffectHandler {
 			potionEffects.put(key.getKey().toLowerCase(Locale.ROOT), potionEffect);
 			potionEffects.put(key.asString().toLowerCase(Locale.ROOT), potionEffect);
 		}
+
+		// Legacy Bukkit PotionEffectType.getName() tokens (slow → slowness, etc.)
+		for (Map.Entry<String, String> entry : PotionEffectKeyNames.LEGACY_TO_MODERN.entrySet()) {
+			PotionEffectType type = potionEffects.get(entry.getValue());
+			if (type != null) potionEffects.put(entry.getKey(), type);
+		}
 	}
 
 	public static PotionEffectType getPotionEffectType(String identification) {
@@ -32,6 +38,9 @@ public class PotionEffectHandler {
 
 		String namespaced = PotionEffectKeyNames.toNamespacedKeyString(identification);
 		if (namespaced == null) return null;
+		mapped = potionEffects.get(namespaced);
+		if (mapped != null) return mapped;
+
 		NamespacedKey key = NamespacedKey.fromString(namespaced);
 		if (key == null) return null;
 		return Registry.MOB_EFFECT.get(key);

@@ -1872,6 +1872,7 @@
       "chestplate-drop-chance",
       "duration",
       "entity",
+      "entity-type",
       "fire-ticks",
       "gravity",
       "helmet",

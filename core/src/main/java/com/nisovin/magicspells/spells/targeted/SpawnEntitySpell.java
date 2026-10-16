@@ -141,6 +141,10 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		entities = new ArrayList<>();
 
 		ConfigurationSection entitySection = getConfigSection("entity");
+		if (entitySection == null) {
+			// Legacy SpawnMonsterSpell / flat configs used top-level entity-type.
+			entitySection = legacyEntitySectionFromRoot();
+		}
 		if (entitySection != null)
 			entityData = new EntityData(entitySection);
 
@@ -1145,5 +1149,32 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	public static void setTotalEntities(int i) {
 		totalEntities = i;
 	}
+
+	/**
+	 * Build a synthetic Entity Data section from flat legacy keys
+	 * ({@code entity-type} + optional root scalars such as {@code tamed}).
+	 */
+	private ConfigurationSection legacyEntitySectionFromRoot() {
+		String entityTypeName = getConfigString("entity-type", "");
+		if (entityTypeName.isEmpty()) return null;
+
+		org.bukkit.configuration.file.YamlConfiguration synthetic = new org.bukkit.configuration.file.YamlConfiguration();
+		synthetic.set("entity", entityTypeName);
+
+		ConfigurationSection spellRoot = config.getSection("spells." + internalName);
+		if (spellRoot != null) {
+			for (String key : LEGACY_ENTITY_ROOT_KEYS) {
+				if (!spellRoot.contains(key)) continue;
+				synthetic.set(key, spellRoot.get(key));
+			}
+		}
+		return synthetic;
+	}
+
+	private static final String[] LEGACY_ENTITY_ROOT_KEYS = {
+			"tamed", "baby", "angry", "chested", "powered", "saddled", "sheared",
+			"glowing", "visible-by-default", "size", "color", "type", "material",
+			"style", "pattern-color", "scoreboard-tags"
+	};
 
 }

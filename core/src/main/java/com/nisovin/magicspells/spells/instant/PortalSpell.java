@@ -98,16 +98,18 @@ public class PortalSpell extends InstantSpell {
 	public void initialize() {
 		super.initialize();
 
-		Spell spell = MagicSpells.getSpellByInternalName(startMarkSpellName);
-		if (spell instanceof MarkSpell)
-			startMark = (MarkSpell) spell;
-		else
-			MagicSpells.error("PortalSpell '" + internalName + "' has an invalid mark-spell defined: '"
-					+ startMarkSpellName + "'.");
+		if (!startMarkSpellName.isBlank()) {
+			Spell spell = MagicSpells.getSpellByInternalName(startMarkSpellName);
+			if (spell instanceof MarkSpell)
+				startMark = (MarkSpell) spell;
+			else
+				MagicSpells.error("PortalSpell '" + internalName + "' has an invalid mark-spell defined: '"
+						+ startMarkSpellName + "'.");
+		}
 
 		usingSecondMarkSpell = false;
-		if (!endMarkSpellName.isEmpty()) {
-			spell = MagicSpells.getSpellByInternalName(endMarkSpellName);
+		if (!endMarkSpellName.isBlank()) {
+			Spell spell = MagicSpells.getSpellByInternalName(endMarkSpellName);
 			if (spell instanceof MarkSpell) {
 				endMark = (MarkSpell) spell;
 				usingSecondMarkSpell = true;

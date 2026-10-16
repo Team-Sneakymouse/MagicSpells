@@ -63,12 +63,10 @@ public class MagicSpellsTowny extends JavaPlugin implements Listener {
 	
 	@EventHandler(ignoreCancelled = true)
 	public void onSpellTarget(SpellTargetEvent event) {
-		LivingEntity caster = event.getCaster();
-		LivingEntity target = event.getTarget();
+		if (!(event.getCaster() instanceof LivingEntity caster)) return;
+		if (!(event.getTarget() instanceof LivingEntity target)) return;
 
 		Spell spell = event.getSpell();
-
-		if (caster == null) return;
 
 		boolean friendlySpell = false;
 		if (spell instanceof TargetedSpell && spell.isBeneficial()) friendlySpell = true;
@@ -84,7 +82,7 @@ public class MagicSpellsTowny extends JavaPlugin implements Listener {
 	public void onSpellCast(SpellCastEvent event) {
 		if (!disallowedInTowns.contains(event.getSpell())) return;
 
-		LivingEntity caster = event.getCaster();
+		if (!(event.getCaster() instanceof LivingEntity caster)) return;
 
 		try {
 			TownyWorld world = TownyUniverse.getInstance().getWorld(caster.getWorld().getName());
