@@ -1486,7 +1486,7 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public Particle.Spell get(Entity caster, Entity target, Location location, float castPower,
+			public Particle.Spell get(LivingEntity caster, LivingEntity target, Location location, float castPower,
 					String[] args) {
 				Color c = color.get(caster, target, location, castPower, args);
 				if (c == null)
