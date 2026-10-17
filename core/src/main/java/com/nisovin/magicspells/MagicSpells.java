@@ -70,6 +70,7 @@ import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.storage.StorageHandler;
 import com.nisovin.magicspells.util.prompt.PromptType;
 import com.nisovin.magicspells.util.compat.CompatBasics;
+import com.nisovin.magicspells.util.compat.placeholderapi.PlaceholderApiCompat;
 import com.nisovin.magicspells.castmodifiers.conditions.util.DependsOn;
 import com.nisovin.magicspells.zones.NoMagicZoneManager;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
@@ -745,6 +746,7 @@ public class MagicSpells extends JavaPlugin {
 		pm.callEvent(new MagicSpellsLoadedEvent(this));
 		loaded = true;
 		PerformanceDiagnostics.register(this);
+		PlaceholderApiCompat.setup(this);
 
 		log("MagicSpells loading complete!");
 	}
@@ -2539,6 +2541,8 @@ public class MagicSpells extends JavaPlugin {
 		pm.removePermission("magicspells.cast.*");
 		pm.removePermission("magicspells.learn.*");
 		pm.removePermission("magicspells.teach.*");
+
+		PlaceholderApiCompat.teardown();
 
 		// Unregister all listeners
 		HandlerList.unregisterAll(this);
