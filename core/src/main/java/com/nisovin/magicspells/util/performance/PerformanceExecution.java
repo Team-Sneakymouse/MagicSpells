@@ -86,10 +86,10 @@ public final class PerformanceExecution {
             if (!closed) measurement.add(counter, amount);
         }
 
-        @Override public void close() {
+		@Override public void close() {
             if (closed) return;
             try {
-                measurement.close();
+                if (measurement != null) measurement.close();
             } finally {
                 state.top = parent;
                 measurement = null;

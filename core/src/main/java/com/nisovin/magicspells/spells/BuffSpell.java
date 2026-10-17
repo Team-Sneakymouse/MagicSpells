@@ -500,6 +500,8 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	}
 
 	private LivingEntity getWhoToCancel(Entity livingEntity) {
+		if (livingEntity == null) return null;
+
 		// If the target was affected by the event, cancel them.
 		if (!targeted || cancelAffectsTarget) {
 			if (!(livingEntity instanceof LivingEntity living)) return null;
@@ -510,10 +512,11 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		// If the caster was affected by the event, cancel the target if they have the buff.
 
 		for (Map.Entry<UUID, LivingEntity> entry : lastCaster.entrySet()) {
-			if (entry == null) continue;
+			LivingEntity caster = entry.getValue();
+			if (caster == null) continue;
 
 			// Check if the entity is the caster of this entry.
-			if (!entry.getValue().getUniqueId().equals(livingEntity.getUniqueId())) continue;
+			if (!caster.getUniqueId().equals(livingEntity.getUniqueId())) continue;
 
 			Entity entity = Bukkit.getEntity(entry.getKey());
 			if (!(entity instanceof LivingEntity target)) return null;
@@ -640,7 +643,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 
 			LivingEntity entity = getWhoToCancel(event.getCaster());
 			if (entity == null) return;
-			if (filter.check(event.getSpell())) return;
+			if (filter != null && filter.check(event.getSpell())) return;
 			turnOff(entity);
 		}
 
