@@ -6,6 +6,10 @@ plugins {
 }
 
 repositories {
+    // Restricted to the provider API for local development before its first publication.
+    mavenLocal {
+        content { includeModule("io.github.team-sneakymouse", "SneakyDiagnostics-API") }
+    }
     flatDir {
         // CMI is paid/proprietary and has no public Maven; keep the jar in libs/.
         dirs '../libs'
@@ -22,6 +26,8 @@ repositories {
 }
 
 dependencies {
+    compileOnly("io.github.team-sneakymouse:SneakyDiagnostics-API:1.0.0")
+    testImplementation("io.github.team-sneakymouse:SneakyDiagnostics-API:1.0.0")
     shadow("org.apache.commons:commons-math4-core:4.0-beta1")
     shadow("com.github.Chronoken:EffectLib:477d459")
     shadow("co.aikar:acf-paper:0.5.1-SNAPSHOT")

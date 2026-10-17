@@ -31,9 +31,14 @@ public final class PerformanceRecorder {
     }
 
     public void start(int seconds) {
-        if (seconds < 1 || seconds > 300) throw new IllegalArgumentException("Duration must be 1..300 seconds");
+        start(clock.getAsLong(), seconds);
+    }
+
+    /** Use the diagnostics clock origin so every provider shares one deadline. */
+    public void start(long startedNanos, int seconds) {
+        if (seconds < 1 || seconds > 1800) throw new IllegalArgumentException("Duration must be 1..1800 seconds");
         if (active != null) throw new IllegalStateException("A performance capture is already running");
-        active = new Session(clock.getAsLong(), seconds);
+        active = new Session(startedNanos, seconds);
     }
 
     public boolean isActive() { return active != null; }

@@ -744,6 +744,7 @@ public class MagicSpells extends JavaPlugin {
 		// Call loaded event
 		pm.callEvent(new MagicSpellsLoadedEvent(this));
 		loaded = true;
+		PerformanceDiagnostics.register(this);
 
 		log("MagicSpells loading complete!");
 	}
@@ -2361,7 +2362,7 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public void unload() {
-		PerformanceDiagnostics.stop("plugin_unload", true);
+		PerformanceDiagnostics.unregister();
 		loaded = false;
 
 		// Save cooldowns

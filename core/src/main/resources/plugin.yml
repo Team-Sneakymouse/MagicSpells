@@ -4,6 +4,7 @@ version: $version
 authors: [nisovin, TheComputerGeek2, Chronoken, tonythemacaroni, JasperLorelai]
 api-version: "26.2"
 softdepend:
+    - SneakyDiagnostics
     - GriefPrevention
     - Vault
     - ProtocolLib
