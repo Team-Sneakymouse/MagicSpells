@@ -11,7 +11,7 @@ class MagicSpellsProbeTest {
     @Test void reportsExistingMeasurementsThroughTheSharedCaptureInterface() {
         var clock = new AtomicLong(100);
         var recorder = new PerformanceRecorder(clock::get, 4096);
-        var probe = new MagicSpellsProbe(recorder);
+        var probe = new MagicSpellsProbe(recorder, java.util.Set.of("fire", "first", "dropped", "after-deadline"));
         probe.start(new Diagnostics.Capture("shared", "now", 50, 4, 1800));
         try (var scope = recorder.enter("spell", "fire", "execute")) {
             recorder.matchCall();
@@ -26,12 +26,12 @@ class MagicSpellsProbeTest {
         var row = (Map<?, ?>) rows.getFirst();
         assertEquals("fire", row.get("spell"));
         assertEquals(20L, row.get("selfNanos"));
-        assertEquals(Map.of("MATCH_CALLS", 1L), row.get("counters"));
+        assertEquals(Map.of("MATCH_CALLS", 1L, "INVENTORY_SLOTS", 0L), row.get("counters"));
     }
 
     @Test void droppedScopesMarkProviderCoverageIncomplete() {
         var recorder = new PerformanceRecorder(() -> 0, 1);
-        var probe = new MagicSpellsProbe(recorder);
+        var probe = new MagicSpellsProbe(recorder, java.util.Set.of("fire", "first", "dropped", "after-deadline"));
         probe.start(new Diagnostics.Capture("id", "now", 0, 4, 1));
         recorder.enter("spell", "first", "").close();
         recorder.enter("spell", "dropped", "").close();
@@ -43,7 +43,7 @@ class MagicSpellsProbeTest {
     @Test void deadlineUsesTheSharedOriginAndStopsAdmissionEvenWithoutAnotherTick() {
         var clock = new AtomicLong(500_000_000L);
         var recorder = new PerformanceRecorder(clock::get, 4);
-        var probe = new MagicSpellsProbe(recorder);
+        var probe = new MagicSpellsProbe(recorder, java.util.Set.of("fire", "first", "dropped", "after-deadline"));
         probe.start(new Diagnostics.Capture("id", "now", 0, 0, 1));
         clock.set(1_000_000_000L);
         recorder.enter("spell", "after-deadline", "").close();

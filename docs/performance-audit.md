@@ -30,15 +30,22 @@ registered, independent of recording state. Each callback enters a fresh scope w
 invoked; waiting time is excluded. Lexical frames are reused by nesting depth and
 clear ownership/recording references on exit. Never retain them outside their lexical scope.
 
-`PerformanceRecorder` handles bounded aggregation on the capture thread.
-`PerformanceDiagnostics` handles commands, metadata, timeout, and export.
-`PerformanceExports` retains queued writes and drains them exactly once on unload.
-Write failures are logged.
+`PerformanceRecorder` handles aggregate-first collection on the capture thread. Every
+admitted scope updates independent global, fixed-operation and loaded-spell aggregates.
+The operation/spell/detail map is optional attribution: saturating it never discards
+aggregate calls, time or counters. Spell aggregate keys are admitted from the loaded
+spell-name snapshot; unknown names share one explicit unattributed bucket.
 
-The capture initiator receives completion or failure messages. Export workers queue
-notifications for delivery on the server thread. The lifecycle task stays alive until
-exports and notifications finish; unload flushes both without requiring another tick.
-Each export captures its own recipient, so a later capture cannot redirect its message.
+`PerformanceReport` owns the JSON shape and derives detail capacity from the documented
+SneakyDiagnostics protocol-1 value allowance. It reserves aggregate/metadata capacity
+before detail, prioritizes spell self-time ranking on export, and preserves the combined
+cost of spell rows whose names cannot fit. No provider report should fail simply because
+it recorded more keys than can be exported. Coverage is explicit for each view.
+
+`PerformanceDiagnostics` owns registration and idle execution ownership. The optional
+`SneakyDiagnosticsHook` registers `MagicSpellsProbe` after load and closes registration
+before unload. SneakyDiagnostics owns capture commands, deadlines and report writing.
+The instrumentation schema is `magicspells-execution-2`; there is no `/ms perf` writer.
 
 Shared seams are normal cast preparation and execution, four subspell execution
 methods, passive activation, listener dispatch, scheduling helpers, and shared
@@ -52,10 +59,10 @@ This is shared execution attribution, not universal method interception. Direct
 targeted administrative casts, direct Bukkit tasks/listeners, external libraries,
 and direct calls between implementations can bypass it. Shared managers may have
 no single spell owner. Async execution is excluded. These limits are documented in
-the wiki. The legacy profiler stays intact; consolidation is a separate compatibility decision.
+the wiki. The legacy profiler stays intact.
 
 Tests cover idle ownership, callbacks across captures, nested self time, exceptions,
-thread isolation, capture replacement, key overflow, and pending/running/failed exports.
+thread isolation, capture replacement, detail overflow with intact aggregates, large loaded-spell sets, export limits and label truncation. The consumer classloader check saturates detail in the actual rebuilt JAR and verifies aggregate counters through the real report guard.
 They are not an end-to-end Paper test. Before production deployment, verify cast
 results, event priority/cancellation, task cancellation, timeout and reload on a test
 server, then compare recording on/off under representative player activity.
@@ -73,6 +80,6 @@ an arithmetic payload. Registration is outside the timed loop. The last three wa
 rounds and thread allocations are printed. This is a smoke benchmark, not JMH or
 Minecraft gameplay; timings must not become CI thresholds.
 
-One local Java 25 run measured baseline 5.6–5.8 ns, idle 42.2–50.1 ns, and recording
-250.2–258.7 ns per operation. Idle allocated 0 bytes after warmup; recording allocated
-240 bytes per operation. Production overhead and GC effects still need measurement.
+Earlier measurements predate aggregate-first recording and are not comparable overhead
+claims for this implementation. Measure the current build with a representative loaded
+spell set and compare recording on/off on an isolated server before deployment.

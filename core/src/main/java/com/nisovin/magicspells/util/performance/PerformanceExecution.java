@@ -13,6 +13,7 @@ public final class PerformanceExecution {
 
         private final String label;
         Operation(String label) { this.label = label; }
+        String label() { return label; }
     }
 
     private final PerformanceRecorder recorder;

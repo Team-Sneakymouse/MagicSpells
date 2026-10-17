@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.util.performance;
 
 import com.teamsneakymouse.sneakydiagnostics.api.Diagnostics;
+import com.nisovin.magicspells.MagicSpells;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /** Loaded only when the optional SneakyDiagnostics plugin is enabled. Never shade its API. */
@@ -14,7 +15,7 @@ final class SneakyDiagnosticsHook {
             return () -> {};
         }
         var registration = diagnostics.register(plugin.getName(), plugin.getPluginMeta().getVersion(),
-                "magicspells-execution-1", new MagicSpellsProbe(recorder));
+                "magicspells-execution-2", new MagicSpellsProbe(recorder, MagicSpells.getSpells().keySet()));
         return registration::close;
     }
 }
