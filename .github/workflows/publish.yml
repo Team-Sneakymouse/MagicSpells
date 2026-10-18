@@ -2,7 +2,7 @@ name: Publish Maven
 
 on:
   push:
-    branches: [feature/cast-item-spelldata]
+    branches: [DvZ]
   workflow_dispatch:
 
 permissions:
