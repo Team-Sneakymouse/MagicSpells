@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.annotation.Annotation;
 
 import java.net.URL;
@@ -71,6 +72,7 @@ import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.storage.StorageHandler;
 import com.nisovin.magicspells.util.prompt.PromptType;
 import com.nisovin.magicspells.util.compat.CompatBasics;
+import com.nisovin.magicspells.util.compat.placeholderapi.PlaceholderApiCompat;
 import com.nisovin.magicspells.castmodifiers.conditions.util.DependsOn;
 import com.nisovin.magicspells.zones.NoMagicZoneManager;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
@@ -746,6 +748,7 @@ public class MagicSpells extends JavaPlugin {
 		pm.callEvent(new MagicSpellsLoadedEvent(this));
 		loaded = true;
 		PerformanceDiagnostics.register(this);
+		PlaceholderApiCompat.setup(this);
 
 		log("MagicSpells loading complete!");
 	}
@@ -2149,8 +2152,11 @@ public class MagicSpells extends JavaPlugin {
 							runs += 1;
 							plugin.profilingRuns.put(eventKey, runs);
 						}
+					} catch (InvocationTargetException ex) {
+						Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+						handleException(cause, auditDetail);
 					} catch (Exception ex) {
-						handleException(ex);
+						handleException(ex, auditDetail);
 					}
 				}
 			};
@@ -2204,8 +2210,14 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static void handleException(@NotNull Exception ex) {
+		handleException((Throwable) ex, null);
+	}
+
+	public static void handleException(@NotNull Throwable ex, String context) {
+		Throwable root = unwrapReflective(ex);
 		if (!plugin.enableErrorLogging) {
-			ex.printStackTrace();
+			if (context != null) plugin.getLogger().severe("Exception in " + context);
+			root.printStackTrace();
 			return;
 		}
 
@@ -2214,11 +2226,26 @@ public class MagicSpells extends JavaPlugin {
 			folder.mkdir();
 
 		plugin.getLogger().severe("AN EXCEPTION HAS OCCURED:");
-		try (PrintWriter writer = new PrintWriter(new File(folder, System.currentTimeMillis() + ".txt"));) {
-			Throwable t = ex;
+		if (context != null) plugin.getLogger().severe("    Context: " + context);
+		try (PrintWriter writer = new PrintWriter(new File(folder, System.currentTimeMillis() + ".txt"))) {
+			if (context != null) {
+				writer.println("Context: " + context);
+				writer.println();
+			}
+
+			Throwable t = root;
 			while (t != null) {
-				plugin.getLogger().severe("    " + t.getMessage() + " (" + t.getClass().getName() + ')');
+				String message = t.getMessage();
+				plugin.getLogger().severe("    " + message + " (" + t.getClass().getName() + ')');
 				t.printStackTrace(writer);
+				if (t.getStackTrace().length == 0) {
+					writer.println("(empty stack trace — JVM often omits frames for hot repeated throws;");
+					writer.println(" restart with -XX:-OmitStackTraceInFastThrow to capture the site)");
+				}
+				for (Throwable suppressed : t.getSuppressed()) {
+					writer.println("Suppressed:");
+					suppressed.printStackTrace(writer);
+				}
 				writer.println();
 				t = t.getCause();
 			}
@@ -2230,7 +2257,7 @@ public class MagicSpells extends JavaPlugin {
 		} catch (Exception e) {
 			plugin.getLogger().severe("ERROR WHILE HANDLING EXCEPTION:");
 			e.printStackTrace();
-			ex.printStackTrace();
+			root.printStackTrace();
 		}
 
 		// Delete old errors if the folder exceeds the limit.
@@ -2247,6 +2274,14 @@ public class MagicSpells extends JavaPlugin {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	private static Throwable unwrapReflective(Throwable ex) {
+		Throwable current = ex;
+		while (current instanceof InvocationTargetException ite && ite.getCause() != null) {
+			current = ite.getCause();
+		}
+		return current;
 	}
 
 	public static void profilingReport() {
@@ -2546,6 +2581,8 @@ public class MagicSpells extends JavaPlugin {
 		pm.removePermission("magicspells.cast.*");
 		pm.removePermission("magicspells.learn.*");
 		pm.removePermission("magicspells.teach.*");
+
+		PlaceholderApiCompat.teardown();
 
 		// Unregister all listeners
 		HandlerList.unregisterAll(this);

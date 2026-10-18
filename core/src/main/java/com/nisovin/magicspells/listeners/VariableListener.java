@@ -65,6 +65,8 @@ public class VariableListener implements Listener {
 				continue;
 
 			Variable variable = variableManager.getVariable(entry.getKey());
+			if (variable == null)
+				continue;
 
 			Player player = null;
 			String playerName = "-";
@@ -101,6 +103,8 @@ public class VariableListener implements Listener {
 				continue;
 
 			Variable variable = variableManager.getVariable(entry.getKey());
+			if (variable == null)
+				continue;
 
 			Player player = null;
 			String playerName = "-";
