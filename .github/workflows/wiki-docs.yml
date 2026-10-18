@@ -1,19 +1,19 @@
 name: Wiki docs (spell surfaces)
 
-# When spell/effect/modifier Java changes on DvZ, verify the sibling wiki clone
+# When spell/effect/modifier Java changes on main, verify the sibling wiki clone
 # still has index coverage. Expects MagicSpells.wiki checked out beside this repo
 # in CI via a second checkout.
 
 on:
   push:
-    branches: [DvZ]
+    branches: [main]
     paths:
       - 'core/src/main/java/com/nisovin/magicspells/spells/**'
       - 'core/src/main/java/com/nisovin/magicspells/spelleffects/**'
       - 'core/src/main/java/com/nisovin/magicspells/castmodifiers/**'
       - '.github/workflows/wiki-docs.yml'
   pull_request:
-    branches: [DvZ]
+    branches: [main]
     paths:
       - 'core/src/main/java/com/nisovin/magicspells/spells/**'
       - 'core/src/main/java/com/nisovin/magicspells/spelleffects/**'

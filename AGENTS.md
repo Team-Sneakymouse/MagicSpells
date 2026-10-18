@@ -1,4 +1,4 @@
-# Agent instructions (MagicSpells / DvZ)
+# Agent instructions (MagicSpells / main)
 
 Paper MagicSpells fork for Lords of Minecraft. Prefer this file plus workspace rules under `MagicSpells-Workspace/.cursor/rules/`.
 

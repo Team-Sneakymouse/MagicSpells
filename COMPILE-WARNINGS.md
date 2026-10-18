@@ -1,6 +1,6 @@
 # Compile warnings backlog
 
-Snapshot from `:core:compileJava` on the DvZ fork (Paper / Bukkit APIs).
+Snapshot from `:core:compileJava` on this fork (Paper / Bukkit APIs).
 
 **Note:** `javac` reports at most **100** warnings per compile. Clearing a large cluster can make previously hidden warnings appear until the true total drops below 100.
 
