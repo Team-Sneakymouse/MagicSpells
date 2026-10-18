@@ -496,14 +496,14 @@ public class MagicItems {
 				component.setColors(new ArrayList<>());
 				meta.setCustomModelDataComponent(component);
 			}
-			case MAX_STACK_SIZE -> meta.setMaxStackSize(0);
+			case MAX_STACK_SIZE -> meta.setMaxStackSize(null);
 			case ITEM_MODEL -> meta.setItemModel(null);
 			case TOOLTIP_STYLE -> meta.setTooltipStyle(null);
 			case RARITY -> meta.setRarity(null);
 			case ENCHANTABLE -> meta.setEnchantable(null);
 			case GLIDER -> meta.setGlider(false);
 			case MAX_DAMAGE -> {
-				if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) damageable.setMaxDamage(0);
+				if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) damageable.setMaxDamage(null);
 			}
 			case FOOD -> meta.setFood(null);
 			case USE_COOLDOWN -> meta.setUseCooldown(null);
