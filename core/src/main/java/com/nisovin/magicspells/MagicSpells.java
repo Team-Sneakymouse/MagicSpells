@@ -1,6 +1,7 @@
 package com.nisovin.magicspells;
 
 import com.nisovin.magicspells.util.performance.PerformanceDiagnostics;
+import com.nisovin.magicspells.util.performance.TaskLifecycle;
 import com.nisovin.magicspells.util.performance.PerformanceExecution.Operation;
 
 import java.io.*;
@@ -2169,13 +2170,15 @@ public class MagicSpells extends JavaPlugin {
 	public static int scheduleDelayedTask(Spell owner, final Runnable task, long delay) {
 		Runnable measured = PerformanceDiagnostics.EXECUTION.task(
 				owner == null ? null : owner.getInternalName(), "delayed", task);
-		return Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, !plugin.enableErrorLogging ? measured : () -> {
+		return PerformanceDiagnostics.TASKS.schedule(owner == null ? PerformanceDiagnostics.EXECUTION.owner() : owner.getInternalName(),
+				TaskLifecycle.schedulingOrigin(), delay, -1, measured,
+				tracked -> Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, !plugin.enableErrorLogging ? tracked : () -> {
 			try {
-				measured.run();
+				tracked.run();
 			} catch (Exception e) {
 				handleException(e);
 			}
-		}, delay);
+		}, delay));
 	}
 
 	public static int scheduleRepeatingTask(final Runnable task, long delay, long interval) {
@@ -2185,17 +2188,19 @@ public class MagicSpells extends JavaPlugin {
 	public static int scheduleRepeatingTask(Spell owner, final Runnable task, long delay, long interval) {
 		Runnable measured = PerformanceDiagnostics.EXECUTION.task(
 				owner == null ? null : owner.getInternalName(), "interval:" + interval, task);
-		return Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, !plugin.enableErrorLogging ? measured : () -> {
+		return PerformanceDiagnostics.TASKS.schedule(owner == null ? PerformanceDiagnostics.EXECUTION.owner() : owner.getInternalName(),
+				TaskLifecycle.schedulingOrigin(), delay, interval, measured,
+				tracked -> Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, !plugin.enableErrorLogging ? tracked : () -> {
 			try {
-				measured.run();
+				tracked.run();
 			} catch (Exception e) {
 				handleException(e);
 			}
-		}, delay, interval);
+		}, delay, interval));
 	}
 
 	public static void cancelTask(int taskId) {
-		Bukkit.getScheduler().cancelTask(taskId);
+		PerformanceDiagnostics.TASKS.cancel(taskId, () -> Bukkit.getScheduler().cancelTask(taskId));
 	}
 
 	public static void handleException(@NotNull Exception ex) {
@@ -2545,6 +2550,7 @@ public class MagicSpells extends JavaPlugin {
 
 		// Cancel all tasks
 		Bukkit.getScheduler().cancelTasks(this);
+		PerformanceDiagnostics.TASKS.clear();
 
 		ModifierSet.unload();
 		PromptType.unloadDestructPromptData();

@@ -6,6 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class PerformanceDiagnostics {
     private static final PerformanceRecorder RECORDER = new PerformanceRecorder();
     public static final PerformanceExecution EXECUTION = new PerformanceExecution(RECORDER);
+    public static final TaskLifecycle TASKS = new TaskLifecycle();
     private static Runnable unregister = () -> {};
 
     private PerformanceDiagnostics() {}

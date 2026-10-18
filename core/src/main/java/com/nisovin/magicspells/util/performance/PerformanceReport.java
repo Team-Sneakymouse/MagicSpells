@@ -25,7 +25,13 @@ final class PerformanceReport {
     }
 
     static Encoded encode(PerformanceRecorder.Report source, String id, long startedAfterMillis, long finishedAfterMillis) {
+        return encode(source, id, startedAfterMillis, finishedAfterMillis, Map.of());
+    }
+
+    static Encoded encode(PerformanceRecorder.Report source, String id, long startedAfterMillis, long finishedAfterMillis,
+                          Map<String, Object> lifecycle) {
         var report = base();
+        if (!lifecycle.isEmpty()) report.put("taskLifecycle", lifecycle);
         long[] truncated = {0};
         report.put("captureId", id);
         report.put("startedAfterMillis", startedAfterMillis);
@@ -80,7 +86,8 @@ final class PerformanceReport {
         report.put("spellTotalsComplete", spellsComplete);
         report.put("detailComplete", detailComplete);
         report.put("limits", limits(source.maxDetailKeys(), source.configuredSpellNames(), source.rows().size(), details.size()));
-        return new Encoded(report, totalsComplete && operationsComplete && spellsComplete && detailComplete);
+        boolean tasksComplete = lifecycle.isEmpty() || Boolean.TRUE.equals(lifecycle.get("lifecycleComplete"));
+        return new Encoded(report, totalsComplete && operationsComplete && spellsComplete && detailComplete && tasksComplete);
     }
 
     private static LinkedHashMap<String, Object> base() {
@@ -139,12 +146,14 @@ final class PerformanceReport {
     private static Map<String, Object> named(Summary row, String dimension, long[] truncated) {
         var encoded = measurement(row);
         encoded.put(dimension, label(row.name(), truncated));
+        if (dimension.equals("spell")) encoded.put("spellKey", label(row.name().toLowerCase(java.util.Locale.ROOT), new long[1]));
         return encoded;
     }
     private static Map<String, Object> detail(PerformanceRecorder.Row row, long[] truncated) {
         var encoded = measurement(new Summary("", row.calls(), row.totalNanos(), row.selfNanos(), row.maxNanos(), row.counters()));
         encoded.put("operation", label(row.key().operation(), truncated));
         encoded.put("spell", label(row.key().spell(), truncated));
+        encoded.put("spellKey", label(row.key().spell().toLowerCase(java.util.Locale.ROOT), new long[1]));
         encoded.put("detail", label(row.key().detail(), truncated));
         return encoded;
     }

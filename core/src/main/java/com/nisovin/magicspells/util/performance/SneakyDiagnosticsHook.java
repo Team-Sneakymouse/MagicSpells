@@ -15,7 +15,16 @@ final class SneakyDiagnosticsHook {
             return () -> {};
         }
         var registration = diagnostics.register(plugin.getName(), plugin.getPluginMeta().getVersion(),
-                "magicspells-execution-2", new MagicSpellsProbe(recorder, MagicSpells.getSpells().keySet()));
+                "magicspells-execution-3", new MagicSpellsProbe(recorder, MagicSpells.getSpells().values().stream()
+                        .map(spell -> spell.getInternalName()).collect(java.util.stream.Collectors.toSet()),
+                        PerformanceDiagnostics.TASKS, () -> pending(plugin)));
         return registration::close;
+    }
+
+    private static Iterable<TaskLifecycle.Pending> pending(JavaPlugin plugin) {
+        // The public API materializes all scheduler tasks. Do not allocate another full list.
+        var tasks = plugin.getServer().getScheduler().getPendingTasks();
+        return () -> tasks.stream().filter(task -> task.getOwner() == plugin && !task.isCancelled())
+                .map(task -> new TaskLifecycle.Pending(task.getTaskId(), task.isSync())).iterator();
     }
 }

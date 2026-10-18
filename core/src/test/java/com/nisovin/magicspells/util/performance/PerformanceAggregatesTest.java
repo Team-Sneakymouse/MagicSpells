@@ -10,6 +10,19 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PerformanceAggregatesTest {
+    @Test void mixedCaseOwnersShareTheConfiguredAggregateAndRetainReadableSpelling() {
+        var recorder = new PerformanceRecorder(() -> 0, 10);
+        recorder.start(0, 60, Set.of("statTrading-freeTrade"));
+        recorder.enter("spell", "statTrading-freeTrade", "cast").close();
+        recorder.enter("task", "stattrading-freetrade", "callback").close();
+        var report = recorder.stop("completed");
+        assertEquals(0, report.unknownOwnerScopes());
+        assertEquals(1, report.spellTotals().size());
+        assertEquals("statTrading-freeTrade", report.spellTotals().getFirst().name());
+        assertEquals(2, report.spellTotals().getFirst().calls());
+        assertEquals(0, report.unattributedSpellTotals().calls());
+    }
+
     @Test void overflowPreservesNestedSelfTimeAndInnermostCountersInEveryAggregate() {
         var clock = new AtomicLong();
         var recorder = new PerformanceRecorder(clock::get, 1);

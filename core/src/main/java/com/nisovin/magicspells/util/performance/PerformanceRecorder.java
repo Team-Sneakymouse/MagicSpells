@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.LongSupplier;
@@ -70,6 +71,7 @@ public final class PerformanceRecorder {
         if (now - session.start >= session.seconds * 1_000_000_000L) return Scope.NONE;
         Scope parent = session.top;
         String owner = spell != null ? spell : parent == null ? "[unattributed]" : parent.key.spell();
+        owner = session.ownerNames.getOrDefault(owner.toLowerCase(Locale.ROOT), owner);
         Key key = new Key(operation, owner, detail);
         Stats stats = session.stats.get(key);
         if (stats == null) {
@@ -157,6 +159,7 @@ public final class PerformanceRecorder {
         final Thread owner = Thread.currentThread();
         final Map<Key, Stats> stats = new HashMap<>();
         final Set<String> configuredSpells;
+        final Map<String, String> ownerNames = new HashMap<>();
         final int maxDetailKeys;
         final Stats totals = new Stats(), unattributedSpellStats = new Stats();
         final Map<String, Stats> spellStats = new HashMap<>(), operationStats = new HashMap<>();
@@ -166,6 +169,7 @@ public final class PerformanceRecorder {
         Scope top;
         Session(long start, int seconds, Set<String> configuredSpells, int maxDetailKeys) {
             this.start = start; this.seconds = seconds; this.configuredSpells = configuredSpells; this.maxDetailKeys = maxDetailKeys;
+            configuredSpells.stream().sorted().forEach(name -> ownerNames.putIfAbsent(name.toLowerCase(Locale.ROOT), name));
             for (String operation : OPERATIONS) operationStats.put(operation, new Stats());
             operationStats.put(OTHER_OPERATION, new Stats());
         }
