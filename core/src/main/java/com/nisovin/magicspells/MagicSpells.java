@@ -2367,6 +2367,8 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public void unload() {
+		// Fail before destructive reload teardown if variable storage cannot accept the final state.
+		if (variableManager != null) variableManager.flushForUnload();
 		PerformanceDiagnostics.unregister();
 		loaded = false;
 

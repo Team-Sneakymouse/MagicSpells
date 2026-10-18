@@ -115,5 +115,10 @@ public class CharacterVariable extends Variable {
 		map.put(compositeKey, value);
 	}
 
+	/** Live read-only persistence view. Traverse only on the server thread; never pass to a writer. */
+	public Map<String, Double> getPersistenceValues() {
+		return java.util.Collections.unmodifiableMap(map);
+	}
+
 }
 

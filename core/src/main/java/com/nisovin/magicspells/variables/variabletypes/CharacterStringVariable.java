@@ -69,5 +69,10 @@ public class CharacterStringVariable extends CharacterVariable {
 		data.put(compositeKey, value);
 	}
 
+	/** Live read-only persistence view. Traverse only on the server thread; never pass to a writer. */
+	public Map<String, String> getPersistenceStringValues() {
+		return java.util.Collections.unmodifiableMap(data);
+	}
+
 }
 
