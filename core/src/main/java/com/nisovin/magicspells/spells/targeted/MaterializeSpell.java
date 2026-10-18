@@ -34,7 +34,7 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
 import com.nisovin.magicspells.events.MagicSpellsBlockBreakEvent;
-import com.nisovin.magicspells.util.managers.AlteredBlockManager;
+import com.sneakyutils.util.AlteredBlockManager;
 
 public class MaterializeSpell extends TargetedSpell implements TargetedLocationSpell {
 

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.ArrayList;
 
-import com.nisovin.magicspells.util.managers.AlteredBlockManager;
+import com.sneakyutils.util.AlteredBlockManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;

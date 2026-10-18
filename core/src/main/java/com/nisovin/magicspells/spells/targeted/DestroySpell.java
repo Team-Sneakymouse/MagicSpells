@@ -3,7 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.nisovin.magicspells.util.managers.AlteredBlockManager;
+import com.sneakyutils.util.AlteredBlockManager;
 import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;

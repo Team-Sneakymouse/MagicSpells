@@ -37,7 +37,7 @@ import com.nisovin.magicspells.util.config.FunctionData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
-import com.nisovin.magicspells.util.managers.AlteredBlockManager;
+import com.sneakyutils.util.AlteredBlockManager;
 
 public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpell {
 

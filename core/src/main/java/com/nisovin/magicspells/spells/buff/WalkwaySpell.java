@@ -23,7 +23,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
-import com.nisovin.magicspells.util.managers.AlteredBlockManager;
+import com.sneakyutils.util.AlteredBlockManager;
 
 import com.nisovin.magicspells.util.config.ConfigData;
 public class WalkwaySpell extends BuffSpell {

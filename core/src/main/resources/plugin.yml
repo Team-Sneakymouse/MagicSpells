@@ -3,6 +3,8 @@ main: com.nisovin.magicspells.MagicSpells
 version: $version
 authors: [nisovin, TheComputerGeek2, Chronoken, tonythemacaroni, JasperLorelai]
 api-version: "26.2"
+depend:
+    - SneakyUtils
 softdepend:
     - SneakyDiagnostics
     - GriefPrevention

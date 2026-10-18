@@ -62,6 +62,7 @@ import com.nisovin.magicspells.events.*;
 import com.nisovin.magicspells.handlers.*;
 import com.nisovin.magicspells.listeners.*;
 import com.nisovin.magicspells.util.managers.*;
+import com.sneakyutils.util.AlteredBlockManager;
 import com.nisovin.magicspells.mana.ManaSystem;
 import com.nisovin.magicspells.mana.ManaHandler;
 import com.nisovin.magicspells.variables.Variable;
@@ -110,7 +111,6 @@ public class MagicSpells extends JavaPlugin {
 
 	public static final String ENTITY_TAG = "MS_ENTITY";
 	public static final String EXPIRATION_TIME_MILLIS_TAG = "MS_EXPIRATION_TIME_MILLIS";
-	public static final String ALTERED_BLOCK_TAG = "MS_ALTERED_BLOCK";
 	public static final String FIREWORK_METADATA_KEY = "MSFirework";
 
 	private Set<Material> losTransparentBlocks;
@@ -153,7 +153,6 @@ public class MagicSpells extends JavaPlugin {
 	private NoMagicZoneManager zoneManager;
 	private PaperCommandManager commandManager;
 	private ExperienceBarManager expBarManager;
-	private AlteredBlockManager alteredBlockManager;
 
 	private MagicConfig config;
 	private MagicLogger magicLogger;
@@ -406,7 +405,6 @@ public class MagicSpells extends JavaPlugin {
 		expBarManager = new ExperienceBarManager();
 		bossBarManager = new BossBarManager();
 		attributeManager = new AttributeManager();
-		alteredBlockManager = new AlteredBlockManager();
 		if (CompatBasics.pluginEnabled("Vault"))
 			moneyHandler = new MoneyHandler();
 		lifeLengthTracker = new LifeLengthTracker();
@@ -693,7 +691,6 @@ public class MagicSpells extends JavaPlugin {
 
 		registerEvents(new EntityListener());
 		LivingEntityCounter.register();
-		registerEvents(new AlteredBlockListener());
 
 		registerEvents(new MagicItemBehaviorReceiveListener());
 		registerEvents(new MagicItemExpirationListener());
@@ -1474,7 +1471,7 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static AlteredBlockManager getAlteredBlockManager() {
-		return plugin.alteredBlockManager;
+		return com.sneakyutils.SneakyUtils.getAlteredBlockManager();
 	}
 
 	public static BossBarManager getBossBarManager() {

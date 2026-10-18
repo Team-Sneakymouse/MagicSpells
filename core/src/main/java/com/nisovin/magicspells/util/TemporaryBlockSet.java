@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
-import com.nisovin.magicspells.util.managers.AlteredBlockManager;
+import com.sneakyutils.util.AlteredBlockManager;
 
 public class TemporaryBlockSet implements Runnable {
 

@@ -11,7 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.managers.AlteredBlockManager;
+import com.sneakyutils.util.AlteredBlockManager;
 
 public class BlockPlatform {
 

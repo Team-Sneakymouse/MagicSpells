@@ -42,6 +42,8 @@ dependencies {
     // Latest GitHub tag published on JitPack (1.5.9.9 is on Spigot but not tagged for JitPack yet).
     compileOnly("com.github.Zrips:CMILib:1.5.9.6") { transitive = false }
     implementation("commons-codec:commons-codec:1.16.1")
+    compileOnly("io.github.team-sneakymouse:sneakyutils:2026.10.18-4b5831b0b997")
+    testImplementation("io.github.team-sneakymouse:sneakyutils:2026.10.18-4b5831b0b997")
     compileOnly("io.github.team-sneakymouse:sneakycharactermanager-paper:2026.10.09-84db8a554af1") { transitive = false }
     compileOnly("io.github.team-sneakymouse:sneakybagofholding:2026.10.09-a79a55f6d44b") { transitive = false }
     compileOnly("io.github.team-sneakymouse:sneakyvaults:2026.10.09-306ea91d36ff") { transitive = false }
