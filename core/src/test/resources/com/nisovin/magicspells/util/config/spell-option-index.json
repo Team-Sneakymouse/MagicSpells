@@ -456,8 +456,8 @@
       "skin-name"
     ],
     ".buff.ext.VoiceEffectSpell": [
-      "effects",
-      "preset"
+      "preset",
+      "voice-effects"
     ],
     ".command.AdminTeachSpell": [],
     ".command.BindSpell": [

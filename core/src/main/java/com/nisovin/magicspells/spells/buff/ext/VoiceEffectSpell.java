@@ -38,14 +38,15 @@ public class VoiceEffectSpell extends BuffSpell {
 		super(config, spellName);
 
 		preset = getConfigDataString("preset", "");
-		List<?> rawEffects = getConfigList("effects", null);
+		// Named voice-effects to avoid clashing with Spell's graphical `effects` section.
+		List<?> rawEffects = getConfigList("voice-effects", null);
 
 		boolean hasEffects = rawEffects != null && !rawEffects.isEmpty();
 		boolean constantPreset = preset.isConstant() && !blank(preset.get(null));
 
 		if (hasEffects && (constantPreset || !preset.isConstant())) {
 			MagicSpells.error("VoiceEffectSpell '" + internalName
-					+ "' defines both 'preset' and 'effects'; use only one.");
+					+ "' defines both 'preset' and 'voice-effects'; use only one.");
 			return;
 		}
 
@@ -55,7 +56,7 @@ public class VoiceEffectSpell extends BuffSpell {
 				try {
 					parsed.add(parseStage(rawEffects.get(i), i));
 				} catch (RuntimeException failure) {
-					MagicSpells.error("VoiceEffectSpell '" + internalName + "' effects[" + i + "] invalid: "
+					MagicSpells.error("VoiceEffectSpell '" + internalName + "' voice-effects[" + i + "] invalid: "
 							+ failure.getMessage());
 					return;
 				}
@@ -67,7 +68,7 @@ public class VoiceEffectSpell extends BuffSpell {
 
 		if (preset.isConstant() && blank(preset.get(null))) {
 			MagicSpells.error("VoiceEffectSpell '" + internalName
-					+ "' needs a non-blank 'preset' or a non-empty 'effects' list.");
+					+ "' needs a non-blank 'preset' or a non-empty 'voice-effects' list.");
 			return;
 		}
 
