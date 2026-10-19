@@ -47,6 +47,7 @@ dependencies {
     compileOnly("io.github.team-sneakymouse:sneakycharactermanager-paper:2026.10.09-84db8a554af1") { transitive = false }
     compileOnly("io.github.team-sneakymouse:sneakybagofholding:2026.10.09-a79a55f6d44b") { transitive = false }
     compileOnly("io.github.team-sneakymouse:sneakyvaults:2026.10.09-306ea91d36ff") { transitive = false }
+    compileOnly("io.github.team-sneakymouse:SneakyConfigurableVoice:2026.10.19-695dc4846c17") { transitive = false }
     implementation("com.comphenix.protocol:ProtocolLib:5.1.0") { transitive = false }
     implementation("com.github.libraryaddict:LibsDisguises:v10.0.25") { transitive = false }
     // VaultAPI only — Vault is provided at runtime. Avoid vault:master-SNAPSHOT (JitPack metadata flaky).

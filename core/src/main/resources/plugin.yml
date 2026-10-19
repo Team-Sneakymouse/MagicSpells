@@ -20,3 +20,4 @@ softdepend:
     - SneakyBagOfHolding
     - SneakyCharacterManager
     - SneakyVaults
+    - SneakyConfigurableVoice

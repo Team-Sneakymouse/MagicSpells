@@ -1,6 +1,6 @@
 {
   "generatedFrom": "spell-index.json",
-  "generated": "2026-10-12",
+  "generated": "2026-10-19",
   "sharedKeys": [
     "aliases",
     "always-granted",
@@ -454,6 +454,10 @@
       "glowing",
       "player-name",
       "skin-name"
+    ],
+    ".buff.ext.VoiceEffectSpell": [
+      "effects",
+      "preset"
     ],
     ".command.AdminTeachSpell": [],
     ".command.BindSpell": [

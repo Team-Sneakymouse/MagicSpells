@@ -42,8 +42,13 @@ Check out more examples of what this plugin can do in our [Discord server] (in t
 * [JasperLorelai's Soundboard][Soundboard]
 
 ---
-## Classical MagicSpells ⭐
-This plugin was originally created by [Nisovin], and published on [Bukkit]. After some time TheComputerGeek2 took over the project and published it on [Spigot]. Since then we dropped support for Spigot and moved to [PaperMC], and the plugin was published on [Modrinth].
+## About this repository ⭐
+
+This repository is a **hard fork** of [TheComputerGeek2/MagicSpells](https://github.com/TheComputerGeek2/MagicSpells). It is maintained for the **Lords of Minecraft** (LoM) server and is no longer synced with upstream.
+
+MagicSpells was originally created by [Nisovin] and published on [Bukkit]. TheComputerGeek2 later took over the project (Spigot / [PaperMC] / [Modrinth]). This fork continues that lineage for LoM gameplay and tooling under `Team-Sneakymouse`.
+
+Fork docs: [Team-Sneakymouse MagicSpells wiki](https://github.com/Team-Sneakymouse/MagicSpells/wiki).
 
 ---
 ## Support 📞
