@@ -44,9 +44,7 @@ public class VariableListener implements Listener {
 	@EventHandler
 	public void onQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
-		if (!variableManager.getDirtyPlayerVariables().contains(player.getName()))
-			return;
-		variableManager.savePlayerVariables(player.getName(), Util.getUniqueId(player));
+		variableManager.requestPlayerSave(player.getName(), Util.getUniqueId(player));
 	}
 
 	// DEBUG INFO: Debug log level 3, variable was modified for player by amount

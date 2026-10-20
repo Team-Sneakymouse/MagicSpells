@@ -12,6 +12,14 @@ class VariableFileSnapshotTest {
 	@TempDir Path directory;
 
 	@Test
+	void newlineEncodingMatchesPreAsyncPersistence() throws Exception {
+		Path target = directory.resolve("GLOBAL.txt");
+		String value = "first\nsecond\\nthird";
+		new VariableFileSnapshot(target, null, false, Map.of("text", value), Set.of()).write();
+		assertEquals("text=" + value.replaceAll("\n", "\\n") + System.lineSeparator(), Files.readString(target));
+	}
+
+	@Test
 	void playerPatchPrefersLegacyAndPreservesUnloadedValues() throws Exception {
 		Path legacy = directory.resolve("PLAYER_name.txt");
 		Path uuid = directory.resolve("PLAYER_uuid.txt");
@@ -20,7 +28,7 @@ class VariableFileSnapshotTest {
 		var snapshot = new VariableFileSnapshot(uuid, legacy, true,
 				Map.of("coins", "2", "character:current", "hello=world\nnext"), Set.of("reset"));
 		snapshot.write();
-		assertEquals("character:current=hello=world\\nnext\ncharacter:other=17\ncoins=2\nunknown=keep\n",
+		assertEquals("character:current=hello=worldnnext\ncharacter:other=17\ncoins=2\nunknown=keep\n",
 				Files.readString(legacy).replace(System.lineSeparator(), "\n"));
 		assertEquals("coins=100\n", Files.readString(uuid));
 	}

@@ -1,8 +1,8 @@
 package com.nisovin.magicspells.variables.variabletypes;
 
 import java.util.Map;
-import java.util.HashMap;
 
+import com.nisovin.magicspells.util.CharacterVariableValues;
 import com.nisovin.magicspells.util.PlayerNameUtils;
 import net.coreprotect.CoreProtect;
 import org.bukkit.Bukkit;
@@ -11,10 +11,10 @@ import org.bukkit.entity.Player;
 
 public class CharacterStringVariable extends CharacterVariable {
 
-	private final Map<String, String> data;
+	private final CharacterVariableValues<String> data;
 
 	public CharacterStringVariable() {
-		data = new HashMap<>();
+		data = new CharacterVariableValues<>();
 	}
 
 	@Override
@@ -59,7 +59,7 @@ public class CharacterStringVariable extends CharacterVariable {
 	 * Returns map with composite keys.
 	 */
 	public Map<String, String> getAllStringValues() {
-		return new HashMap<>(data);
+		return data.copy();
 	}
 
 	/**
@@ -69,9 +69,9 @@ public class CharacterStringVariable extends CharacterVariable {
 		data.put(compositeKey, value);
 	}
 
-	/** Live read-only persistence view. Traverse only on the server thread; never pass to a writer. */
-	public Map<String, String> getPersistenceStringValues() {
-		return java.util.Collections.unmodifiableMap(data);
+	/** Owner-thread cursor over just this player's history; never pass live data to a writer. */
+	public Map.Entry<String, String> getNextPersistenceStringValue(String player, String previous) {
+		return data.next(player, previous);
 	}
 
 }

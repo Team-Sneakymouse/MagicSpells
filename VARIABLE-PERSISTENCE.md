@@ -1,61 +1,59 @@
 # Variable persistence contract and validation
 
-## Scope and ownership
+## Ownership and module interface
 
-`VariableManager` is constructed and used on the server thread. Its managed mutation, save and load entry points reject a different thread. Existing public variable objects/maps remain live owner-thread interfaces, not async-safe collections. External integrations must not mutate them from async tasks or bypass dirty tracking.
+`VariableManager` and live variable objects belong to the server thread. `VariablePersistence` owns dirty generations, save-cycle selection, capture progress, single-flight writer completion, diagnostics and lifecycle barriers. The manager supplies captures and connects the one-tick driver; the writer only executes detached writes and reports completion. It does not own mutation bookkeeping.
 
-Call-site audit: routine saves originate in `loadVariables`; explicit saves are public manager methods; `VariableListener` loads on join and saves dirty players on quit; `MagicSpells.unload` handles reload/disable. Spell, variable-mod and prompt paths mutate manager state. `Util.getUniqueId(String)` checks its cache / an online player only; no offline identity or storage lookup is added. Unknown identities remain dirty, with final-flush failure surfaced rather than silently skipped.
+Scopes are typed identities (`global`, all permanent locations, or one player). Named capture factories exclude invalid string/null combinations. Every `markDirty` advances a generation, even when already dirty. Only successful completion of that exact generation clears it. A failed explicit save of clean state becomes dirty; unresolved identities remain dirty and prevent a successful final flush.
 
-## Routine path
+Integrations must mutate on the owner thread through the manager, or call `VariableManager.markDirty(variable, playerName)` after direct mutation. `getDirtyPlayerVariables()` returns a read-only snapshot, not an editable persistence data structure. Existing variable objects/maps are not async-safe.
 
-Every 1,200 ticks, capture a bounded cycle of dirty scope identifiers. A one-tick driver polls completion without waiting and visits at most 256 live variable/map entries per active capture step. Character persistence views avoid copying entire histories before filtering a player. Captures seal private builder storage by ownership transfer, avoiding an O(n) final map copy. String escaping, sorting, player-file reads/merging, UTF-8 encoding, replacement and fsync happen on the writer.
+## Routine work and progress
 
-At most **one scope capture OR one outstanding scope write** exists. A scope is global, all permanent location files, or one player file. The bound is in work items, not bytes: one snapshot may be as large as that scope. The dirty identifier list is proportional to existing dirty players, not the number of repeated triggers. Individual map operations are amortized, not hard real-time deadlines. Snapshot total and maximum slice timings are available at debug level 2.
+Every 1,200 ticks, dirty scope identifiers enter a coalescing ordered set. Quit requests can expedite a dirty player without waiting or creating snapshots. The routine driver keeps at most **one active capture OR one outstanding write**; completed work occupies the writer slot until collected on the owner thread. Repeated triggers cannot accumulate snapshots. The identifier backlog is bounded by dirty/requested scopes, not trigger count; the snapshot bound is in work items, not bytes.
 
-Structural changes to a traversed live map invalidate its iterator; the incomplete capture is discarded without acknowledging dirtiness and retried in a later cycle. Continuous structural churn can defer routine persistence until a stable capture or the final owner-thread flush. Non-structural changes during capture are safe because the captured generation cannot acknowledge newer mutations. Existing public APIs that bypass manager dirty tracking retain their previous caller responsibilities.
+Capture visits at most 256 variable/map entries per step. Private builder storage transfers ownership without a final O(n) map copy. Player-file reads/merging, string escaping, sorting, encoding, atomic replacement and fsync happen on the worker. Scope identifier selection and individual strings/map operations are not hard real-time guarantees.
 
-`DirtyVariableScopes` assigns a new generation on every add, even for an already dirty scope. Only successful completion acknowledges the captured generation. A failed explicit save of previously clean state marks it dirty. A failed batch of location files retains the whole location scope for retry, including files already written successfully. There are no independent writes that can finish out of order.
+Unrelated loads/saves do not discard an active capture. If a structural change invalidates a remaining live iterator (e.g. region definitions), its dirty scope is promptly requeued at the tail rather than waiting for the next minute. Other scopes can progress first. Continuous changes to those structures can still delay their capture; final flush captures synchronously.
 
-## File compatibility
+Character values retain hash-based gameplay lookups. An ordered per-player key index is maintained only when keys are inserted/removed. Persistence seeks through that player's history; it neither scans all other players nor holds a fail-fast character-map iterator across ticks. This adds index memory proportional to character entries and logarithmic index work on structural changes, not on ordinary value updates. Insertions behind an active cursor and other mutations remain pending through generation checks; an incremental snapshot is not a transactionally consistent view across all values.
 
-- Global/location files replace their captured contents; defaults remain omitted from global files.
-- Player saves choose an existing legacy-name file before the UUID path, read it on the writer, apply captured updates/default removals, and preserve unknown and uncaptured character keys.
-- Existing load-time legacy migration remains synchronous and is serialized after outstanding writes.
-- Player/global newline flattening is preserved; location serialization keeps its existing behavior.
-- The existing `AtomicFiles` implementation is unchanged, including fsync, atomic-move fallback and temporary-file cleanup.
-- The configured-variable load path now also loads/saves location variables, matching the no-config path. String-based location mutations now mark location state dirty, matching numeric mutations/resets.
+## Player lifecycle and explicit saves
 
-## Explicit save, player lifecycle, reload and disable
+- **Quit:** request saving the dirty player; no global wait. Data stays in memory and retries remain dirty. Disconnect is no longer a synchronous durability barrier; a crash before completion may lose those recent changes, as with other pending routine saves.
+- **Join/load:** wait only for an outstanding write to the same scope before reading its file. Dirty memory is authoritative: do not overwrite it with disk state, or force a save merely to read it straight back. This also handles quit/rejoin before the queued save runs. A same-player in-flight write may still block join; unrelated global/location/player writes do not. UUID aliases (renamed/case-changed players) are treated as the same file: outstanding or dirty old-name state is persisted before reading it under the new name.
+- **Explicit public saves:** retain the blocking attempt-completed contract. The single writer must drain before an explicit write; errors are logged and retained as dirty state. An unrelated unfinished capture is retained (so an explicit blocking save can temporarily hold that capture plus its own snapshot).
+- **Reload/disable:** `flushForUnload` runs before destructive teardown. Drain the outstanding write and save all remaining dirty scopes. Failure throws without discarding dirty state. `disable` repeats the barrier after spell teardown, closes the drained writer, then clears memory. No successfully closed old writer can overwrite a replacement manager's files.
 
-Explicit saves cancel unfinished routine capture, wait for any outstanding write, capture current state and wait for its write. Failures remain dirty and are logged without payloads, paths or player identities. Public save methods retain their void/logging contract; return means the attempt completed, not that a storage failure was suppressed into success.
+There is no storage timeout. A hung same-scope join or deliberate explicit/final barrier can wait indefinitely. Persistent storage failure or forced process termination cannot guarantee durability. Ordinary join-time file reads and legacy migration remain synchronous; this work does not claim to eliminate all server-thread I/O.
 
-Player loads wait for pending writes and first persist any dirty in-memory state for that player. They refuse to load stale disk contents over unsaved state after a failed write. This also orders rapid quit/rejoin against routine writes.
+## Compatibility and diagnostics
 
-`MagicSpells.unload` runs `flushForUnload` before destructive teardown. It waits for the outstanding write and saves all remaining dirty generations. Failure (including unresolved identities) throws before teardown and retains the manager for a possible retry. `disable` performs another final barrier after spell teardown, cancels the driver, closes the drained executor and only then clears variables. A failed late flush also surfaces rather than clearing data. No old writer can modify files after a successful unload. A blocked filesystem can block a lifecycle barrier indefinitely; no timeout or cancellation silently weakens durability. Forced process exit and persistently failing storage remain outside any durability guarantee.
+Existing player/global/location paths, defaults, legacy-file precedence and player partial-file merge behavior are retained. Unknown/unloaded character keys survive player patches. `AtomicFiles` is unchanged, including synchronization, replacement fallback and temporary-file cleanup.
 
-## Local verification
+Player/global newline flattening deliberately matches the pre-async implementation: the historic regex replacement turns a newline into literal `n`, **not** backslash+n. Existing literal backslash+n text is left alone. Correcting this lossy historical format requires a separate compatibility decision. Location formatting is unchanged.
 
-Run from the workspace root:
+Debug level 2 reports total/max capture-step duration, write duration, dirty scope count, in-flight work and failure count. Write errors expose only the exception class, not variable values, paths or player identities.
+
+## Local validation
+
+Run from `MagicSpells/`:
 
 ```powershell
 ./gradlew.bat :core:test
 ./gradlew.bat build
 ```
 
-Tests at the approved persistence seams:
+`VariablePersistenceTest` drives the production coordinator with real captures/atomic writes and a controllable executor. It covers joins between every capture slice, unrelated joins with storage deliberately delayed, coalesced quit requests, dirty-memory rejoin, mutation during a write, prompt/fair invalidation retry, periodic trigger backpressure, failed writes/retry, explicit clean-state failure, unresolved identity and final flush/replacement, including same-UUID name changes. Assertions inspect queued work and resulting files, not performance timing thresholds.
 
-- `OrderedVariableWriterTest`: latch-controlled owner responsiveness with blocked storage; 1,000 overlapping submissions rejected without queue growth; mutation during a write; exact-generation acknowledgement; real atomic replacement failure preserving the previous file, cleanup and retry; blocking final flush; drained writer shutdown/replacement; off-owner rejection; failed explicit clean save becoming dirty.
-- `DirtyVariableScopesTest`: mutation during capture cannot be cleared by acknowledgement of an earlier generation.
-- `VariableSnapshotCaptureTest`: actual numeric/string global and character values, default removal and preservation of unknown/unloaded player data, location formats and reconstruction, 600 location entries requiring multiple capture steps, detached mutable regions, and incomplete/sealed capture guards.
-- `VariableFileSnapshotTest`: legacy path precedence with both files present, newline/equals compatibility, ownership-transferred builders, immutable input capture, and unreadable merge-source protection.
-- Existing `AtomicFilesTest` verifies the actual replacement/fallback/cleanup seams. The full test suite also runs existing diagnostics/provider aggregation tests.
+Writer tests retain latch-controlled nonblocking submission, deliberate flush waiting, owner-thread rejection and shutdown ordering. Capture/file tests cover formats, legacy/partial files, historical newline encoding, immutable ownership transfer, and player-scoped capture finishing in one slice despite 10,000 unrelated histories. Character key-index tests cover updates, removal/reinsertion, cursor ordering and detached copies. Existing `AtomicFilesTest` exercises replacement/fallback/cleanup failures.
 
-Verified locally: `:core:test` passed **158 tests**, with zero failures/errors; the full `build` passed, including publication/JAR checks. Existing compiler/Javadoc/Gradle deprecation warnings remain. `git diff --check` passed in both repositories. Wiki inventories were not regenerated because no spell/effect/modifier inventory or configuration key changed.
+Validated locally: `:core:test` and the full `build` pass; **181 tests**, zero failures/errors. Publication and deployable-JAR checks pass. Existing compiler/Javadoc, Shadow metadata and Gradle deprecation messages remain (including the tolerated empty factions Javadoc task). `git diff --check` passes in both repositories. No inventory regeneration is needed: configuration keys and spell/effect/modifier inventories are unchanged.
 
-These tests need no running Bukkit server. They do not prove join/quit/reload event wiring or performance at production scale. No production commands, deployment, storage or configuration changes are part of this task.
+These checks do not prove Paper join/quit/reload event wiring or production-scale performance. No deployment, production commands, storage or configuration changes are included.
 
 ## Remaining live validation
 
-On an authorized local/dev Paper server, exercise routine save, mutation while a write is delayed, quit/rejoin, reload and graceful stop/restart for player/global/location values. Check legacy and UUID files and unsaved-state error reporting. A storage-delay test must control the write boundary, not merely compare fragile elapsed-time thresholds.
+On an authorized dev Paper server, exercise routine saves, delayed storage, quit/rejoin, reload and graceful stop/restart for player/global/location values, including legacy files and failure reporting. Verify unrelated joins do not wait on a delayed write and dirty rejoin values remain current.
 
-For production comparison, capture at least one complete **1,200-tick save cycle** under comparable players/activity/storage conditions. A 60-second wall-clock profile can miss the save at low TPS. Enable the existing debug-level-2 seam if needed to correlate capture slices, writer duration/failures and dirty counts with tick timestamps; do not log identities or values. Compare save-related main-thread stacks and worst tick, not only mean TPS. The expected result is absence of save-path read/merge/encoding/fsync on routine main-thread stacks, not a claim that this alone resolves sustained low TPS.
+For production comparison, capture at least one complete **1,200-tick save cycle** under comparable workload. At low TPS, 60 wall-clock seconds can miss the save. Compare save-related main-thread stacks and worst tick, not only average TPS. This change targets persistence spikes; it does not claim to resolve sustained overload.

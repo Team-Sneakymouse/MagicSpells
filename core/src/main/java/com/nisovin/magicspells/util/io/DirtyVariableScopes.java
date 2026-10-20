@@ -1,45 +1,19 @@
 package com.nisovin.magicspells.util.io;
 
-import java.util.AbstractSet;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
-/** Owner-thread dirty scopes. Every add is a mutation, even when the scope is already dirty. */
-public final class DirtyVariableScopes extends AbstractSet<String> {
-	private final Map<String, Long> generations = new HashMap<>();
+/** Owner-thread mutation generations. Repeated marks represent new mutations, not set insertion. */
+public final class DirtyVariableScopes<S> {
+	private final Map<S, Long> generations = new LinkedHashMap<>();
 	private long nextGeneration;
 
-	@Override
-	public boolean add(String scope) {
-		return generations.put(scope, ++nextGeneration) == null;
-	}
-
-	public long generation(String scope) {
-		return generations.getOrDefault(scope, 0L);
-	}
-
-	public void acknowledge(String scope, long generation) {
-		generations.remove(scope, generation);
-	}
-
-	@Override
-	public Iterator<String> iterator() {
-		return generations.keySet().iterator();
-	}
-
-	@Override
-	public int size() {
-		return generations.size();
-	}
-
-	@Override
-	public boolean contains(Object scope) {
-		return generations.containsKey(scope);
-	}
-
-	@Override
-	public boolean remove(Object scope) {
-		return generations.remove(scope) != null;
-	}
+	public void markDirty(S scope) { generations.put(scope, ++nextGeneration); }
+	public long generation(S scope) { return generations.getOrDefault(scope, 0L); }
+	public void acknowledge(S scope, long generation) { generations.remove(scope, generation); }
+	public boolean contains(S scope) { return generations.containsKey(scope); }
+	public boolean isEmpty() { return generations.isEmpty(); }
+	public Set<S> scopes() { return Collections.unmodifiableSet(generations.keySet()); }
 }

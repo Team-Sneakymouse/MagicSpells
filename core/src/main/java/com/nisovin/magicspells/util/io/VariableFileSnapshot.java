@@ -91,7 +91,8 @@ public final class VariableFileSnapshot implements OrderedVariableWriter.Write {
 			}
 		}
 		removals.forEach(result::remove);
-		values.forEach((key, value) -> result.put(key, flatten ? value.replace("\n", "\\n") : value));
+		// Match historic Util.flattenLineBreaks regex replacement: newline -> literal n, not backslash+n.
+		values.forEach((key, value) -> result.put(key, flatten ? value.replace("\n", "n") : value));
 		StringBuilder content = new StringBuilder();
 		result.forEach((key, value) -> content.append(key).append('=').append(value).append(System.lineSeparator()));
 		AtomicFiles.writeUtf8(file, content.toString());

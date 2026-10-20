@@ -6,20 +6,26 @@ import java.util.concurrent.Executors;
 
 /**
  * Owner-thread interface to a single ordered writer. There is no pending queue: callers retain
- * dirty state until successful completion is acknowledged. A completed write occupies the slot until acknowledged.
- * Neither poll nor submit waits for storage. flush deliberately does, without Bukkit callbacks. close requires an acknowledged flush.
+ * dirty state until successful completion is collected. A completed write occupies the slot until collected.
+ * Neither poll nor submit waits for storage. flush deliberately does, without Bukkit callbacks. close requires a collected flush.
  */
 public final class OrderedVariableWriter implements AutoCloseable {
 	private final Thread owner = Thread.currentThread();
-	private final ExecutorService executor = Executors.newSingleThreadExecutor(task -> {
-		Thread thread = new Thread(task, "MagicSpells-variable-writer");
-		thread.setDaemon(true);
-		return thread;
-	});
+	private final ExecutorService executor;
 	private CompletableFuture<Completion> outstanding;
 	private boolean closed;
-	private Runnable acknowledgeDirty;
-	private Runnable restoreDirty;
+
+	public OrderedVariableWriter() {
+		this(Executors.newSingleThreadExecutor(task -> {
+			Thread thread = new Thread(task, "MagicSpells-variable-writer");
+			thread.setDaemon(true);
+			return thread;
+		}));
+	}
+
+	OrderedVariableWriter(ExecutorService executor) {
+		this.executor = executor;
+	}
 
 	@FunctionalInterface
 	public interface Write {
@@ -45,14 +51,6 @@ public final class OrderedVariableWriter implements AutoCloseable {
 		return true;
 	}
 
-	/** Acknowledge only the captured generation on success; never retire newer mutations. */
-	public boolean submit(Write write, DirtyVariableScopes dirty, String scope, long generation) {
-		if (!submit(write)) return false;
-		acknowledgeDirty = () -> dirty.acknowledge(scope, generation);
-		restoreDirty = () -> { if (!dirty.contains(scope)) dirty.add(scope); };
-		return true;
-	}
-
 	public Completion poll() {
 		checkOwner();
 		return outstanding != null && outstanding.isDone() ? flush() : null;
@@ -63,10 +61,6 @@ public final class OrderedVariableWriter implements AutoCloseable {
 		if (outstanding == null) return null;
 		Completion result = outstanding.join();
 		outstanding = null;
-		if (result.failure() == null && acknowledgeDirty != null) acknowledgeDirty.run();
-		if (result.failure() != null && restoreDirty != null) restoreDirty.run();
-		acknowledgeDirty = null;
-		restoreDirty = null;
 		return result;
 	}
 
@@ -78,7 +72,7 @@ public final class OrderedVariableWriter implements AutoCloseable {
 	@Override
 	public void close() {
 		checkOwner();
-		if (outstanding != null) throw new IllegalStateException("Flush and acknowledge the write before closing");
+		if (outstanding != null) throw new IllegalStateException("Flush and collect the write before closing");
 		closed = true;
 		executor.shutdown();
 	}

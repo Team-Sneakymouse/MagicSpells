@@ -18,14 +18,12 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.Location;
 
 import com.nisovin.magicspells.util.BlockLocation;
-import com.nisovin.magicspells.util.Region;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.io.OrderedVariableWriter;
-import com.nisovin.magicspells.util.io.DirtyVariableScopes;
+import com.nisovin.magicspells.util.io.VariablePersistence;
+import com.nisovin.magicspells.util.io.VariableScope;
 import com.nisovin.magicspells.util.io.VariableSnapshotCapture;
 import com.nisovin.magicspells.variables.*;
-import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.VariableMod;
 import com.nisovin.magicspells.variables.meta.*;
 import com.nisovin.magicspells.util.PlayerNameUtils;
@@ -37,22 +35,14 @@ public class VariableManager {
 	private static final Map<String, Class<? extends Variable>> variableTypes = new HashMap<>();
 	private static final Map<String, Variable> metaVariables = new HashMap<>();
 	private static final Map<String, Variable> variables = new LinkedHashMap<>();
-	private static final DirtyVariableScopes dirtyPlayerVars = new DirtyVariableScopes();
-
-	private static final DirtyVariableScopes dirtyScopes = new DirtyVariableScopes();
 	private static File folder;
 
 	private final Thread owner = Thread.currentThread();
-	private final OrderedVariableWriter writer = new OrderedVariableWriter();
+	private final Map<String, String> playerIds = new HashMap<>();
+	private final VariablePersistence persistence = new VariablePersistence(this::captureVariables,
+			message -> MagicSpells.debug(2, message), MagicSpells::error);
 	private int saveTask = -1;
-	private int ticksUntilSave = TimeUtil.TICKS_PER_MINUTE;
-	private Deque<String> routinePlayers;
-	private boolean routineGlobals;
-	private boolean routineLocations;
-	private SnapshotCapture capture;
 	private boolean closed;
-	private long lastSnapshotNanos;
-	private long failures;
 
 	public VariableManager() {
 		initialize();
@@ -95,8 +85,12 @@ public class VariableManager {
 		return metaVariables;
 	}
 
+	/** Read-only snapshot. Integrations should use markDirty rather than modifying bookkeeping. */
 	public Set<String> getDirtyPlayerVariables() {
-		return dirtyPlayerVars;
+		Set<String> players = new HashSet<>();
+		for (VariableScope scope : persistence.dirtyScopes())
+			if (scope.kind() == VariableScope.Kind.PLAYER) players.add(scope.player());
+		return Collections.unmodifiableSet(players);
 	}
 
 	private void initialize() {
@@ -342,20 +336,7 @@ public class VariableManager {
 		variable.set(player, amount);
 		updateBossBar(variable, player);
 		updateExpBar(variable, player);
-		if (!variable.isPermanent())
-			return;
-		if (variable instanceof CharacterVariable || variable instanceof CharacterStringVariable)
-			dirtyPlayerVars.add(player);
-		else if (variable instanceof PlayerVariable)
-			dirtyPlayerVars.add(player);
-		else if (variable instanceof GlobalVariable)
-			dirtyScopes.add("global");
-		else if (variable instanceof GlobalStringVariable)
-			dirtyScopes.add("global");
-		else if (variable instanceof LocationVariable)
-			dirtyScopes.add("location");
-		else if (variable instanceof LocationStringVariable)
-			dirtyScopes.add("location");
+		markDirty(variable, player);
 	}
 
 	public void set(String variable, Player player, String amount) {
@@ -374,18 +355,7 @@ public class VariableManager {
 		variable.parseAndSet(player, amount);
 		updateBossBar(variable, player);
 		updateExpBar(variable, player);
-		if (!variable.isPermanent())
-			return;
-		if (variable instanceof CharacterVariable || variable instanceof CharacterStringVariable)
-			dirtyPlayerVars.add(player);
-		else if (variable instanceof PlayerVariable)
-			dirtyPlayerVars.add(player);
-		else if (variable instanceof GlobalVariable)
-			dirtyScopes.add("global");
-		else if (variable instanceof GlobalStringVariable)
-			dirtyScopes.add("global");
-		else if (variable instanceof LocationVariable || variable instanceof LocationStringVariable)
-			dirtyScopes.add("location");
+		markDirty(variable, player);
 	}
 
 	public double getValue(String variable, Player player) {
@@ -450,20 +420,19 @@ public class VariableManager {
 		variable.reset(player);
 		updateBossBar(variable, player != null ? player.getName() : "");
 		updateExpBar(variable, player != null ? player.getName() : "");
-		if (!variable.isPermanent())
-			return;
-		if (variable instanceof CharacterVariable || variable instanceof CharacterStringVariable)
-			dirtyPlayerVars.add(player != null ? player.getName() : "");
-		else if (variable instanceof PlayerVariable)
-			dirtyPlayerVars.add(player != null ? player.getName() : "");
-		else if (variable instanceof GlobalVariable)
-			dirtyScopes.add("global");
-		else if (variable instanceof GlobalStringVariable)
-			dirtyScopes.add("global");
-		else if (variable instanceof LocationVariable)
-			dirtyScopes.add("location");
-		else if (variable instanceof LocationStringVariable)
-			dirtyScopes.add("location");
+		markDirty(variable, player != null ? player.getName() : "");
+	}
+
+	/** Explicitly mark a direct owner-thread integration mutation for persistence. */
+	public void markDirty(Variable variable, String player) {
+		checkOwner();
+		if (variable == null || !variable.isPermanent()) return;
+		if (variable instanceof CharacterVariable || variable instanceof PlayerVariable)
+			persistence.markDirty(VariableScope.player(Objects.requireNonNullElse(player, "")));
+		else if (variable instanceof GlobalVariable || variable instanceof GlobalStringVariable)
+			persistence.markDirty(VariableScope.global());
+		else if (variable instanceof LocationVariable || variable instanceof LocationStringVariable)
+			persistence.markDirty(VariableScope.locations());
 	}
 
 	public void updateBossBar(Variable var, String player) {
@@ -520,14 +489,9 @@ public class VariableManager {
 	}
 
 	public void loadGlobalVariables() {
-		flushPending();
-		if (dirtyScopes.contains("global")) {
-			saveGlobalVariables();
-			if (dirtyScopes.contains("global")) throw new IllegalStateException("Cannot load over unsaved variable state");
-		}
+		if (!persistence.prepareLoad(VariableScope.global())) return;
 		File file = new File(folder, "GLOBAL.txt");
 		if (!file.exists()) {
-			dirtyScopes.remove("global");
 			return;
 		}
 
@@ -549,26 +513,19 @@ public class VariableManager {
 			MagicSpells.error("ERROR LOADING GLOBAL VARIABLES");
 			MagicSpells.handleException(e);
 		}
-
-		dirtyScopes.remove("global");
 	}
 
 	public void saveGlobalVariables() {
-		flushPending();
-		submitGlobal();
-		flushPending();
-	}
-
-	private void submitGlobal() {
-		captureNow("global", null, null);
+		persistence.saveNow(VariableScope.global());
 	}
 
 	public void loadPlayerVariables(String player, String uniqueId) {
-		flushPending();
-		if (dirtyPlayerVars.contains(player)) {
-			savePlayerVariables(player, uniqueId);
-			if (dirtyPlayerVars.contains(player)) throw new IllegalStateException("Cannot load over unsaved variable state");
-		}
+		checkOwner();
+		playerIds.put(player, uniqueId);
+		VariableScope scope = VariableScope.player(player);
+		if (!persistence.prepareLoad(scope, other -> other.equals(scope)
+				|| other.kind() == VariableScope.Kind.PLAYER && uniqueId != null
+				&& uniqueId.equals(playerIds.get(other.player())))) return;
 		File file = new File(folder, "PLAYER_" + uniqueId + ".txt");
 		if (!file.exists()) {
 			File file2 = new File(folder, "PLAYER_" + player + ".txt");
@@ -576,7 +533,6 @@ public class VariableManager {
 				file2.renameTo(file);
 		}
 		if (!file.exists()) {
-			dirtyPlayerVars.remove(player);
 			return;
 		}
 
@@ -617,26 +573,23 @@ public class VariableManager {
 			MagicSpells.error("ERROR LOADING PLAYER VARIABLES FOR " + player);
 			MagicSpells.handleException(e);
 		}
-
-		dirtyPlayerVars.remove(player);
 	}
 
 	public void savePlayerVariables(String player, String uniqueId) {
-		flushPending();
-		submitPlayer(player, uniqueId);
-		flushPending();
+		checkOwner();
+		playerIds.put(player, uniqueId);
+		persistence.saveNow(VariableScope.player(player));
 	}
 
-	private void submitPlayer(String player, String uniqueId) {
-		captureNow("player", player, uniqueId);
+	/** Quit schedules current dirty memory; graceful unload remains the durability barrier. */
+	public void requestPlayerSave(String player, String uniqueId) {
+		checkOwner();
+		playerIds.put(player, uniqueId);
+		persistence.requestSave(VariableScope.player(player));
 	}
 
 	public void loadLocationVariables() {
-		flushPending();
-		if (dirtyScopes.contains("location")) {
-			saveLocationVariables();
-			if (dirtyScopes.contains("location")) throw new IllegalStateException("Cannot load over unsaved variable state");
-		}
+		if (!persistence.prepareLoad(VariableScope.locations())) return;
 		for (String varName : variables.keySet()) {
 			Variable variable = variables.get(varName);
 			if (!(variable instanceof LocationVariable || variable instanceof LocationStringVariable))
@@ -672,112 +625,27 @@ public class VariableManager {
 				MagicSpells.handleException(e);
 			}
 		}
-		dirtyScopes.remove("location");
 	}
 
 	public void saveLocationVariables() {
-		flushPending();
-		submitLocations();
-		flushPending();
+		persistence.saveNow(VariableScope.locations());
 	}
 
-	private void submitLocations() {
-		captureNow("location", null, null);
-	}
-
-	private void captureNow(String kind, String player, String uid) {
-		SnapshotCapture snapshot = new SnapshotCapture(kind, player, uid);
-		while (!snapshot.advance()) { /* Explicit lifecycle saves may block. */ }
-		submit(snapshot);
-	}
-
-	private final class SnapshotCapture {
-		private final VariableSnapshotCapture data;
-		private final DirtyVariableScopes dirty;
-		private final String key;
-		private final long generation;
-
-		private SnapshotCapture(String kind, String player, String uid) {
-			dirty = player == null ? dirtyScopes : dirtyPlayerVars;
-			key = player == null ? kind : player;
-			generation = dirty.generation(key);
-			data = new VariableSnapshotCapture(kind, player, uid, folder, variables);
-		}
-
-		private boolean advance() { return data.advance(); }
+	private VariableSnapshotCapture captureVariables(VariableScope scope) {
+		return switch (scope.kind()) {
+			case GLOBAL -> VariableSnapshotCapture.global(folder, variables);
+			case LOCATION -> VariableSnapshotCapture.locations(folder, variables);
+			case PLAYER -> {
+				String uid = playerIds.get(scope.player());
+				if (uid == null) uid = Util.getUniqueId(scope.player());
+				yield uid == null ? null : VariableSnapshotCapture.player(scope.player(), uid, folder, variables);
+			}
+		};
 	}
 
 	private void startSaveTask() {
 		if (saveTask != -1) MagicSpells.cancelTask(saveTask);
-		saveTask = MagicSpells.scheduleRepeatingTask(this::tickPersistence, 1, 1);
-	}
-
-	private void tickPersistence() {
-		checkOwner();
-		acknowledge(writer.poll());
-		if (--ticksUntilSave <= 0) {
-			ticksUntilSave = TimeUtil.TICKS_PER_MINUTE;
-			// Coalesce repeated triggers: do not construct snapshots while storage is busy.
-			if (routinePlayers == null) {
-				routinePlayers = new ArrayDeque<>(dirtyPlayerVars);
-				routineGlobals = dirtyScopes.contains("global");
-				routineLocations = dirtyScopes.contains("location");
-			}
-		}
-		if (writer.isBusy() || routinePlayers == null) return;
-		if (capture != null) {
-			try {
-				if (capture.advance()) {
-					submit(capture);
-					capture = null;
-				}
-			} catch (ConcurrentModificationException e) {
-				// A map changed between ticks. Nothing was acknowledged; retry next save cycle.
-				capture = null;
-				MagicSpells.debug(2, "Variable snapshot invalidated; dirty generation retained.");
-			}
-			return;
-		}
-		if (routineGlobals) {
-			routineGlobals = false;
-			if (dirtyScopes.contains("global")) capture = new SnapshotCapture("global", null, null);
-		} else if (routineLocations) {
-			routineLocations = false;
-			if (dirtyScopes.contains("location")) capture = new SnapshotCapture("location", null, null);
-		} else if (!routinePlayers.isEmpty()) {
-			String player = routinePlayers.removeFirst();
-			String uid = Util.getUniqueId(player); // cached identity or online player; never offline lookup
-			if (uid != null && dirtyPlayerVars.contains(player)) capture = new SnapshotCapture("player", player, uid);
-		} else routinePlayers = null;
-	}
-
-	private void submit(SnapshotCapture snapshot) {
-		checkOwner();
-		lastSnapshotNanos = snapshot.data.snapshotNanos();
-		if (!writer.submit(snapshot.data.write(), snapshot.dirty, snapshot.key, snapshot.generation))
-			throw new IllegalStateException("Variable write already outstanding");
-		MagicSpells.debug(2, "Variable persistence submitted: snapshot-ns=" + lastSnapshotNanos
-				+ ", max-snapshot-slice-ns=" + snapshot.data.maxSliceNanos() + ", in-flight=1, queued-snapshots=0");
-	}
-
-	private void flushPending() {
-		checkOwner();
-		capture = null; // Explicit saves/loads supersede any unfinished routine capture.
-		acknowledge(writer.flush());
-	}
-
-	private void acknowledge(OrderedVariableWriter.Completion completion) {
-		if (completion == null) return;
-		if (completion.failure() != null) {
-			failures++;
-			// Do not log payloads, file paths or player identities from exception messages.
-			MagicSpells.error("Variable persistence failed (" + completion.failure().getClass().getSimpleName()
-					+ "); changes retained for retry.");
-		}
-		MagicSpells.debug(2, "Variable persistence: snapshot-ns=" + lastSnapshotNanos
-				+ ", write-ns=" + completion.writeNanos() + ", failures=" + failures
-				+ ", pending-player-scopes=" + dirtyPlayerVars.size() + ", pending-global=" + dirtyScopes.contains("global")
-				+ ", pending-location=" + dirtyScopes.contains("location") + ", in-flight=0, queued-snapshots=0");
+		saveTask = MagicSpells.scheduleRepeatingTask(persistence::tick, 1, 1);
 	}
 
 	private void checkOwner() {
@@ -786,7 +654,7 @@ public class VariableManager {
 	}
 
 	public void saveAllPlayerVariables() {
-		for (String playerName : new HashSet<>(dirtyPlayerVars)) {
+		for (String playerName : getDirtyPlayerVariables()) {
 			String uid = Util.getUniqueId(playerName);
 			if (uid != null)
 				savePlayerVariables(playerName, uid);
@@ -815,23 +683,15 @@ public class VariableManager {
 	/** Blocking durability barrier, also used before reload starts tearing down other managers. */
 	public void flushForUnload() {
 		checkOwner();
-		flushPending();
-		if (dirtyScopes.contains("global")) saveGlobalVariables();
-		if (dirtyScopes.contains("location")) saveLocationVariables();
-		if (!dirtyPlayerVars.isEmpty()) saveAllPlayerVariables();
-		flushPending();
-		if (!dirtyScopes.isEmpty() || !dirtyPlayerVars.isEmpty()) {
-			MagicSpells.error("Final variable flush incomplete; refusing to discard unsaved state.");
-			throw new IllegalStateException("Final variable flush incomplete");
-		}
+		persistence.flush();
 	}
 
 	public void disable() {
-		flushForUnload();
+		checkOwner();
+		persistence.close();
 		if (saveTask != -1) MagicSpells.cancelTask(saveTask);
-		routinePlayers = null;
-		writer.close();
 		closed = true;
+		playerIds.clear();
 		variables.clear();
 	}
 
@@ -918,7 +778,7 @@ public class VariableManager {
 						lsv.reset(locationToMod);
 					else
 						lsv.set(locationToMod, value);
-					dirtyScopes.add("location");
+					persistence.markDirty(VariableScope.locations());
 					return value;
 				}
 				case ADD -> {
@@ -927,7 +787,7 @@ public class VariableManager {
 						lsv.reset(locationToMod);
 					else
 						lsv.set(locationToMod, value);
-					dirtyScopes.add("location");
+					persistence.markDirty(VariableScope.locations());
 					return value;
 				}
 				case MULTIPLY -> {
@@ -937,7 +797,7 @@ public class VariableManager {
 						lsv.reset(locationToMod);
 					else
 						lsv.set(locationToMod, value);
-					dirtyScopes.add("location");
+					persistence.markDirty(VariableScope.locations());
 					return value;
 				}
 			}
@@ -947,7 +807,7 @@ public class VariableManager {
 				lv.reset(locationToMod);
 			else
 				lv.set(locationToMod, value);
-			dirtyScopes.add("location");
+			persistence.markDirty(VariableScope.locations());
 			return Double.toString(value);
 		}
 		return 0 + "";

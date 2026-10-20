@@ -3,7 +3,6 @@ package com.nisovin.magicspells.util.io;
 import java.util.concurrent.CountDownLatch;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.io.TempDir;
@@ -34,59 +33,18 @@ class OrderedVariableWriterTest {
 	@TempDir Path directory;
 
 	@Test
-	void mutationDuringWriteSurvivesAndNextSaveWins() throws Exception {
-		Path file = directory.resolve("GLOBAL.txt");
-		var dirty = new DirtyVariableScopes();
-		dirty.add("global");
-		CountDownLatch entered = new CountDownLatch(1);
-		CountDownLatch release = new CountDownLatch(1);
-		try (var writer = new OrderedVariableWriter()) {
-			var first = new VariableFileSnapshot(file, null, false, Map.of("value", "1"), Set.of());
-			assertTrue(writer.submit(() -> {
-				entered.countDown();
-				if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("not released");
-				first.write();
-			}, dirty, "global", dirty.generation("global")));
-			try {
-				assertTrue(entered.await(5, TimeUnit.SECONDS));
-				dirty.add("global");
-				for (int i = 0; i < 1000; i++) {
-					assertFalse(writer.submit(() -> fail("unbounded queue")));
-				}
-				assertTrue(dirty.contains("global"));
-			} finally {
-				release.countDown();
-			}
-			assertNull(writer.flush().failure());
-			assertTrue(dirty.contains("global"));
-			var second = new VariableFileSnapshot(file, null, false, Map.of("value", "2"), Set.of());
-			assertTrue(writer.submit(second, dirty, "global", dirty.generation("global")));
-			assertNull(writer.flush().failure());
-			assertFalse(dirty.contains("global"));
-			assertEquals("value=2" + System.lineSeparator(), Files.readString(file));
-		}
-	}
-
-	@Test
-	void realReplacementFailureKeepsOldFileAndDirtyGenerationForRetry() throws Exception {
+	void actualReplacementFailurePreservesOldFileAndCanRetry() throws Exception {
 		Path file = directory.resolve("PLAYER_uuid.txt");
 		Files.writeString(file, "coins=1\n");
-		var dirty = new DirtyVariableScopes();
-		dirty.add("player");
 		try (var writer = new OrderedVariableWriter()) {
 			assertTrue(writer.submit(() -> AtomicFiles.writeUtf8(file, "coins=2\n",
-					(temporary, destination) -> { throw new IOException("replacement failed"); },
-					Files::deleteIfExists), dirty, "player", dirty.generation("player")));
-			assertInstanceOf(IOException.class, writer.flush().failure());
+					(temporary, destination) -> { throw new java.io.IOException("replacement failed"); },
+					Files::deleteIfExists)));
+			assertInstanceOf(java.io.IOException.class, writer.flush().failure());
 			assertEquals("coins=1\n", Files.readString(file));
-			assertTrue(dirty.contains("player"));
-			try (var paths = Files.list(directory)) {
-				assertEquals(1, paths.count());
-			}
-			assertTrue(writer.submit(new VariableFileSnapshot(file, null, true, Map.of("coins", "2"), Set.of()),
-					dirty, "player", dirty.generation("player")));
+			try (var files = Files.list(directory)) { assertEquals(1, files.count()); }
+			assertTrue(writer.submit(new VariableFileSnapshot(file, null, true, Map.of("coins", "2"), Set.of())));
 			assertNull(writer.flush().failure());
-			assertTrue(dirty.isEmpty());
 			assertEquals("coins=2" + System.lineSeparator(), Files.readString(file));
 		}
 	}
@@ -139,16 +97,6 @@ class OrderedVariableWriterTest {
 			release.countDown();
 		}
 		owner.get(5, TimeUnit.SECONDS);
-	}
-
-	@Test
-	void failedExplicitSaveOfCleanScopeBecomesDirty() {
-		var dirty = new DirtyVariableScopes();
-		try (var writer = new OrderedVariableWriter()) {
-			assertTrue(writer.submit(() -> { throw new IOException("write failed"); }, dirty, "global", 0));
-			assertInstanceOf(IOException.class, writer.flush().failure());
-			assertTrue(dirty.contains("global"));
-		}
 	}
 
 }

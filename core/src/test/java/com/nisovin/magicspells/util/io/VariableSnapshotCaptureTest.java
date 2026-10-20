@@ -15,7 +15,7 @@ class VariableSnapshotCaptureTest {
 
 	@Test
 	void incompleteCaptureCannotEscapeToWriter() {
-		var capture = new VariableSnapshotCapture("global", null, null, directory.toFile(), Map.of());
+		var capture = VariableSnapshotCapture.global(directory.toFile(), Map.of());
 		assertThrows(IllegalStateException.class, capture::write);
 		assertTrue(capture.advance());
 		assertNotNull(capture.write());
@@ -37,7 +37,7 @@ class VariableSnapshotCaptureTest {
 		writeCapture("global", null, Map.of("number", number, "text", text,
 				"defaulted", defaulted, "temporary", transientValue));
 		String saved = Files.readString(directory.resolve("GLOBAL.txt"));
-		assertEquals("number=4.5\ntext=hello=world\\nnext\n", saved.replace(System.lineSeparator(), "\n"));
+		assertEquals("number=4.5\ntext=hello=worldnnext\n", saved.replace(System.lineSeparator(), "\n"));
 		var restored = new GlobalVariable();
 		restored.parseAndSet("", saved.lines().findFirst().orElseThrow().split("=", 2)[1]);
 		assertEquals(4.5, restored.getValue(""));
@@ -72,7 +72,7 @@ class VariableSnapshotCaptureTest {
 		var text = new LocationStringVariable();
 		text.setPermanent(true);
 		text.defineRegion(Set.of(new BlockLocation("world", 1, 2, 3)), "label=value");
-		var capture = new VariableSnapshotCapture("location", null, null, directory.toFile(),
+		var capture = VariableSnapshotCapture.locations(directory.toFile(),
 				Map.of("zone", locations, "labels", text));
 		assertFalse(capture.advance());
 		assertFalse(capture.advance());
@@ -98,23 +98,64 @@ class VariableSnapshotCaptureTest {
 		var locations = new LocationVariable();
 		locations.setPermanent(true);
 		for (int i = 0; i < 600; i++) locations.defineRegion(Set.of(new BlockLocation("world", i, 2, 3)), 1);
-		var dirty = new DirtyVariableScopes();
-		dirty.add("location");
+		var dirty = new DirtyVariableScopes<String>();
+		dirty.markDirty("location");
 		long generation = dirty.generation("location");
-		var capture = new VariableSnapshotCapture("location", null, null, directory.toFile(), Map.of("zone", locations));
+		var capture = VariableSnapshotCapture.locations(directory.toFile(), Map.of("zone", locations));
 		assertFalse(capture.advance());
 		locations.getBlockMap().values().forEach(region -> region.setValue(2.0));
-		dirty.add("location");
+		dirty.markDirty("location");
 		while (!capture.advance()) { }
 		try (var writer = new OrderedVariableWriter()) {
-			assertTrue(writer.submit(capture.write(), dirty, "location", generation));
+			assertTrue(writer.submit(capture.write()));
 			assertNull(writer.flush().failure());
+			dirty.acknowledge("location", generation);
 			assertTrue(dirty.contains("location"));
 		}
 	}
 
+	@Test
+	void playerCaptureVisitsOnlyThatPlayersHistory() throws Exception {
+		var number = new CharacterVariable();
+		number.setPermanent(true);
+		var text = new CharacterStringVariable();
+		text.setPermanent(true);
+		number.setWithCompositeKey("Alice:current", 7);
+		text.setStringWithCompositeKey("Alice:current", "story");
+		for (int i = 0; i < 10000; i++) {
+			number.setWithCompositeKey("Bob:" + i, 99);
+			text.setStringWithCompositeKey("AliceOther:" + i, "unrelated");
+		}
+		var capture = VariableSnapshotCapture.player("Alice", "uuid", directory.toFile(), Map.of("n", number, "s", text));
+		assertTrue(capture.advance()); // Old cross-player scan cannot finish within one 256-entry slice.
+		capture.write().run();
+		assertEquals("n:current=7.0\ns:current=story\n",
+				Files.readString(directory.resolve("PLAYER_uuid.txt")).replace(System.lineSeparator(), "\n"));
+	}
+
+	@Test
+	void characterCursorSurvivesStructuralChangesBetweenSlices() throws Exception {
+		var character = new CharacterVariable();
+		character.setPermanent(true);
+		for (int i = 0; i < 600; i++) character.setWithCompositeKey("Alice:" + String.format("%04d", i), 1);
+		var capture = VariableSnapshotCapture.player("Alice", "uuid", directory.toFile(), Map.of("stat", character));
+		assertFalse(capture.advance());
+		character.setWithCompositeKey("Bob:new", 99);
+		character.setWithCompositeKey("Alice:zzzz", 2);
+		assertFalse(capture.advance());
+		assertTrue(capture.advance());
+		capture.write().run();
+		List<String> saved = Files.readAllLines(directory.resolve("PLAYER_uuid.txt"));
+		assertEquals(601, saved.size());
+		assertTrue(saved.contains("stat:zzzz=2.0"));
+	}
+
 	private void writeCapture(String kind, String player, Map<String, Variable> variables) throws Exception {
-		var capture = new VariableSnapshotCapture(kind, player, "uuid", directory.toFile(), variables);
+		var capture = switch (kind) {
+			case "global" -> VariableSnapshotCapture.global(directory.toFile(), variables);
+			case "player" -> VariableSnapshotCapture.player(player, "uuid", directory.toFile(), variables);
+			default -> VariableSnapshotCapture.locations(directory.toFile(), variables);
+		};
 		while (!capture.advance()) { }
 		try (var writer = new OrderedVariableWriter()) {
 			assertTrue(writer.submit(capture.write()));
