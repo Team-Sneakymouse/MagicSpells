@@ -2,6 +2,7 @@ package com.nisovin.magicspells.util.io;
 
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -21,6 +22,8 @@ public final class VariablePersistence implements AutoCloseable {
 	private final Consumer<String> error;
 	private final DirtyVariableScopes<VariableScope> dirty = new DirtyVariableScopes<>();
 	private final Set<VariableScope> pending = new LinkedHashSet<>();
+	/** Scopes whose durable state has been loaded into live memory at least once. */
+	private final Set<VariableScope> hydrated = new HashSet<>();
 	private Active capture;
 	private Active outstanding;
 	private int ticksUntilSave = SAVE_INTERVAL;
@@ -46,6 +49,10 @@ public final class VariablePersistence implements AutoCloseable {
 	public boolean isDirty(VariableScope scope) { checkOwner(); return dirty.contains(scope); }
 	public Set<VariableScope> dirtyScopes() { checkOwner(); return dirty.scopes(); }
 
+	/** Record that durable state for this scope is present in live memory. */
+	public void markHydrated(VariableScope scope) { checkOwner(); hydrated.add(scope); }
+	public boolean isHydrated(VariableScope scope) { checkOwner(); return hydrated.contains(scope); }
+
 	/** Expedite a dirty scope (e.g. quit) without waiting for storage or constructing a snapshot. */
 	public void requestSave(VariableScope scope) {
 		checkOwner();
@@ -53,13 +60,15 @@ public final class VariablePersistence implements AutoCloseable {
 	}
 
 	/**
-	 * Only a write to this scope can conflict with its load. Dirty memory is authoritative:
-	 * skip reloading it instead of saving synchronously merely to read it straight back.
+	 * Only a write to this scope can conflict with its load. Dirty memory is authoritative
+	 * only after the scope was hydrated: skip reloading it instead of saving synchronously
+	 * merely to read it straight back. Unhydrated dirty state must still load from disk —
+	 * otherwise empty defaults replace the file and wipe progress.
 	 */
 	public boolean prepareLoad(VariableScope scope) {
 		checkOwner();
 		if (outstanding != null && outstanding.scope().equals(scope)) complete(writer.flush());
-		return !dirty.contains(scope);
+		return !skipLoad(scope);
 	}
 
 	/** Identity resolution can recognize renamed/case-changed players sharing the same UUID file. */
@@ -73,7 +82,7 @@ public final class VariablePersistence implements AutoCloseable {
 			saveNow(other);
 			if (dirty.contains(other)) throw new IllegalStateException("Cannot load over unsaved variable identity");
 		}
-		return !dirty.contains(scope);
+		return !skipLoad(scope);
 	}
 
 	public void tick() {
@@ -102,7 +111,11 @@ public final class VariablePersistence implements AutoCloseable {
 		var iterator = pending.iterator();
 		VariableScope scope = iterator.next();
 		iterator.remove();
-		if (dirty.contains(scope)) capture = capture(scope);
+		if (dirty.contains(scope)) {
+			Active snapshot = capture(scope);
+			// Unhydrated player captures are refused; dirty stays until load hydrates, then the next interval.
+			if (snapshot != null) capture = snapshot;
+		}
 	}
 
 	/** Explicit public saves retain their blocking attempt-completed contract. */
@@ -112,6 +125,13 @@ public final class VariablePersistence implements AutoCloseable {
 		if (capture != null && capture.scope().equals(scope)) capture = null;
 		Active snapshot = capture(scope);
 		if (snapshot == null) {
+			if (scope.kind() == VariableScope.Kind.PLAYER && !hydrated.contains(scope)) {
+				// Unloaded player memory is defaults: writing it would erase the file.
+				dirty.clear(scope);
+				pending.remove(scope);
+				error.accept("Variable save skipped: player scope not loaded; existing file preserved.");
+				return;
+			}
 			// Even an explicit attempt on previously clean state must not silently disappear.
 			if (!dirty.contains(scope)) dirty.markDirty(scope);
 			error.accept("Variable save deferred: unresolved identity; changes retained for retry.");
@@ -136,10 +156,16 @@ public final class VariablePersistence implements AutoCloseable {
 		writer.close();
 		capture = null;
 		pending.clear();
+		hydrated.clear();
 		closed = true;
 	}
 
+	private boolean skipLoad(VariableScope scope) {
+		return dirty.contains(scope) && hydrated.contains(scope);
+	}
+
 	private Active capture(VariableScope scope) {
+		if (scope.kind() == VariableScope.Kind.PLAYER && !hydrated.contains(scope)) return null;
 		long generation = dirty.generation(scope);
 		VariableSnapshotCapture data = captures.apply(scope);
 		return data == null ? null : new Active(scope, generation, data);

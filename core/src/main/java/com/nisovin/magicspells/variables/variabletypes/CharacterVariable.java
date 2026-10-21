@@ -68,6 +68,11 @@ public class CharacterVariable extends Variable {
 		objective.getScore(player).setScore((int) defaultValue);
 	}
 
+	/** False when set/reset would no-op (no online player or no loaded character). */
+	public boolean hasCharacterContext(String playerName) {
+		return getCompositeKey(playerName) != null;
+	}
+
 	/**
 	 * Gets the composite key for a player combining player name and character UUID.
 	 * Returns null if character manager is not available or no character is loaded.

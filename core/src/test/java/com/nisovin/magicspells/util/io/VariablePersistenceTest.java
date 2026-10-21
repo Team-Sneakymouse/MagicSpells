@@ -53,13 +53,15 @@ class VariablePersistenceTest {
 	void quitRequestsCoalesceWhileUnrelatedStorageIsDelayed() throws Exception {
 		try (var persistence = coordinator()) {
 			submitGlobal(persistence);
-			persistence.markDirty(VariableScope.player("Alice"));
+			var alice = VariableScope.player("Alice");
+			persistence.markHydrated(alice);
+			persistence.markDirty(alice);
 			for (int i = 0; i < 1000; i++) {
-				persistence.requestSave(VariableScope.player("Alice"));
+				persistence.requestSave(alice);
 				persistence.tick();
 			}
 			assertEquals(1, storage.work.size());
-			assertFalse(persistence.prepareLoad(VariableScope.player("Alice"))); // Keep dirty memory on rejoin.
+			assertFalse(persistence.prepareLoad(alice)); // Keep dirty memory on rejoin.
 			storage.runNext();
 			persistence.tick(); // Select Alice.
 			persistence.tick(); // Submit Alice.
@@ -153,6 +155,7 @@ class VariablePersistenceTest {
 	void samePlayerRejoinCollectsItsWriteButKeepsNewerMemory() {
 		try (var persistence = coordinator()) {
 			var alice = VariableScope.player("Alice");
+			persistence.markHydrated(alice);
 			persistence.markDirty(alice);
 			persistence.requestSave(alice);
 			persistence.tick();
@@ -162,6 +165,32 @@ class VariablePersistenceTest {
 			assertFalse(persistence.prepareLoad(alice));
 			// Flush using inline execution once delayed work has been collected.
 			storage.inline = true;
+		}
+	}
+
+	@Test
+	void dirtyBeforeHydrationStillLoadsFromDisk() {
+		try (var persistence = coordinator()) {
+			var alice = VariableScope.player("Alice");
+			persistence.markDirty(alice);
+			assertTrue(persistence.prepareLoad(alice)); // Must not skip: memory is not authoritative yet.
+			persistence.markHydrated(alice);
+			assertFalse(persistence.prepareLoad(alice)); // After load, dirty memory wins on rejoin.
+			storage.inline = true;
+		}
+	}
+
+	@Test
+	void unhydratedPlayerSaveDoesNotEraseExistingFile() throws Exception {
+		Path file = directory.resolve("PLAYER_uuid.txt");
+		Files.writeString(file, "number=42.0" + System.lineSeparator());
+		try (var persistence = coordinator()) {
+			var alice = VariableScope.player("Alice");
+			persistence.markDirty(alice);
+			persistence.saveNow(alice); // Would write defaults over the file if capture were allowed.
+			assertFalse(persistence.isDirty(alice));
+			assertEquals(1, failures.size());
+			assertEquals("number=42.0" + System.lineSeparator(), Files.readString(file));
 		}
 	}
 
@@ -188,6 +217,7 @@ class VariablePersistenceTest {
 		try (var persistence = new VariablePersistence(scope -> resolved[0] ? capture(scope) : null,
 				new OrderedVariableWriter(storage), message -> { }, failures::add)) {
 			var alice = VariableScope.player("Alice");
+			persistence.markHydrated(alice);
 			persistence.markDirty(alice);
 			persistence.requestSave(alice);
 			persistence.tick();
@@ -205,6 +235,7 @@ class VariablePersistenceTest {
 		try (var persistence = new VariablePersistence(scope -> resolved[0] ? capture(scope) : null,
 				new OrderedVariableWriter(storage), message -> { }, failures::add)) {
 			var alice = VariableScope.player("Alice");
+			persistence.markHydrated(alice);
 			persistence.saveNow(alice);
 			assertTrue(persistence.isDirty(alice));
 			assertEquals(1, failures.size());
@@ -241,6 +272,7 @@ class VariablePersistenceTest {
 		try (var persistence = new VariablePersistence(scope -> VariableSnapshotCapture.player(
 				scope.player(), "same-uuid", directory.toFile(), Map.of("stat", character)),
 				new OrderedVariableWriter(storage), message -> { }, failures::add)) {
+			persistence.markHydrated(oldName);
 			persistence.markDirty(oldName);
 			persistence.requestSave(oldName); // Still queued when the same UUID joins under another name.
 			assertTrue(persistence.prepareLoad(newName, scope -> scope.equals(oldName) || scope.equals(newName)));

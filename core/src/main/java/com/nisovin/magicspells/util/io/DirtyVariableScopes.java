@@ -13,6 +13,8 @@ public final class DirtyVariableScopes<S> {
 	public void markDirty(S scope) { generations.put(scope, ++nextGeneration); }
 	public long generation(S scope) { return generations.getOrDefault(scope, 0L); }
 	public void acknowledge(S scope, long generation) { generations.remove(scope, generation); }
+	/** Drop dirty tracking without a successful write (e.g. refuse to snapshot unloaded player memory). */
+	public void clear(S scope) { generations.remove(scope); }
 	public boolean contains(S scope) { return generations.containsKey(scope); }
 	public boolean isEmpty() { return generations.isEmpty(); }
 	public Set<S> scopes() { return Collections.unmodifiableSet(generations.keySet()); }

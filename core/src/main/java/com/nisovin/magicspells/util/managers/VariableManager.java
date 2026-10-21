@@ -333,6 +333,8 @@ public class VariableManager {
 		checkOwner();
 		if (variable == null)
 			return;
+		if (variable instanceof CharacterVariable character && !character.hasCharacterContext(player))
+			return;
 		variable.set(player, amount);
 		updateBossBar(variable, player);
 		updateExpBar(variable, player);
@@ -351,6 +353,8 @@ public class VariableManager {
 	public void set(Variable variable, String player, String amount) {
 		checkOwner();
 		if (variable == null)
+			return;
+		if (variable instanceof CharacterVariable character && !character.hasCharacterContext(player))
 			return;
 		variable.parseAndSet(player, amount);
 		updateBossBar(variable, player);
@@ -417,10 +421,13 @@ public class VariableManager {
 		checkOwner();
 		if (variable == null)
 			return;
+		String playerName = player != null ? player.getName() : "";
+		if (variable instanceof CharacterVariable character && !character.hasCharacterContext(playerName))
+			return;
 		variable.reset(player);
-		updateBossBar(variable, player != null ? player.getName() : "");
-		updateExpBar(variable, player != null ? player.getName() : "");
-		markDirty(variable, player != null ? player.getName() : "");
+		updateBossBar(variable, playerName);
+		updateExpBar(variable, playerName);
+		markDirty(variable, playerName);
 	}
 
 	/** Explicitly mark a direct owner-thread integration mutation for persistence. */
@@ -492,6 +499,7 @@ public class VariableManager {
 		if (!persistence.prepareLoad(VariableScope.global())) return;
 		File file = new File(folder, "GLOBAL.txt");
 		if (!file.exists()) {
+			persistence.markHydrated(VariableScope.global());
 			return;
 		}
 
@@ -513,6 +521,7 @@ public class VariableManager {
 			MagicSpells.error("ERROR LOADING GLOBAL VARIABLES");
 			MagicSpells.handleException(e);
 		}
+		persistence.markHydrated(VariableScope.global());
 	}
 
 	public void saveGlobalVariables() {
@@ -533,6 +542,7 @@ public class VariableManager {
 				file2.renameTo(file);
 		}
 		if (!file.exists()) {
+			persistence.markHydrated(scope);
 			return;
 		}
 
@@ -573,6 +583,7 @@ public class VariableManager {
 			MagicSpells.error("ERROR LOADING PLAYER VARIABLES FOR " + player);
 			MagicSpells.handleException(e);
 		}
+		persistence.markHydrated(scope);
 	}
 
 	public void savePlayerVariables(String player, String uniqueId) {
@@ -625,6 +636,7 @@ public class VariableManager {
 				MagicSpells.handleException(e);
 			}
 		}
+		persistence.markHydrated(VariableScope.locations());
 	}
 
 	public void saveLocationVariables() {
