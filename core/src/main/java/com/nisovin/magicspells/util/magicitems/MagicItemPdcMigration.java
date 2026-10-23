@@ -17,6 +17,7 @@ final class MagicItemPdcMigration {
         for (NamespacedKey key : carried.getKeys()) {
             if (key.getNamespace().equals(namespace)
                     && (key.getKey().startsWith(ItemPdcKeys.PERMANENT_PREFIX)
+                    || key.getKey().equals("tags")
                     || key.getKey().equals("magicitem") || key.getKey().equals("magicitem_version"))) {
                 carried.remove(key);
             }

@@ -466,7 +466,7 @@ public class MagicItemUpdater {
             if (blacklisted.contains(attr)) continue;
             if (attr == MagicItemAttribute.AMOUNT || attr == MagicItemAttribute.TYPE
                     || attr == MagicItemAttribute.MAGIC_ITEM_NAME || attr == MagicItemAttribute.PERSISTENT_DATA
-                    || attr == MagicItemAttribute.PERMANENT_DATA) {
+                    || attr == MagicItemAttribute.PERMANENT_DATA || attr == MagicItemAttribute.TAGS) {
                 continue;
             }
             boolean has = stackData != null && stackData.hasAttribute(attr);
@@ -476,7 +476,7 @@ public class MagicItemUpdater {
         for (MagicItemAttribute attr : blacklisted) {
             if (attr == MagicItemAttribute.AMOUNT || attr == MagicItemAttribute.TYPE
                     || attr == MagicItemAttribute.MAGIC_ITEM_NAME || attr == MagicItemAttribute.PERSISTENT_DATA
-                    || attr == MagicItemAttribute.PERMANENT_DATA) {
+                    || attr == MagicItemAttribute.PERMANENT_DATA || attr == MagicItemAttribute.TAGS) {
                 continue;
             }
             MagicItems.applyMagicItemAttribute(updatedItem, meta, null, attr, true);

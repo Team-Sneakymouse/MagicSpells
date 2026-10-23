@@ -48,6 +48,27 @@ class MagicItemPdcMigrationTest {
     }
 
     @Test
+    void definitionOwnsChangedAndRemovedTagsWithoutChangingSourceOrForeignTags() {
+        PersistentDataContainer source = container();
+        PersistentDataContainer changed = container();
+        PersistentDataContainer removed = container();
+        source.set(key("magicspells:tags"), PersistentDataType.STRING, "old");
+        source.set(key("foreign:tags"), PersistentDataType.STRING, "foreign");
+        changed.set(key("magicspells:tags"), PersistentDataType.STRING, "definition");
+
+        MagicItemPdcMigration.copy(source, changed, "magicspells");
+        MagicItemPdcMigration.copy(source, removed, "magicspells");
+
+        assertAll(
+                () -> assertEquals("definition", changed.get(key("magicspells:tags"), PersistentDataType.STRING)),
+                () -> assertFalse(removed.has(key("magicspells:tags"))),
+                () -> assertEquals("foreign", changed.get(key("foreign:tags"), PersistentDataType.STRING)),
+                () -> assertEquals("foreign", removed.get(key("foreign:tags"), PersistentDataType.STRING)),
+                () -> assertEquals("old", source.get(key("magicspells:tags"), PersistentDataType.STRING)),
+                () -> assertEquals("foreign", source.get(key("foreign:tags"), PersistentDataType.STRING)));
+    }
+
+    @Test
     void preservesEveryPrimitiveAndNestedAndListData() {
         verifyType(PersistentDataType.BYTE, (byte) 1);
         verifyType(PersistentDataType.SHORT, (short) 2);
@@ -77,11 +98,12 @@ class MagicItemPdcMigrationTest {
     }
 
     @Test
-    void updaterUsesMigrationAndDoesNotAllowAttributeOverridesOfPermanentData() throws Exception {
+    void updaterUsesMigrationAndDoesNotAllowAttributeOverridesOfPermanentDataOrTags() throws Exception {
         String updater = java.nio.file.Files.readString(java.nio.file.Path.of(
                 "src/main/java/com/nisovin/magicspells/util/magicitems/MagicItemUpdater.java"));
         assertTrue(updater.contains("MagicItemPdcMigration.copy(sourceContainer, meta.getPersistentDataContainer()"));
         assertEquals(2, updater.split("attr == MagicItemAttribute.PERMANENT_DATA", -1).length - 1);
+        assertEquals(2, updater.split("attr == MagicItemAttribute.TAGS", -1).length - 1);
     }
 
     // Narrow in-memory implementation of the Bukkit PDC contract, not a server mock.
