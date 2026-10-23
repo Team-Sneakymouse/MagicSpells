@@ -454,14 +454,7 @@ public class MagicItemUpdater {
             updatedBlockStateMeta.setBlockState(updatedContainer);
         }
 
-        String regularPrefix = "magicspelldata_";
-        String namespace = MagicSpells.getInstance().getName().toLowerCase();
-        for (NamespacedKey key : sourceContainer.getKeys()) {
-            if (key.getNamespace().equals(namespace) && key.getKey().startsWith(regularPrefix)) {
-                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING,
-                        sourceContainer.get(key, PersistentDataType.STRING));
-            }
-        }
+        MagicItemPdcMigration.copy(sourceContainer, meta.getPersistentDataContainer(), NAME_KEY.getNamespace());
 
         MagicItemIgnoredAttributes.copyPdc(sourceMeta, meta);
 
@@ -472,7 +465,8 @@ public class MagicItemUpdater {
         for (MagicItemAttribute attr : ignored) {
             if (blacklisted.contains(attr)) continue;
             if (attr == MagicItemAttribute.AMOUNT || attr == MagicItemAttribute.TYPE
-                    || attr == MagicItemAttribute.MAGIC_ITEM_NAME || attr == MagicItemAttribute.PERSISTENT_DATA) {
+                    || attr == MagicItemAttribute.MAGIC_ITEM_NAME || attr == MagicItemAttribute.PERSISTENT_DATA
+                    || attr == MagicItemAttribute.PERMANENT_DATA || attr == MagicItemAttribute.TAGS) {
                 continue;
             }
             boolean has = stackData != null && stackData.hasAttribute(attr);
@@ -481,7 +475,8 @@ public class MagicItemUpdater {
 
         for (MagicItemAttribute attr : blacklisted) {
             if (attr == MagicItemAttribute.AMOUNT || attr == MagicItemAttribute.TYPE
-                    || attr == MagicItemAttribute.MAGIC_ITEM_NAME || attr == MagicItemAttribute.PERSISTENT_DATA) {
+                    || attr == MagicItemAttribute.MAGIC_ITEM_NAME || attr == MagicItemAttribute.PERSISTENT_DATA
+                    || attr == MagicItemAttribute.PERMANENT_DATA || attr == MagicItemAttribute.TAGS) {
                 continue;
             }
             MagicItems.applyMagicItemAttribute(updatedItem, meta, null, attr, true);
