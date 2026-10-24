@@ -7,21 +7,22 @@ public final class PerformanceDiagnostics {
     private static final PerformanceRecorder RECORDER = new PerformanceRecorder();
     public static final PerformanceExecution EXECUTION = new PerformanceExecution(RECORDER);
     public static final TaskLifecycle TASKS = new TaskLifecycle();
-    private static Runnable unregister = () -> {};
+    private static DiagnosticsAttachment attachment;
 
     private PerformanceDiagnostics() {}
 
     public static void register(JavaPlugin plugin) {
         unregister();
-        // Keep the API-dependent adapter unloaded when diagnostics is absent.
-        if (plugin.getServer().getPluginManager().isPluginEnabled("SneakyDiagnostics"))
-            unregister = SneakyDiagnosticsHook.register(plugin, RECORDER);
+        // The adapter that needs the API is only reached once SneakyDiagnostics' service exists, and again after
+        // a Diagnostics-only reload or a late enable.
+        attachment = new DiagnosticsAttachment(plugin, () -> SneakyDiagnosticsHook.register(plugin, RECORDER));
+        attachment.hook();
     }
 
     public static void unregister() {
-        try { unregister.run(); }
+        try { if (attachment != null) attachment.unhook(); }
         finally {
-            unregister = () -> {};
+            attachment = null;
             RECORDER.stop("plugin_unload");
         }
     }

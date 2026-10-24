@@ -26,8 +26,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.github.team-sneakymouse:SneakyDiagnostics-API:1.0.0")
-    testImplementation("io.github.team-sneakymouse:SneakyDiagnostics-API:1.0.0")
+    compileOnly("io.github.team-sneakymouse:SneakyDiagnostics-API:2026.10.24-4bbd770c6454")
+    testImplementation("io.github.team-sneakymouse:SneakyDiagnostics-API:2026.10.24-4bbd770c6454")
     shadow("org.apache.commons:commons-math4-core:4.0-beta1")
     shadow("com.github.Chronoken:EffectLib:477d459")
     shadow("co.aikar:acf-paper:0.5.1-SNAPSHOT")
