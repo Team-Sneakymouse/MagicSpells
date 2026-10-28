@@ -160,8 +160,20 @@ class LevitateSpellTest {
     @Test void expiryDoesNotApplyOneLastVelocity() throws Exception {
         option("duration", 5);
         castTarget(); tick();
+        assertEquals(1, target.velocities, "initial zero-delay tick must still pull");
+        assertEquals(1, scheduled.size());
+        tick();
         assertTerminated();
-        assertEquals(0, target.velocities);
+        assertEquals(1, target.velocities, "expired tick must not apply another pull");
+    }
+
+    @Test void durationPreservesEveryScheduledPull() throws Exception {
+        option("duration", 10);
+        castTarget(); tick(); tick();
+        assertEquals(2, target.velocities);
+        tick();
+        assertTerminated();
+        assertEquals(2, target.velocities);
     }
 
     @Test void canonicalPlayerEntryCanToggleOffDuringCooldown() {

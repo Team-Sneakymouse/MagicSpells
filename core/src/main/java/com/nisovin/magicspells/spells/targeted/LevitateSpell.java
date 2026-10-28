@@ -255,12 +255,11 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 		public void run() {
 			if (stopped) return;
 
-			counter++;
-
 			if (duration > 0 && counter >= duration) {
 				stop();
 				return;
 			}
+			counter++;
 
 			if (caster.isDead() || !caster.isValid() || target.isDead() || !target.isValid()
 					|| !caster.getWorld().equals(target.getWorld())) {

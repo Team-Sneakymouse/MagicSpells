@@ -30,7 +30,8 @@ merged (the wiki currently describes released `main`):
 - With `toggle: false`, a successful recast replaces the previous levitation
   rather than leaving an untracked repeating task behind.
 - Death/invalidity of either participant and duration expiry cancel the task and
-  clear its caster registry entry. No velocity is applied after termination.
+  clear its caster registry entry. No velocity is applied after termination. The zero-delay first tick still pulls;
+  `duration: 5` / `tick-rate: 5` produces one pull, then stops at the next tick.
 
 No configuration file is rewritten. Existing `max-distance: 200` settings remain
 200; remove the override or set `max-distance: 20` to use the new limit.
