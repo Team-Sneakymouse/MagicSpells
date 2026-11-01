@@ -25,23 +25,28 @@ Update permission grants separately; do not rewrite item data.
 
 ## Publication / merge gate
 
-**This consumer must remain draft until a genuine SneakyUtils artifact containing
-this API is published and the normal Maven dependency pin in `core/build.gradle`
-is updated to that actual published version.** The old pin intentionally remains
-rather than inventing an available release. No release, merge or deployment is
-authorized by this work. CI against the old pin cannot compile the new API.
+**Publication gate fulfilled:** SneakyUtils PR #8 merged as
+`f8f8c4cb7512d82671733f53c980febe66fa4db0`; publish run `41307785625`
+succeeded. Maven metadata, the published POM and JAR confirm
+`io.github.team-sneakymouse:sneakyutils:2026.11.01-f8f8c4cb7512`
+from `https://maven.sneakyrp.com/releases`. The JAR contains `ItemBehaviors`
+and `ItemExpireEvent`; its SHA-256 is
+`036234a01a1162047d370f007b119412fb4a703492d9083ba759f4b2cdf2f36b`.
 
-For task-local verification only:
+`core/build.gradle` pins that version for compile-only and test-only use.
+The temporary local JAR override has been removed; the provider is never shaded.
+Normal published-dependency verification:
 
 ```sh
-./gradlew build check -PsneakyUtilsJar=/absolute/path/to/provider.jar \
+./gradlew build check \
   --max-workers=1 -Dorg.gradle.jvmargs='-Xmx768m -XX:ActiveProcessorCount=2' \
   -Pkotlin.compiler.execution.strategy=in-process
 ```
 
-This override is compile-only plus test-only, never shaded. Record the exact
-provider JAR checksum with test evidence; remove reliance on the override before
-marking this PR ready.
+Result: BUILD SUCCESSFUL; JUnit XML reports 198 tests, zero failures, errors or
+skips. The resolved Maven-cache JAR matches the published checksum, publication
+and deployable-content guards pass, and the deployable JAR contains no
+`com/sneakyutils/` classes. No merge or deployment is authorized by this work.
 
 Roll out/roll back matching provider and consumer versions together: the old
 MagicSpells build registers enforcement itself, so mixing it with the new provider
