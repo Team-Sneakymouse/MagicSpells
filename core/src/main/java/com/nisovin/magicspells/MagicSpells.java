@@ -25,8 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Files;
 
 import com.nisovin.magicspells.util.magicitems.MagicItemBehaviorReceiveListener;
-import com.nisovin.magicspells.util.magicitems.MagicItemExpirationListener;
-import com.nisovin.magicspells.util.magicitems.MagicItemSoulboundListener;
+
 import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 import de.slikey.effectlib.EffectManager;
 
@@ -693,8 +692,7 @@ public class MagicSpells extends JavaPlugin {
 		LivingEntityCounter.register();
 
 		registerEvents(new MagicItemBehaviorReceiveListener());
-		registerEvents(new MagicItemExpirationListener());
-		registerEvents(new MagicItemSoulboundListener());
+
 
 		registerSneakyCharacterManagerHooks();
 		registerEvents(new Listener() {
@@ -744,6 +742,11 @@ public class MagicSpells extends JavaPlugin {
 		// Call loaded event
 		pm.callEvent(new MagicSpellsLoadedEvent(this));
 		loaded = true;
+		// Consumer-only reload: passives are ready; the provider retains all scheduling state.
+		for (Player player : Bukkit.getOnlinePlayers()) {
+			com.sneakyutils.util.items.ItemExpirationScheduler.purgeExpiredForPlayer(player);
+			com.sneakyutils.util.items.ItemExpirationScheduler.scheduleAllForPlayer(player);
+		}
 		PerformanceDiagnostics.register(this);
 		PlaceholderApiCompat.setup(this);
 
@@ -2076,9 +2079,7 @@ public class MagicSpells extends JavaPlugin {
 			}
 		}
 
-		MagicItemExpirationListener expirationListener = MagicItemExpirationListener.getInstance();
-		if (expirationListener != null)
-			expirationListener.ensureCharacterHandler();
+
 	}
 
 	public static void registerEvents(final Listener listener) {

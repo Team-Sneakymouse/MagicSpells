@@ -10,8 +10,8 @@ public final class MagicItemBehaviorKeys {
 
 	private static final NamespacedKey MAGIC_ITEM = new NamespacedKey(MagicSpells.getInstance(), "magicitem");
 	private static final NamespacedKey MAGIC_ITEM_VERSION = new NamespacedKey(MagicSpells.getInstance(), "magicitem_version");
-	private static final NamespacedKey SOULBOUND_OWNER = new NamespacedKey(MagicSpells.getInstance(), "soulbound_owner");
-	private static final NamespacedKey EXPIRES_AT = new NamespacedKey(MagicSpells.getInstance(), "expires_at");
+	private static final NamespacedKey SOULBOUND_OWNER = com.sneakyutils.util.items.ItemBehaviors.SOULBOUND_OWNER;
+	private static final NamespacedKey EXPIRES_AT = com.sneakyutils.util.items.ItemBehaviors.EXPIRES_AT;
 	private static final NamespacedKey CREATOR_NAME = new NamespacedKey(MagicSpells.getInstance(), "creator_name");
 	private static final NamespacedKey IGNORED_ATTRIBUTES = new NamespacedKey(MagicSpells.getInstance(), "ignored_attributes");
 

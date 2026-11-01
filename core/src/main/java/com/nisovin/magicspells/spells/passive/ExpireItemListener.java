@@ -8,7 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.events.MagicItemExpireEvent;
+import com.sneakyutils.events.ItemExpireEvent;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 import com.nisovin.magicspells.util.OverridePriority;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
@@ -39,7 +39,7 @@ public class ExpireItemListener extends PassiveListener {
 
 	@OverridePriority
 	@EventHandler
-	public void onExpire(MagicItemExpireEvent event) {
+	public void onExpire(ItemExpireEvent event) {
 		Player caster = event.getPlayer();
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
