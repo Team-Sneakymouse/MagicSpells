@@ -15,6 +15,41 @@ class MagicItemPdcMigrationTest {
     private static NamespacedKey key(String value) { return NamespacedKey.fromString(value); }
 
     @Test
+    void updaterBehaviorSnapshotRestoresExactLegacyValuesWithoutNormalizationOrReset() throws Exception {
+        PersistentDataContainer source = container();
+        PersistentDataContainer replacement = container();
+        String exactOwner = "ABCDEFAB-1234-5678-9ABC-ABCDEFABCDEF";
+        long exactDeadline = 9007199254740993L;
+        source.set(key("magicspells:soulbound_owner"), PersistentDataType.STRING, exactOwner);
+        source.set(key("magicspells:expires_at"), PersistentDataType.LONG, exactDeadline);
+        replacement.set(key("magicspells:soulbound_owner"), PersistentDataType.STRING, "new-definition-owner");
+        replacement.set(key("magicspells:expires_at"), PersistentDataType.LONG, 1L);
+        Class<?> snapshot = Class.forName("com.nisovin.magicspells.util.magicitems.MagicItemBehaviorState");
+        Object state = snapshot.getDeclaredMethod("capture", PersistentDataContainer.class).invoke(null, source);
+        snapshot.getDeclaredMethod("restore", PersistentDataContainer.class).invoke(state, replacement);
+        assertEquals(exactOwner, replacement.get(key("magicspells:soulbound_owner"), PersistentDataType.STRING));
+        assertEquals(exactDeadline, replacement.get(key("magicspells:expires_at"), PersistentDataType.LONG));
+        assertEquals(exactOwner, source.get(key("magicspells:soulbound_owner"), PersistentDataType.STRING));
+        assertEquals(exactDeadline, source.get(key("magicspells:expires_at"), PersistentDataType.LONG));
+    }
+
+    @Test
+    void updaterBehaviorSnapshotIgnoresWrongTypedLegacyKeys() {
+        PersistentDataContainer source = container();
+        PersistentDataContainer replacement = container();
+        source.set(key("magicspells:soulbound_owner"), PersistentDataType.LONG, 42L);
+        source.set(key("magicspells:expires_at"), PersistentDataType.STRING, "not-a-deadline");
+
+        MagicItemBehaviorState state = assertDoesNotThrow(() -> MagicItemBehaviorState.capture(source));
+        state.restore(replacement);
+
+        assertFalse(replacement.has(key("magicspells:soulbound_owner")));
+        assertFalse(replacement.has(key("magicspells:expires_at")));
+        assertEquals(42L, source.get(key("magicspells:soulbound_owner"), PersistentDataType.LONG));
+        assertEquals("not-a-deadline", source.get(key("magicspells:expires_at"), PersistentDataType.STRING));
+    }
+
+    @Test
     void migratesForeignTypedDataAndOldValueWinsConflicts() {
         PersistentDataContainer source = container();
         PersistentDataContainer target = container();

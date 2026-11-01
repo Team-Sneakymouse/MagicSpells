@@ -8,7 +8,6 @@ public enum Perm {
 	NO_REAGENTS("magicspells.noreagents"),
 	NO_COOLDOWN("magicspells.nocooldown"),
 	NO_CAST_TIME("magicspells.nocasttime"),
-	NO_SOULBOUND("magicspells.nosoulbound"),
 	NO_TARGET("magicspells.notarget"),
 	ADVANCED_SPELLBOOK("magicspells.advanced.spellbook"),
 	ADVANCED_IMBUE("magicspells.advanced.imbue"),

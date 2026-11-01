@@ -364,9 +364,7 @@ public class MagicItemUpdater {
         }
 
         Integer durability = null;
-        Long expiresAt = null;
         String creatorName = null;
-        String soulboundOwner = null;
         int amount = itemStack.getAmount();
         BookMeta bookMeta = null;
         Inventory blockInventory = null;
@@ -385,20 +383,12 @@ public class MagicItemUpdater {
             return itemStack;
         }
 
-        if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG)) {
-            expiresAt = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"),
-                    PersistentDataType.LONG);
-        }
+        MagicItemBehaviorState behaviorState = MagicItemBehaviorState.capture(sourceContainer);
 
         if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"),
                 PersistentDataType.STRING)) {
             creatorName = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"),
                     PersistentDataType.STRING);
-        }
-
-        // Magic item soulbound ownership should not be lost during magic item updates.
-        if (sourceContainer.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
-            soulboundOwner = sourceContainer.get(SOULBOUND_OWNER_KEY, PersistentDataType.STRING);
         }
 
         if (sourceMeta instanceof Damageable damageable) {
@@ -425,18 +415,11 @@ public class MagicItemUpdater {
         if (durability != null && durability != 0 && meta instanceof Damageable updatedDamageable && !durabilityIgnored) {
             updatedDamageable.setDamage(durability);
         }
-        if (expiresAt != null) {
-            meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"),
-                    PersistentDataType.LONG, expiresAt);
-        }
+        behaviorState.restore(meta.getPersistentDataContainer());
 
         if (creatorName != null) {
             meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"),
                     PersistentDataType.STRING, creatorName);
-        }
-
-        if (soulboundOwner != null) {
-            meta.getPersistentDataContainer().set(SOULBOUND_OWNER_KEY, PersistentDataType.STRING, soulboundOwner);
         }
 
         if (meta instanceof BookMeta updatedBookMeta && bookMeta != null) {

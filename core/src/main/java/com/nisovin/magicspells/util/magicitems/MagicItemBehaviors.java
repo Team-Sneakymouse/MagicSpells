@@ -1,85 +1,31 @@
 package com.nisovin.magicspells.util.magicitems;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-
-import org.bukkit.Bukkit;
-import com.nisovin.magicspells.util.ColorUtil;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
-
-import com.nisovin.magicspells.events.MagicItemExpireEvent;
-import com.nisovin.magicspells.util.TimeUtil;
-import com.nisovin.magicspells.util.Util;
+import com.sneakyutils.util.items.ItemBehaviors;
 import com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute;
 
+/** MagicSpells definition adapter; SneakyUtils owns persisted behavior and enforcement. */
 public final class MagicItemBehaviors {
-
-	private MagicItemBehaviors() {
-	}
-
-	public static void applySoulbound(ItemStack item, Player owner) {
-		if (owner == null)
-			return;
-		applySoulbound(item, owner.getUniqueId());
-	}
-
-	public static void applySoulbound(ItemStack item, UUID ownerUuid) {
-		if (item == null || ownerUuid == null || !item.hasItemMeta())
-			return;
-		if (hasSoulbound(item))
-			return;
-
-		ItemMeta meta = item.getItemMeta();
-		meta.getPersistentDataContainer().set(
-				MagicItemBehaviorKeys.soulboundOwner(),
-				PersistentDataType.STRING,
-				ownerUuid.toString());
-		item.setItemMeta(meta);
-	}
-
-	public static void applySoulboundOverlay(ItemStack item, Player owner) {
-		if (owner == null)
-			return;
-		applySoulboundOverlay(item, owner.getUniqueId());
-	}
-
-	public static void applySoulboundOverlay(ItemStack item, UUID ownerUuid) {
-		if (item == null || ownerUuid == null || !item.hasItemMeta())
-			return;
-
-		ItemMeta meta = item.getItemMeta();
-		meta.getPersistentDataContainer().set(
-				MagicItemBehaviorKeys.soulboundOwner(),
-				PersistentDataType.STRING,
-				ownerUuid.toString());
-		item.setItemMeta(meta);
-	}
-
-	public static void applyExpiration(ItemStack item, double durationMs) {
-		if (item == null || durationMs <= 0 || !item.hasItemMeta())
-			return;
-		if (hasExpiration(item))
-			return;
-
-		addExpiresLine(item, durationMs);
-	}
-
-	public static void applyExpirationOverlay(ItemStack item, double durationMs) {
-		if (item == null || durationMs <= 0 || !item.hasItemMeta())
-			return;
-
-		addExpiresLine(item, durationMs);
-	}
-
+    private MagicItemBehaviors() {}
+    public static void applySoulbound(ItemStack item, Player owner) { ItemBehaviors.applySoulbound(item, owner); }
+    public static void applySoulbound(ItemStack item, UUID owner) { ItemBehaviors.applySoulbound(item, owner); }
+    public static void applySoulboundOverlay(ItemStack item, Player owner) { ItemBehaviors.applySoulboundOverlay(item, owner); }
+    public static void applySoulboundOverlay(ItemStack item, UUID owner) { ItemBehaviors.applySoulboundOverlay(item, owner); }
+    public static void applyExpiration(ItemStack item, double durationMs) { ItemBehaviors.applyExpiration(item, durationMs); }
+    public static void applyExpirationOverlay(ItemStack item, double durationMs) { ItemBehaviors.applyExpirationOverlay(item, durationMs); }
+    public static boolean hasSoulbound(ItemStack item) { return ItemBehaviors.hasSoulbound(item); }
+    public static boolean hasExpiration(ItemStack item) { return ItemBehaviors.hasExpiration(item); }
+    public static String getExpiresText(long deadline) { return ItemBehaviors.getExpiresText(deadline); }
+    public enum ExpirationResult { NO_UPDATE, UPDATE, EXPIRED }
+    public static ExpirationResult updateExpiresLineIfNeeded(ItemStack item) { return updateExpiresLineIfNeeded(item, null); }
+    public static ExpirationResult updateExpiresLineIfNeeded(ItemStack item, Player owner) {
+        return ExpirationResult.valueOf(ItemBehaviors.updateExpiresLineIfNeeded(item, owner).name());
+    }
 	public static void applyFromData(ItemStack item, @Nullable MagicItemData data, @Nullable Player owner) {
 		applyFromData(item, data, (LivingEntity) owner);
 	}
@@ -133,119 +79,6 @@ public final class MagicItemBehaviors {
 
 		applyFromData(item, magicItem.getMagicItemData(), owner);
 		MagicItemExpirationScheduler.scheduleFromItem(owner, item);
-	}
-
-	public static boolean hasSoulbound(ItemStack item) {
-		if (item == null || !item.hasItemMeta())
-			return false;
-		return item.getItemMeta().getPersistentDataContainer()
-				.has(MagicItemBehaviorKeys.soulboundOwner(), PersistentDataType.STRING);
-	}
-
-	public static boolean hasExpiration(ItemStack item) {
-		if (item == null || !item.hasItemMeta())
-			return false;
-		return item.getItemMeta().getPersistentDataContainer()
-				.has(MagicItemBehaviorKeys.expiresAt(), PersistentDataType.LONG);
-	}
-
-	public static String getExpiresText(long expiresAt) {
-		if (expiresAt < System.currentTimeMillis())
-			return ColorUtil.GRAY + "Expired";
-		double hours = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_HOUR);
-		if (hours / 24 >= 15)
-			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + ((long) hours / TimeUtil.HOURS_PER_WEEK)
-					+ ColorUtil.GRAY + " weeks";
-		if (hours / 24 >= 3)
-			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + ((long) hours / TimeUtil.HOURS_PER_DAY)
-					+ ColorUtil.GRAY + " days";
-		if (hours >= 2)
-			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + (long) hours + ColorUtil.GRAY + " hours";
-		if (hours >= 1)
-			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + '1' + ColorUtil.GRAY + " hour";
-		double minutes = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_MINUTE);
-		if (minutes >= 2)
-			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + (long) minutes + ColorUtil.GRAY + " minutes";
-		if (minutes >= 1)
-			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + '1' + ColorUtil.GRAY + " minute";
-		double seconds = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_SECOND);
-		if (seconds >= 2)
-			return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + (long) seconds + ColorUtil.GRAY + " seconds";
-		return ColorUtil.GRAY + "Expires in " + ColorUtil.WHITE + '1' + ColorUtil.GRAY + " second";
-	}
-
-	public enum ExpirationResult {
-
-		NO_UPDATE,
-		UPDATE,
-		EXPIRED
-
-	}
-
-	public static ExpirationResult updateExpiresLineIfNeeded(ItemStack item) {
-		return updateExpiresLineIfNeeded(item, null);
-	}
-
-	public static ExpirationResult updateExpiresLineIfNeeded(ItemStack item, @Nullable Player owner) {
-		if (item == null || !item.hasItemMeta())
-			return ExpirationResult.NO_UPDATE;
-
-		ItemMeta meta = item.getItemMeta();
-		Long expiresAt = meta.getPersistentDataContainer()
-				.get(MagicItemBehaviorKeys.expiresAt(), PersistentDataType.LONG);
-		if (expiresAt == null)
-			return ExpirationResult.NO_UPDATE;
-
-		if (expiresAt < System.currentTimeMillis()) {
-			if (owner != null)
-				Bukkit.getPluginManager().callEvent(new MagicItemExpireEvent(owner, item));
-			return ExpirationResult.EXPIRED;
-		}
-
-		List<Component> lore = meta.hasLore() ? meta.lore() : new ArrayList<>();
-		if (lore == null)
-			lore = new ArrayList<>();
-
-		ExpirationResult result;
-		if (!lore.isEmpty()) {
-			Component lastLine = lore.get(lore.size() - 1);
-			if (lastLine instanceof TextComponent textComponent
-					&& textComponent.content().contains("Expires in ")) {
-				lore.set(lore.size() - 1, Util.getMiniMessage(getExpiresText(expiresAt)));
-				meta.lore(lore);
-				item.setItemMeta(meta);
-				result = ExpirationResult.UPDATE;
-			} else {
-				lore.add(Util.getMiniMessage(getExpiresText(expiresAt)));
-				meta.lore(lore);
-				item.setItemMeta(meta);
-				result = ExpirationResult.UPDATE;
-			}
-		} else {
-			lore.add(Util.getMiniMessage(getExpiresText(expiresAt)));
-			meta.lore(lore);
-			item.setItemMeta(meta);
-			result = ExpirationResult.UPDATE;
-		}
-
-		if (owner != null)
-			MagicItemExpirationScheduler.scheduleFromItem(owner, item);
-		return result;
-	}
-
-	private static void addExpiresLine(ItemStack item, double expireMilis) {
-		ItemMeta meta = item.getItemMeta();
-		List<Component> lore = null;
-		if (meta.hasLore())
-			lore = meta.lore();
-		if (lore == null)
-			lore = new ArrayList<>();
-
-		long expiresAt = System.currentTimeMillis() + (long) expireMilis;
-		lore.add(Util.getMiniMessage(getExpiresText(expiresAt)));
-		meta.getPersistentDataContainer().set(MagicItemBehaviorKeys.expiresAt(), PersistentDataType.LONG, expiresAt);
-		meta.lore(lore);
-		item.setItemMeta(meta);
 	}
 
 }
