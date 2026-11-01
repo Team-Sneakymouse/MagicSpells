@@ -12,8 +12,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
 
-import ca.bungo.sneakyconfigurablevoice.api.VoiceEffect;
-import ca.bungo.sneakyconfigurablevoice.api.VoiceEffects;
+import ca.bungo.sneakyvoicechat.api.VoiceEffect;
+import ca.bungo.sneakyvoicechat.api.VoiceEffects;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.conditions.util.DependsOn;
@@ -22,10 +22,10 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.config.ConfigData;
 
 /**
- * Applies a SneakyConfigurableVoice preset or an inline effect chain while the buff is active.
- * Requires SneakyConfigurableVoice.
+ * Applies a SneakyVoiceChat preset or an inline effect chain while the buff is active.
+ * Requires SneakyVoiceChat.
  */
-@DependsOn(plugin = "SneakyConfigurableVoice")
+@DependsOn(plugin = "SneakyVoiceChat")
 public class VoiceEffectSpell extends BuffSpell {
 
 	private final Set<UUID> entities = new HashSet<>();
