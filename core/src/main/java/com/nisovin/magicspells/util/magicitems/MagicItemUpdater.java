@@ -48,6 +48,7 @@ import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
 import org.jetbrains.annotations.Nullable;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.spells.MenuSpell;
 import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.events.MagicSpellsLoadedEvent;
@@ -231,7 +232,7 @@ public class MagicItemUpdater {
     }
 
     public static void processInventory(Inventory inv, @Nullable Player player) {
-        if (inv == null || isBagOfHoldingGui(inv))
+        if (inv == null || MenuSpell.isMenuInventory(inv) || isBagOfHoldingGui(inv))
             return;
         ItemStack[] contents = inv.getContents();
         processItemStacks(contents, player);

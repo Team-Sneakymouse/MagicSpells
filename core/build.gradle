@@ -62,8 +62,11 @@ dependencies {
 
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.mockito:mockito-core:5.20.0")
     testImplementation("io.papermc.paper:paper-api:26.2.build.116-stable")
     testRuntimeOnly("com.github.Chronoken:EffectLib:477d459")
+    testRuntimeOnly("co.aikar:acf-paper:0.5.1-SNAPSHOT")
+    testRuntimeOnly(project(":nms:shared"))
     // Index + YAML fixtures for SpellSnippetValidator.
     testImplementation("com.google.code.gson:gson:2.11.0")
     testImplementation("org.yaml:snakeyaml:2.3")
