@@ -11,7 +11,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -21,6 +20,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
+import org.bukkit.inventory.MenuType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -43,6 +44,14 @@ import com.nisovin.magicspells.events.MagicSpellsGenericPlayerEvent;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 
 public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, TargetedLocationSpell {
+
+	// Server-thread only, like the inventory operations that register and query these views.
+	// Weak keys keep closed views eligible for collection; registration happens before InventoryOpenEvent.
+	private static final Set<Inventory> menuInventories = Collections.newSetFromMap(new WeakHashMap<>());
+
+	public static boolean isMenuInventory(Inventory inventory) {
+		return menuInventories.contains(inventory);
+	}
 
 	private final Map<String, MenuOption> options = new LinkedHashMap<>();
 	private final Map<UUID, MenuData> menuData = new HashMap<>();
@@ -402,12 +411,11 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		Map<Integer, ItemStack> itemStacks = buildInventory(opener, args, mData);
 		int rows_ = (int) Math.ceil((itemStacks.keySet().stream().max(Integer::compareTo).orElse(0) + 1) / 9.0);
-		Inventory inv = Bukkit.createInventory(opener, Math.min(6, Math.max(1, (rows_ > rows ? rows_ : rows))) * 9,
-				Component.text(internalName));
+		InventoryView view = createMenuView(opener, Math.min(6, Math.max(1, (rows_ > rows ? rows_ : rows))) * 9);
 
-		applyOptionsToInventory(opener, inv, args, mData, itemStacks);
+		applyOptionsToInventory(opener, view.getTopInventory(), args, mData, itemStacks);
 
-		opener.openInventory(inv);
+		opener.openInventory(view);
 		Util.setInventoryTitle(opener, title);
 
 		SpellData data = new SpellData(caster, entityTarget, locTarget, power, args);
@@ -420,6 +428,22 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			playSpellEffects(EffectPosition.CASTER, caster, data);
 		if (locTarget != null)
 			playSpellEffects(EffectPosition.TARGET, locTarget, data);
+	}
+
+	private InventoryView createMenuView(Player player, int size) {
+		MenuType menuType = switch (size) {
+			case 9 -> MenuType.GENERIC_9X1;
+			case 18 -> MenuType.GENERIC_9X2;
+			case 27 -> MenuType.GENERIC_9X3;
+			case 36 -> MenuType.GENERIC_9X4;
+			case 45 -> MenuType.GENERIC_9X5;
+			case 54 -> MenuType.GENERIC_9X6;
+			default -> throw new IllegalArgumentException("Invalid menu size: " + size);
+		};
+		// No location: Paper creates a virtual container, never a chest in the world.
+		InventoryView view = menuType.create(player, Component.text(internalName));
+		menuInventories.add(view.getTopInventory());
+		return view;
 	}
 
 	private Map<Integer, ItemStack> buildInventory(Player opener, String[] args, MenuData mData) {
@@ -572,10 +596,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 									MenuData mData = menuData.get(id);
 									Map<Integer, ItemStack> itemStacks = buildInventory(player, MagicSpells.NULL_ARGS,
 											mData);
-									Inventory newInv = Bukkit.createInventory(player,
-											event.getView().getTopInventory().getSize(), Component.text(internalName));
-									applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS, mData, itemStacks);
-									player.openInventory(newInv);
+									InventoryView newView = createMenuView(player,
+											event.getView().getTopInventory().getSize());
+									applyOptionsToInventory(player, newView.getTopInventory(), MagicSpells.NULL_ARGS, mData, itemStacks);
+									player.openInventory(newView);
 									Util.setInventoryTitle(player, title);
 								}
 								return;
@@ -624,10 +648,9 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		// Reopen.
 		menuData.put(id, mData);
 		Map<Integer, ItemStack> itemStacks = buildInventory(player, MagicSpells.NULL_ARGS, mData);
-		Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(),
-				Component.text(internalName));
-		applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS, mData, itemStacks);
-		player.openInventory(newInv);
+		InventoryView newView = createMenuView(player, event.getView().getTopInventory().getSize());
+		applyOptionsToInventory(player, newView.getTopInventory(), MagicSpells.NULL_ARGS, mData, itemStacks);
+		player.openInventory(newView);
 		Util.setInventoryTitle(player, title);
 	}
 
