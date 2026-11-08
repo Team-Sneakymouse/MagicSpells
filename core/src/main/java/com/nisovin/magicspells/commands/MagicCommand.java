@@ -89,7 +89,8 @@ public class MagicCommand extends BaseCommand {
 			MagicSpells.getVariableManager().getVariables().keySet()
 		);
 		commandManager.getCommandCompletions().registerAsyncCompletion("magic_items", context ->
-			MagicItems.getMagicItemKeys()
+			MagicItems.getMagicItemKeys(),
+			CommandCompletionFilter.contains()
 		);
 		commandManager.getCommandCompletions().registerAsyncCompletion("looking_at", context -> {
 			Set<String> completions = new HashSet<>();
