@@ -44,6 +44,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventPriority;
@@ -132,6 +133,12 @@ public class MagicSpells extends JavaPlugin {
 
 	// Listeners
 	public CastListener castListener;
+	private LeftClickListener leftClickListener;
+	private RightClickListener rightClickListener;
+	private ConsumeListener consumeListener;
+	/** True after the first {@link ServerLoadEvent}; Magics reloads finalize cast items immediately. */
+	private boolean serverLoadComplete;
+	private boolean serverLoadListenerRegistered;
 
 	// Container vars
 	private ManaHandler manaHandler;
@@ -252,6 +259,16 @@ public class MagicSpells extends JavaPlugin {
 	public void load() {
 		plugin = this;
 		PluginManager pm = plugin.getServer().getPluginManager();
+		if (!serverLoadListenerRegistered) {
+			pm.registerEvents(new Listener() {
+				@EventHandler
+				public void onServerLoad(ServerLoadEvent event) {
+					serverLoadComplete = true;
+					finalizeDeferredCastItems();
+				}
+			}, this);
+			serverLoadListenerRegistered = true;
+		}
 
 		effectManager = new EffectManager(this);
 		effectManager.enableDebug(debug);
@@ -677,17 +694,8 @@ public class MagicSpells extends JavaPlugin {
 		if (!incantations.isEmpty())
 			registerEvents(new MagicChatListener());
 
-		LeftClickListener leftClickListener = new LeftClickListener();
-		if (leftClickListener.hasLeftClickCastItems())
-			registerEvents(leftClickListener);
-
-		RightClickListener rightClickListener = new RightClickListener();
-		if (rightClickListener.hasRightClickCastItems())
-			registerEvents(rightClickListener);
-
-		ConsumeListener consumeListener = new ConsumeListener();
-		if (consumeListener.hasConsumeCastItems())
-			registerEvents(consumeListener);
+		// Built from Magics-owned items first; rebuilt after ServerLoad when plugin items exist.
+		registerCastItemListeners();
 		if (config.getBoolean(path + "enable-dance-casting", true))
 			new DanceCastListener(this, config);
 
@@ -747,6 +755,38 @@ public class MagicSpells extends JavaPlugin {
 		PlaceholderApiCompat.setup(this);
 
 		log("MagicSpells loading complete!");
+
+		// Magics reload after startup: other plugins already registered their items.
+		if (serverLoadComplete) finalizeDeferredCastItems();
+	}
+
+	/**
+	 * Re-resolve cast items now that SneakyItems owners (Fishing, Themepark, …) have registered,
+	 * then rebuild left/right/consume click maps.
+	 */
+	private void finalizeDeferredCastItems() {
+		if (spells == null || spells.isEmpty()) return;
+		log("Finalizing cast items against registered magic items...");
+		for (Spell spell : spells.values()) {
+			spell.applyCastItemSpecs(true);
+		}
+		registerCastItemListeners();
+		log("...cast items finalized");
+	}
+
+	private void registerCastItemListeners() {
+		if (leftClickListener != null) HandlerList.unregisterAll(leftClickListener);
+		if (rightClickListener != null) HandlerList.unregisterAll(rightClickListener);
+		if (consumeListener != null) HandlerList.unregisterAll(consumeListener);
+
+		leftClickListener = new LeftClickListener();
+		if (leftClickListener.hasLeftClickCastItems()) registerEvents(leftClickListener);
+
+		rightClickListener = new RightClickListener();
+		if (rightClickListener.hasRightClickCastItems()) registerEvents(rightClickListener);
+
+		consumeListener = new ConsumeListener();
+		if (consumeListener.hasConsumeCastItems()) registerEvents(consumeListener);
 	}
 
 	private void loadVariables(PluginManager pm) {

@@ -133,6 +133,12 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected CastItem[] leftClickCastItems;
 	protected CastItem[] rightClickCastItems;
 
+	/** Raw cast-item specs; resolved again after other plugins register SneakyItems defs. */
+	protected String[] castItemSpecs = new String[0];
+	protected String[] consumeCastItemSpecs = new String[0];
+	protected String[] leftClickCastItemSpecs = new String[0];
+	protected String[] rightClickCastItemSpecs = new String[0];
+
 	protected String[] castItemTags = new String[0];
 	protected String[] consumeCastItemTags = new String[0];
 	protected String[] leftClickCastItemTags = new String[0];
@@ -232,83 +238,55 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		// General options
 		description = config.getString(path + "description", "");
 		if (config.contains(path + "cast-item")) {
-			String[] sItems = config.getString(path + "cast-item", "-5").trim().replace(" ", "")
+			castItemSpecs = config.getString(path + "cast-item", "-5").trim().replace(" ", "")
 					.split(MagicItemDataParser.DATA_REGEX);
-			CastItemConfig castConfig = setupCastItemConfig(sItems, "Spell '" + internalName + "' has an invalid cast item specified: %i");
-			castItems = castConfig.items();
-			castItemTags = castConfig.tags();
 		} else if (config.contains(path + "cast-items")) {
 			List<String> sItems = config.getStringList(path + "cast-items", null);
 			if (sItems == null)
 				sItems = new ArrayList<>();
-			CastItemConfig castConfig = setupCastItemConfig(sItems.toArray(new String[0]),
-					"Spell '" + internalName + "' has an invalid cast item specified: %i");
-			castItems = castConfig.items();
-			castItemTags = castConfig.tags();
+			castItemSpecs = sItems.toArray(new String[0]);
 		} else {
-			castItems = new CastItem[0];
-			castItemTags = new String[0];
+			castItemSpecs = new String[0];
 		}
 
 		if (config.contains(path + "left-click-cast-item")) {
-			String[] sItems = config.getString(path + "left-click-cast-item", "-5").trim().replace(" ", "")
+			leftClickCastItemSpecs = config.getString(path + "left-click-cast-item", "-5").trim().replace(" ", "")
 					.split(MagicItemDataParser.DATA_REGEX);
-			CastItemConfig castConfig = setupCastItemConfig(sItems,
-					"Spell '" + internalName + "' has an invalid left click cast item specified: %i");
-			leftClickCastItems = castConfig.items();
-			leftClickCastItemTags = castConfig.tags();
 		} else if (config.contains(path + "left-click-cast-items")) {
 			List<String> sItems = config.getStringList(path + "left-click-cast-items", null);
 			if (sItems == null)
 				sItems = new ArrayList<>();
-			CastItemConfig castConfig = setupCastItemConfig(sItems.toArray(new String[0]),
-					"Spell '" + internalName + "' has an invalid left click cast item listed: %i");
-			leftClickCastItems = castConfig.items();
-			leftClickCastItemTags = castConfig.tags();
+			leftClickCastItemSpecs = sItems.toArray(new String[0]);
 		} else {
-			leftClickCastItems = new CastItem[0];
-			leftClickCastItemTags = new String[0];
+			leftClickCastItemSpecs = new String[0];
 		}
 
 		if (config.contains(path + "right-click-cast-item")) {
-			String[] sItems = config.getString(path + "right-click-cast-item", "-5").trim().replace(" ", "")
+			rightClickCastItemSpecs = config.getString(path + "right-click-cast-item", "-5").trim().replace(" ", "")
 					.split(MagicItemDataParser.DATA_REGEX);
-			CastItemConfig castConfig = setupCastItemConfig(sItems,
-					"Spell '" + internalName + "' has an invalid right click cast item specified: %i");
-			rightClickCastItems = castConfig.items();
-			rightClickCastItemTags = castConfig.tags();
 		} else if (config.contains(path + "right-click-cast-items")) {
 			List<String> sItems = config.getStringList(path + "right-click-cast-items", null);
 			if (sItems == null)
 				sItems = new ArrayList<>();
-			CastItemConfig castConfig = setupCastItemConfig(sItems.toArray(new String[0]),
-					"Spell '" + internalName + "' has an invalid right click cast item listed: %i");
-			rightClickCastItems = castConfig.items();
-			rightClickCastItemTags = castConfig.tags();
+			rightClickCastItemSpecs = sItems.toArray(new String[0]);
 		} else {
-			rightClickCastItems = new CastItem[0];
-			rightClickCastItemTags = new String[0];
+			rightClickCastItemSpecs = new String[0];
 		}
 
 		if (config.contains(path + "consume-cast-item")) {
-			String[] sItems = config.getString(path + "consume-cast-item", "-5").trim().replace(" ", "")
+			consumeCastItemSpecs = config.getString(path + "consume-cast-item", "-5").trim().replace(" ", "")
 					.split(MagicItemDataParser.DATA_REGEX);
-			CastItemConfig castConfig = setupCastItemConfig(sItems,
-					"Spell '" + internalName + "' has an invalid consume cast item specified: %i");
-			consumeCastItems = castConfig.items();
-			consumeCastItemTags = castConfig.tags();
 		} else if (config.contains(path + "consume-cast-items")) {
 			List<String> sItems = config.getStringList(path + "consume-cast-items", null);
 			if (sItems == null)
 				sItems = new ArrayList<>();
-			CastItemConfig castConfig = setupCastItemConfig(sItems.toArray(new String[0]),
-					"Spell '" + internalName + "' has an invalid consume cast item listed: %i");
-			consumeCastItems = castConfig.items();
-			consumeCastItemTags = castConfig.tags();
+			consumeCastItemSpecs = sItems.toArray(new String[0]);
 		} else {
-			consumeCastItems = new CastItem[0];
-			consumeCastItemTags = new String[0];
+			consumeCastItemSpecs = new String[0];
 		}
+
+		// Resolve what Magics already registered; missing plugin-owned items are retried after ServerLoadEvent.
+		applyCastItemSpecs(false);
 
 		castWithLeftClick = config.getBoolean(path + "cast-with-left-click", MagicSpells.canCastWithLeftClick());
 		castWithRightClick = config.getBoolean(path + "cast-with-right-click", MagicSpells.canCastWithRightClick());
@@ -2143,10 +2121,14 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	protected CastItem[] setupCastItems(String[] items, String errorMessage) {
-		return setupCastItemConfig(items, errorMessage).items();
+		return setupCastItemConfig(items, errorMessage, true).items();
 	}
 
 	protected CastItemConfig setupCastItemConfig(String[] items, String errorMessage) {
+		return setupCastItemConfig(items, errorMessage, true);
+	}
+
+	protected CastItemConfig setupCastItemConfig(String[] items, String errorMessage, boolean reportMissing) {
 		if (items == null || items.length == 0) return CastItemConfig.EMPTY;
 
 		List<CastItem> castItemList = new ArrayList<>();
@@ -2156,7 +2138,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			if (entry.startsWith("#")) {
 				String tag = entry.substring(1).trim();
 				if (tag.isEmpty()) {
-					MagicSpells.error(errorMessage.replace("%i", entry));
+					if (reportMissing) MagicSpells.error(errorMessage.replace("%i", entry));
 					continue;
 				}
 				tagList.add(tag);
@@ -2165,18 +2147,41 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 			MagicItem magicItem = MagicItems.getMagicItemFromString(entry);
 			if (magicItem == null) {
-				MagicSpells.error(errorMessage.replace("%i", entry));
+				if (reportMissing) MagicSpells.error(errorMessage.replace("%i", entry));
 				continue;
 			}
 
 			ItemStack item = magicItem.getItemStack();
 			if (item == null) {
-				MagicSpells.error(errorMessage.replace("%i", entry));
+				if (reportMissing) MagicSpells.error(errorMessage.replace("%i", entry));
 				continue;
 			}
 			castItemList.add(new CastItem(item));
 		}
 		return new CastItemConfig(castItemList.toArray(new CastItem[0]), tagList.toArray(new String[0]));
+	}
+
+	/** Apply stored cast-item specs. When {@code reportMissing} is false, unknown names are skipped silently. */
+	public void applyCastItemSpecs(boolean reportMissing) {
+		CastItemConfig castConfig = setupCastItemConfig(castItemSpecs,
+				"Spell '" + internalName + "' has an invalid cast item specified: %i", reportMissing);
+		castItems = castConfig.items();
+		castItemTags = castConfig.tags();
+
+		CastItemConfig leftConfig = setupCastItemConfig(leftClickCastItemSpecs,
+				"Spell '" + internalName + "' has an invalid left click cast item specified: %i", reportMissing);
+		leftClickCastItems = leftConfig.items();
+		leftClickCastItemTags = leftConfig.tags();
+
+		CastItemConfig rightConfig = setupCastItemConfig(rightClickCastItemSpecs,
+				"Spell '" + internalName + "' has an invalid right click cast item specified: %i", reportMissing);
+		rightClickCastItems = rightConfig.items();
+		rightClickCastItemTags = rightConfig.tags();
+
+		CastItemConfig consumeConfig = setupCastItemConfig(consumeCastItemSpecs,
+				"Spell '" + internalName + "' has an invalid consume cast item specified: %i", reportMissing);
+		consumeCastItems = consumeConfig.items();
+		consumeCastItemTags = consumeConfig.tags();
 	}
 
 	protected Subspell initSubspell(String subspellName, String errorMessage) {
