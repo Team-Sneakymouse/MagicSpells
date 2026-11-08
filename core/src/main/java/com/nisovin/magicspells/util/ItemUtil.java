@@ -6,7 +6,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Damageable;
 
-import com.nisovin.magicspells.util.magicitems.CustomModelDataValues;
+import com.sneakyitems.util.magicitems.CustomModelDataValues;
 
 public class ItemUtil {
 

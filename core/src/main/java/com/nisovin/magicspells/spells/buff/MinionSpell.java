@@ -29,8 +29,8 @@ import com.nisovin.magicspells.spells.DamageSpell;
 import com.nisovin.magicspells.util.ValidTargetList;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.util.config.ConfigData;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.managers.AttributeManager;
 
 public class MinionSpell extends BuffSpell {

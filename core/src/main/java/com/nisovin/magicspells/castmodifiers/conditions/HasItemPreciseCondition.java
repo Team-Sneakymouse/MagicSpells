@@ -10,8 +10,8 @@ import org.bukkit.inventory.EntityEquipment;
 
 import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.castmodifiers.Condition;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItemData;
 
 // Only accepts magic items and uses a much stricter match
 public class HasItemPreciseCondition extends Condition {

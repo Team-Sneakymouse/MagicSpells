@@ -16,8 +16,8 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.event.inventory.InventoryType;
 
 import com.nisovin.magicspells.util.reagent.ItemReagent;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItemData;
 
 public class InventoryUtil {
 

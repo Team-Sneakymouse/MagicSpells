@@ -24,9 +24,10 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Files;
 
-import com.nisovin.magicspells.util.magicitems.MagicItemBehaviorReceiveListener;
-
-import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
+import com.sneakyitems.api.MagicItemRegistry;
+import com.sneakyitems.api.SneakyItemsAPI;
+import com.sneakyitems.platform.SneakyItemsPlatform;
+import com.sneakyitems.util.magicitems.MagicItemUpdater;
 import de.slikey.effectlib.EffectManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -65,6 +65,7 @@ import com.sneakyutils.util.AlteredBlockManager;
 import com.nisovin.magicspells.mana.ManaSystem;
 import com.nisovin.magicspells.mana.ManaHandler;
 import com.nisovin.magicspells.variables.Variable;
+import com.nisovin.magicspells.spells.MenuSpell;
 import com.nisovin.magicspells.spells.PassiveSpell;
 import com.nisovin.magicspells.commands.MagicCommand;
 import com.nisovin.magicspells.util.io.AtomicFiles;
@@ -76,11 +77,11 @@ import com.nisovin.magicspells.util.compat.placeholderapi.PlaceholderApiCompat;
 import com.nisovin.magicspells.castmodifiers.conditions.util.DependsOn;
 import com.nisovin.magicspells.zones.NoMagicZoneManager;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItem;
 import com.nisovin.magicspells.Spell.DelayedSpellCast;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.commands.CommandHelpFilter;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.storage.types.TXTFileStorage;
 import com.nisovin.magicspells.volatilecode.ManagerVolatile;
@@ -91,8 +92,6 @@ import com.nisovin.magicspells.spelleffects.trackers.AsyncEffectTracker;
 import com.nisovin.magicspells.spelleffects.effecttypes.EffectLibEffect;
 import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;
-import com.nisovin.magicspells.util.magicitems.MagicItemUpdater.PersistentDataUpdater;
-
 public class MagicSpells extends JavaPlugin {
 
 	public static MagicSpells plugin;
@@ -182,7 +181,7 @@ public class MagicSpells extends JavaPlugin {
 
 	private boolean checkItemPersistentData;
 	private boolean enableUpdateItemData;
-	private boolean characterMagicItemUpdaterRegistered;
+	private static boolean menuInventorySkipRegistered;
 
 	private boolean castOnAnimate;
 	private boolean enableManaSystem;
@@ -351,6 +350,8 @@ public class MagicSpells extends JavaPlugin {
 
 		checkItemPersistentData = config.getBoolean(path + "check-item-persistent-data", false);
 		enableUpdateItemData = config.getBoolean(path + "enable-update-item-data", true);
+		SneakyItemsPlatform.setCheckItemPersistentData(checkItemPersistentData);
+		SneakyItemsPlatform.setEnableUpdateItemData(enableUpdateItemData);
 
 		checkWorldPvpFlag = config.getBoolean(path + "check-world-pvp-flag", true);
 		checkScoreboardTeams = config.getBoolean(path + "check-scoreboard-teams", false);
@@ -422,13 +423,19 @@ public class MagicSpells extends JavaPlugin {
 		Map<String, Boolean> permCastChildren = new HashMap<>();
 		Map<String, Boolean> permTeachChildren = new HashMap<>();
 
-		// Load magic items
+		// Load magic items into SneakyItems (PDC namespace stays magicspells for live stacks)
 		log("Loading magic items...");
 		hideMagicItemTooltips = config.getBoolean(path + "hide-magic-items-tooltips", false);
+		SneakyItemsPlatform.setHideMagicItemTooltips(hideMagicItemTooltips);
 		if (hideMagicItemTooltips)
 			log("... hiding tooltips!");
 
-		MagicItems.getMagicItems().clear();
+		SneakyItemsAPI.clearOwner(this);
+		if (!menuInventorySkipRegistered) {
+			SneakyItemsAPI.registerMenuInventorySkip(MenuSpell::isMenuInventory);
+			menuInventorySkipRegistered = true;
+		}
+		int magicItemsLoaded = 0;
 		String itemStr = "magic-items";
 		if (config.contains(path + itemStr)) {
 			Set<String> magicItems = config.getKeys(path + itemStr);
@@ -440,8 +447,9 @@ public class MagicSpells extends JavaPlugin {
 							continue;
 
 						MagicItem magicItem = MagicItems.getMagicItemFromString(str);
-						if (magicItem != null)
-							MagicItems.getMagicItems().put(key, magicItem);
+						if (magicItem != null
+								&& MagicItemRegistry.register(this, "magicspells", key, magicItem))
+							magicItemsLoaded++;
 						else
 							MagicSpells.error("Invalid magic item: " + key + ": " + str);
 
@@ -451,8 +459,9 @@ public class MagicSpells extends JavaPlugin {
 							continue;
 
 						MagicItem magicItem = MagicItems.getMagicItemFromSection(section);
-						if (magicItem != null)
-							MagicItems.getMagicItems().put(key, magicItem);
+						if (magicItem != null
+								&& MagicItemRegistry.register(this, "magicspells", key, magicItem))
+							magicItemsLoaded++;
 						else
 							MagicSpells.error("Invalid magic item: " + key + ": (section)");
 
@@ -461,7 +470,7 @@ public class MagicSpells extends JavaPlugin {
 				}
 			}
 		}
-		log("..." + MagicItems.getMagicItems().size() + " magic items loaded");
+		log("..." + magicItemsLoaded + " magic items loaded");
 
 		// Load crafting recipes.
 		RecipeHandler.clearRecipes();
@@ -682,27 +691,8 @@ public class MagicSpells extends JavaPlugin {
 		if (config.getBoolean(path + "enable-dance-casting", true))
 			new DanceCastListener(this, config);
 
-		characterMagicItemUpdaterRegistered = false;
-		if (enableUpdateItemData) {
-			registerEvents(new PersistentDataUpdater());
-			registerEvents(new MagicItemUpdater.ChunkMagicItemListener());
-		}
-
 		registerEvents(new EntityListener());
 		LivingEntityCounter.register();
-
-		registerEvents(new MagicItemBehaviorReceiveListener());
-
-
-		registerSneakyCharacterManagerHooks();
-		registerEvents(new Listener() {
-			@EventHandler
-			public void onPluginEnable(PluginEnableEvent event) {
-				if (!event.getPlugin().getName().equals("SneakyCharacterManager"))
-					return;
-				registerSneakyCharacterManagerHooks();
-			}
-		});
 
 		log("...done");
 
@@ -742,6 +732,12 @@ public class MagicSpells extends JavaPlugin {
 		// Call loaded event
 		pm.callEvent(new MagicSpellsLoadedEvent(this));
 		loaded = true;
+		// Refresh stacks against newly registered SneakyItems definitions.
+		if (enableUpdateItemData) {
+			for (Player player : Bukkit.getOnlinePlayers()) {
+				MagicItemUpdater.processPlayerInventories(player);
+			}
+		}
 		// Consumer-only reload: passives are ready; the provider retains all scheduling state.
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			com.sneakyutils.util.items.ItemExpirationScheduler.purgeExpiredForPlayer(player);
@@ -2059,27 +2055,6 @@ public class MagicSpells extends JavaPlugin {
 
 		matcher = PLACEHOLDER_PATTERN.matcher(message);
 		return matcher.find();
-	}
-
-	/**
-	 * Wires SneakyCharacterManager-dependent listeners once that plugin is enabled.
-	 * Softdepend normally makes this succeed during MagicSpells load; PluginEnableEvent
-	 * covers the case where MagicSpells still enables first.
-	 */
-	private void registerSneakyCharacterManagerHooks() {
-		if (!CompatBasics.pluginEnabled("SneakyCharacterManager"))
-			return;
-
-		if (enableUpdateItemData && !characterMagicItemUpdaterRegistered) {
-			try {
-				registerEvents(new MagicItemUpdater.CharacterPersistentDataUpdater());
-				characterMagicItemUpdaterRegistered = true;
-			} catch (NoClassDefFoundError | ExceptionInInitializerError e) {
-				DebugHandler.debugNoClassDefFoundError(e);
-			}
-		}
-
-
 	}
 
 	public static void registerEvents(final Listener listener) {

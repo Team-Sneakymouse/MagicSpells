@@ -16,8 +16,8 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.magicspells.util.OverridePriority;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 

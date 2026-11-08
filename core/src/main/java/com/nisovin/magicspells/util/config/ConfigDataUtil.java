@@ -1,7 +1,7 @@
 package com.nisovin.magicspells.util.config;
 
-import com.nisovin.magicspells.util.magicitems.MagicItem;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.handlers.EnchantmentHandler;
 import com.nisovin.magicspells.util.AttributeSpecParser;

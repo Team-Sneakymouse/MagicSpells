@@ -24,10 +24,10 @@ import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItemData;
 
 public class DisarmSpell extends TargetedSpell implements TargetedEntitySpell {
 

@@ -8,8 +8,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.OverridePriority;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 
 public class InventoryClickListener extends PassiveListener {

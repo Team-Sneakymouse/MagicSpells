@@ -15,8 +15,8 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.magicitems.MagicItemIgnoredAttributes;
+import com.sneakyitems.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItemIgnoredAttributes;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class EnchantSpell extends InstantSpell {

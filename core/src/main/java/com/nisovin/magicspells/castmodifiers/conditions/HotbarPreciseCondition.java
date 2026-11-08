@@ -7,8 +7,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItemData;
 
 public class HotbarPreciseCondition extends Condition {
 

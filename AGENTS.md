@@ -20,6 +20,7 @@ Do not substitute remembered rules, a web mirror, or an unlisted path. Follow lo
 | Shared policy | sibling checkout via `.team-policy/pointer.json` → `team-development-policy` |
 | Workspace | parent `MagicSpells-Workspace/` (wiki submodule, cursor/codex rules, `Ms_Scripts` symlink) |
 | Runtime targets | Paper 1.21.4 test server via `runServer`; see Gradle/NMS modules |
+| Magic items | Owned by **SneakyItems** (`compileOnly` + hard `depend`). MagicsSpells parses `magic-items:` and registers into SneakyItems with PDC namespace `magicspells`. Legacy ItemTag mappings live in SneakyItems, not `ItemTagSpell`. |
 | Deployment | branches listed in `.github/workflows/publish.yml` publish to sneakyrp |
 
 **Branches / sneakyrp publish:** live vs milestone vs feature — see **Branch roles** in `MagicSpells-Workspace/.cursor/rules/workspace-overview.mdc`; publisher list is `.github/workflows/publish.yml`.

@@ -1,9 +1,12 @@
 # Shared soulbound / expiration migration
 
-MagicSpells keeps `soulbound`, `expiration`, conjure overlays and registry-based
-receive handling. `MagicItemBehaviors` and `MagicItemExpirationScheduler` are thin
-compatibility adapters to SneakyUtils. Enforcement listeners, scheduler state,
-expiration lore and `com.sneakyutils.events.ItemExpireEvent` belong to SneakyUtils.
+Magic-item definitions, matching, fingerprinting, inventory updating, and legacy
+ItemTag mappings live in **SneakyItems**. MagicsSpells registers its `magic-items:`
+into that registry (PDC namespace `magicspells`) and keeps conjure overlays plus
+`soulbound`/`expiration` definition flags. `MagicItemBehaviors` /
+`MagicItemExpirationScheduler` in SneakyItems are thin adapters to SneakyUtils.
+Enforcement listeners, scheduler state, expiration lore and
+`com.sneakyutils.events.ItemExpireEvent` belong to SneakyUtils.
 The provider defers its initial online-player scan until the next tick so dependent
 listeners can register. MagicSpells-only reloads purge/reschedule through the provider
 API after passives and `MagicSpellsLoadedEvent` are ready; no consumer scheduler is added.

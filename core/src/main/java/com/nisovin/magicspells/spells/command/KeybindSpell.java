@@ -28,8 +28,8 @@ import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.spells.CommandSpell;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItems;
 
 public class KeybindSpell extends CommandSpell {
 

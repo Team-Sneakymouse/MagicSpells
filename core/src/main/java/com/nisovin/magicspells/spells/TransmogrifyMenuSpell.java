@@ -35,14 +35,14 @@ import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.config.ConfigData;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.magicitems.MagicItemIgnoredAttributes;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItemIgnoredAttributes;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.reagent.SpellReagents;
 
-import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.ITEM_MODEL;
-import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME;
+import static com.sneakyitems.util.magicitems.MagicItemData.MagicItemAttribute.ITEM_MODEL;
+import static com.sneakyitems.util.magicitems.MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME;
 
 /**
  * Opens a GUI of item-model options for the magic item in the caster's main hand.

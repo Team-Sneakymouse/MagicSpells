@@ -5,7 +5,7 @@ import java.util.Map;
 import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.magicspells.Spell;
-import com.nisovin.magicspells.util.magicitems.MagicItemTags;
+import com.sneakyitems.util.magicitems.MagicItemTags;
 
 /**
  * Resolves a spell from exact {@link CastItem} maps, then {@code #tag} maps.

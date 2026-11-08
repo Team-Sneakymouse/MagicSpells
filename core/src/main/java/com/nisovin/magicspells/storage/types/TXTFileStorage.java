@@ -19,7 +19,7 @@ import com.nisovin.magicspells.util.CastItem;
 import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.storage.StorageHandler;
-import com.nisovin.magicspells.util.magicitems.MagicItemDataParser;
+import com.sneakyitems.util.magicitems.MagicItemDataParser;
 
 public class TXTFileStorage extends StorageHandler {
 

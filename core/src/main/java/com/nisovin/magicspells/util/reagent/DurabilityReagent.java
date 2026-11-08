@@ -10,8 +10,8 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.Inventory;
 
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItems;
 
 public class DurabilityReagent extends Reagent {
     private int durability;

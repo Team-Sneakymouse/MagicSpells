@@ -16,9 +16,9 @@ import com.nisovin.magicspells.util.CastResult;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.handlers.DebugHandler;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute;
+import com.sneakyitems.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItemData.MagicItemAttribute;
 
 public class UnconjureSpell extends InstantSpell {
 

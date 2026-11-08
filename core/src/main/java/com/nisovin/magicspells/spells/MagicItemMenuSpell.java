@@ -26,10 +26,10 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.CastResult;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
-import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors;
-import com.nisovin.magicspells.util.magicitems.MagicItemExpirationScheduler;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItemBehaviors;
+import com.sneakyitems.util.magicitems.MagicItemExpirationScheduler;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntitySpell {

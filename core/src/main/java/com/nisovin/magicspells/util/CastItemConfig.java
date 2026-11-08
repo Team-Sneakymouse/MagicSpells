@@ -21,7 +21,7 @@ public record CastItemConfig(CastItem[] items, String[] tags) {
 		}
 		if (tags != null) {
 			for (String tag : tags) {
-				if (com.nisovin.magicspells.util.magicitems.MagicItemTags.has(stack, tag)) return true;
+				if (com.sneakyitems.util.magicitems.MagicItemTags.has(stack, tag)) return true;
 			}
 		}
 		return false;

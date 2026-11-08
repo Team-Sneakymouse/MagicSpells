@@ -19,7 +19,7 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.spells.CommandSpell;
-import com.nisovin.magicspells.util.itemreader.alternative.AlternativeReaderManager;
+import com.sneakyitems.util.itemreader.alternative.AlternativeReaderManager;
 
 // TODO find a good way of configuring which items to serialize
 // TODO make the serialization and io processing async
