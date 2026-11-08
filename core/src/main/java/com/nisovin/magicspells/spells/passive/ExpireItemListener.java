@@ -8,7 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.sneakyutils.events.ItemExpireEvent;
+import com.sneakyitems.events.ItemExpireEvent;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 import com.nisovin.magicspells.util.OverridePriority;
 import com.sneakyitems.util.magicitems.MagicItemData;

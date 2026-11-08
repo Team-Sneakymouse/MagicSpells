@@ -4,9 +4,10 @@ Magic-item definitions, matching, fingerprinting, inventory updating, and legacy
 ItemTag mappings live in **SneakyItems**. MagicsSpells registers its `magic-items:`
 into that registry (PDC namespace `magicspells`) and keeps conjure overlays plus
 `soulbound`/`expiration` definition flags. `MagicItemBehaviors` /
-`MagicItemExpirationScheduler` in SneakyItems are thin adapters to SneakyUtils.
-Enforcement listeners, scheduler state, expiration lore and
-`com.sneakyutils.events.ItemExpireEvent` belong to SneakyUtils.
+`MagicItemExpirationScheduler` are thin MagicsSpells-facing adapters over
+SneakyItems `ItemBehaviors` / `ItemExpirationScheduler`. Enforcement listeners,
+scheduler state, expiration lore and `com.sneakyitems.events.ItemExpireEvent`
+belong to SneakyItems.
 The provider defers its initial online-player scan until the next tick so dependent
 listeners can register. MagicSpells-only reloads purge/reschedule through the provider
 API after passives and `MagicSpellsLoadedEvent` are ready; no consumer scheduler is added.
@@ -23,7 +24,7 @@ The updater's `MagicItemBehaviorState` snapshots/restores both values around
 replacement metadata. Tests include an uppercase UUID and a deadline larger than
 an exactly representable double, to detect normalization and precision loss.
 
-Creative bypass is now `sneakyutils.nosoulbound`, still requiring Creative mode.
+Creative bypass is now `sneakyitems.nosoulbound`, still requiring Creative mode.
 Update permission grants separately; do not rewrite item data.
 
 ## Publication / merge gate
