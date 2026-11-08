@@ -740,8 +740,8 @@ public class MagicSpells extends JavaPlugin {
 		}
 		// Consumer-only reload: passives are ready; the provider retains all scheduling state.
 		for (Player player : Bukkit.getOnlinePlayers()) {
-			com.sneakyutils.util.items.ItemExpirationScheduler.purgeExpiredForPlayer(player);
-			com.sneakyutils.util.items.ItemExpirationScheduler.scheduleAllForPlayer(player);
+			com.sneakyitems.util.items.ItemExpirationScheduler.purgeExpiredForPlayer(player);
+			com.sneakyitems.util.items.ItemExpirationScheduler.scheduleAllForPlayer(player);
 		}
 		PerformanceDiagnostics.register(this);
 		PlaceholderApiCompat.setup(this);
