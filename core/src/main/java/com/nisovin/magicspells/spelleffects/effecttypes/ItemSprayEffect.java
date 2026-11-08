@@ -20,7 +20,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
-import com.nisovin.magicspells.util.magicitems.CustomModelDataValues;
+import com.sneakyitems.util.magicitems.CustomModelDataValues;
 
 public class ItemSprayEffect extends SpellEffect {
 

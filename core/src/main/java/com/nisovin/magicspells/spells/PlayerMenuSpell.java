@@ -1,6 +1,6 @@
 package com.nisovin.magicspells.spells;
 
-import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.NAME;
+import static com.sneakyitems.util.magicitems.MagicItemData.MagicItemAttribute.NAME;
 
 import java.util.*;
 
@@ -31,8 +31,8 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MenuData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 

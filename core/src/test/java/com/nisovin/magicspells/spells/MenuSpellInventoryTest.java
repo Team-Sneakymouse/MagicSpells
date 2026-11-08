@@ -21,7 +21,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.config.ConfigData;
-import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
+import com.sneakyitems.api.SneakyItemsHooks;
+import com.sneakyitems.platform.SneakyItemsPlatform;
+import com.sneakyitems.util.magicitems.MagicItemUpdater;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -138,12 +140,10 @@ class MenuSpellInventoryTest {
         create.setAccessible(true);
         create.invoke(spell, player, 54);
         clearInvocations(top);
-        try (var magic = mockStatic(MagicSpells.class)) {
-            MagicSpells plugin = mock(MagicSpells.class);
-            when(plugin.getName()).thenReturn("MagicSpells");
-            when(plugin.namespace()).thenReturn("magicspells");
-            magic.when(MagicSpells::getInstance).thenReturn(plugin);
-            magic.when(MagicSpells::enableUpdateItemData).thenReturn(true);
+        java.util.function.Predicate<Inventory> menuSkip = MenuSpell::isMenuInventory;
+        SneakyItemsHooks.registerMenuInventorySkip(menuSkip);
+        try (var platform = mockStatic(SneakyItemsPlatform.class)) {
+            platform.when(SneakyItemsPlatform::enableUpdateItemData).thenReturn(true);
             MagicItemUpdater.processInventory(top, player);
             var event = mock(org.bukkit.event.inventory.InventoryOpenEvent.class);
             when(event.getInventory()).thenReturn(top);
@@ -160,6 +160,8 @@ class MenuSpellInventoryTest {
             verify(ordinary).setContents(contents);
             assertFalse(MenuSpell.isMenuInventory(ordinary));
             MagicItemUpdater.processInventory(null, player);
+        } finally {
+            SneakyItemsHooks.unregisterMenuInventorySkip(menuSkip);
         }
     }
 
@@ -185,8 +187,8 @@ class MenuSpellInventoryTest {
         var item = mock(ItemStack.class);
         when(item.getType()).thenReturn(mock(org.bukkit.Material.class));
         when(item.getAmount()).thenReturn(2);
-        var itemData = mock(com.nisovin.magicspells.util.magicitems.MagicItemData.class);
-        when(itemData.getAttribute(com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME))
+        var itemData = mock(com.sneakyitems.util.magicitems.MagicItemData.class);
+        when(itemData.getAttribute(com.sneakyitems.util.magicitems.MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME))
                 .thenReturn("token");
         InventoryView view = mock(InventoryView.class);
         when(view.getTopInventory()).thenReturn(top);
@@ -198,10 +200,10 @@ class MenuSpellInventoryTest {
         when(event.getClick()).thenReturn(org.bukkit.event.inventory.ClickType.SHIFT_LEFT);
         when(event.getCurrentItem()).thenReturn(item);
         try (var bukkit = mockStatic(Bukkit.class); var util = mockStatic(Util.class);
-             var items = mockStatic(com.nisovin.magicspells.util.magicitems.MagicItems.class)) {
+             var items = mockStatic(com.sneakyitems.util.magicitems.MagicItems.class)) {
             bukkit.when(() -> Bukkit.createInventory(eq(player), eq(54), any(Component.class))).thenReturn(top);
             util.when(() -> Util.getStringFromComponent(any())).thenReturn("menu");
-            items.when(() -> com.nisovin.magicspells.util.magicitems.MagicItems.getMagicItemDataFromItemStack(item))
+            items.when(() -> com.sneakyitems.util.magicitems.MagicItems.getMagicItemDataFromItemStack(item))
                     .thenReturn(itemData);
             spell.onInvClick(event);
             verify(event).setCancelled(true);

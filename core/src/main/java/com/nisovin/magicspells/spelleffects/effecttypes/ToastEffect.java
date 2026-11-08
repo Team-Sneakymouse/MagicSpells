@@ -12,9 +12,9 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItems;
 
 import io.papermc.paper.advancement.AdvancementDisplay.Frame;
 

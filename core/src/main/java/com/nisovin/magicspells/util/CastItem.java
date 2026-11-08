@@ -20,14 +20,14 @@ import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.PotionIdentity;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.magicitems.CustomModelDataValues;
-import com.nisovin.magicspells.util.itemreader.PotionHandler;
-import com.nisovin.magicspells.util.itemreader.DurabilityHandler;
-import com.nisovin.magicspells.util.itemreader.WrittenBookHandler;
-import com.nisovin.magicspells.util.itemreader.LeatherArmorHandler;
-import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.*;
+import com.sneakyitems.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.CustomModelDataValues;
+import com.sneakyitems.util.itemreader.PotionHandler;
+import com.sneakyitems.util.itemreader.DurabilityHandler;
+import com.sneakyitems.util.itemreader.WrittenBookHandler;
+import com.sneakyitems.util.itemreader.LeatherArmorHandler;
+import static com.sneakyitems.util.magicitems.MagicItemData.MagicItemAttribute.*;
 
 public class CastItem {
 

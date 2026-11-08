@@ -49,9 +49,9 @@ import com.destroystokyo.paper.profile.ProfileProperty;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.Subspell.CastMode;
 import com.nisovin.magicspells.handlers.DebugHandler;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.handlers.PotionEffectHandler;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItemData;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;

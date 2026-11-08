@@ -17,7 +17,7 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TxtUtil;
 import com.nisovin.magicspells.util.SpellData;
-import com.nisovin.magicspells.util.magicitems.MagicItemTags;
+import com.sneakyitems.util.magicitems.MagicItemTags;
 import com.nisovin.magicspells.variables.Variable;
 import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;

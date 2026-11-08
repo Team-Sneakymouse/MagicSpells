@@ -33,7 +33,7 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
 
 import com.nisovin.magicspells.util.config.ConfigData;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
 public class EntityData {

@@ -10,7 +10,7 @@ import org.bukkit.inventory.Inventory;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.util.compat.BagOfHoldingCompat;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItemData;
 
 public class ItemReagent extends Reagent {
     private Map<MagicItemData, Integer> itemMap;

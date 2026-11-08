@@ -5,6 +5,7 @@ authors: [nisovin, TheComputerGeek2, Chronoken, tonythemacaroni, JasperLorelai]
 api-version: "26.2"
 depend:
     - SneakyUtils
+    - SneakyItems
 softdepend:
     - SneakyDiagnostics
     - GriefPrevention

@@ -13,7 +13,7 @@ import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.handlers.MagicXpHandler;
 import com.nisovin.magicspells.events.SpellSelectionChangedEvent;
-import com.nisovin.magicspells.util.magicitems.MagicItemTags;
+import com.sneakyitems.util.magicitems.MagicItemTags;
 
 public class Spellbook {
 

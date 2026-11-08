@@ -10,9 +10,9 @@ import org.bukkit.inventory.EntityEquipment;
 
 import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.util.SpellData;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.sneakyitems.util.magicitems.MagicItem;
+import com.sneakyitems.util.magicitems.MagicItemData;
+import com.sneakyitems.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
