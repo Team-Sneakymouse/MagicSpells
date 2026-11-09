@@ -4,7 +4,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 /** Ownership is always available; SneakyDiagnostics owns collection and report writing. */
 public final class PerformanceDiagnostics {
-    private static final PerformanceRecorder RECORDER = new PerformanceRecorder();
+    // The tick is read only for slow scopes, during a capture, on the server thread.
+    private static final PerformanceRecorder RECORDER = new PerformanceRecorder(System::nanoTime, Integer.MAX_VALUE,
+            org.bukkit.Bukkit::getCurrentTick);
     public static final PerformanceExecution EXECUTION = new PerformanceExecution(RECORDER);
     public static final TaskLifecycle TASKS = new TaskLifecycle();
     private static DiagnosticsAttachment attachment;

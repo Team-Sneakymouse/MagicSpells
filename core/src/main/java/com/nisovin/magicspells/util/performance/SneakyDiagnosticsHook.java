@@ -15,7 +15,7 @@ final class SneakyDiagnosticsHook {
             return () -> {};
         }
         var registration = diagnostics.register(plugin.getName(), plugin.getPluginMeta().getVersion(),
-                "magicspells-execution-3", new MagicSpellsProbe(recorder, MagicSpells.getSpells().values().stream()
+                "magicspells-execution-4", new MagicSpellsProbe(recorder, MagicSpells.getSpells().values().stream()
                         .map(spell -> spell.getInternalName()).collect(java.util.stream.Collectors.toSet()),
                         PerformanceDiagnostics.TASKS, () -> pending(plugin)));
         return registration::close;

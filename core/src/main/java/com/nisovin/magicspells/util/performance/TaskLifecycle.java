@@ -155,15 +155,45 @@ public final class TaskLifecycle {
         result.put("groupCapacity", groupCapacity);
         result.put("retainedTasksAtStop", entries.size());
         result.put("deadlineAfterMillis", (session.deadline - session.start) / 1_000_000);
-        boolean afterDeadline = clock.getAsLong() > session.deadline;
+        long late = clock.getAsLong() - session.deadline;
+        boolean afterDeadline = late > 0;
         result.put("endObservedAfterDeadline", afterDeadline);
+        result.put("endObservedLateMillis", afterDeadline ? late / 1_000_000 : 0L);
         boolean inventoryComplete = (boolean) session.initial.get("complete") && (boolean) end.get("complete");
         result.put("inventoryComplete", inventoryComplete);
-        result.put("lifecycleComplete", inventoryComplete && overflowRegistrations == 0 && session.totals.unobservedRemovals == 0
-                && session.omittedGroupEvents == 0 && session.unknownOwnerEvents == 0 && truncatedMetadataLabels == 0 && !afterDeadline
-                && ((Number) end.getOrDefault("inFlightTasks", 0)).longValue() == 0);
+        List<String> reasons = incompleteReasons(session.initial, end, afterDeadline);
+        result.put("incompleteReasons", reasons);
+        result.put("lifecycleComplete", reasons.isEmpty());
         session = null;
         return result;
+    }
+
+    /**
+     * Every reason lifecycle coverage is partial; empty exactly when it is complete. The end inventory is taken when the
+     * capture stops, at the first tick end after the deadline, so a stop past the deadline compares lifecycle events
+     * (cut at the deadline) with an inventory that may include later work: that stays a reason, not a rounding detail.
+     */
+    private List<String> incompleteReasons(Map<String, Object> start, Map<String, Object> end, boolean afterDeadline) {
+        var reasons = new ArrayList<String>();
+        inventoryReasons("start", start, reasons);
+        inventoryReasons("end", end, reasons);
+        if (overflowRegistrations != 0) reasons.add("registry_overflow");
+        if (session.totals.unobservedRemovals != 0) reasons.add("unobserved_removals");
+        if (session.omittedGroupEvents != 0) reasons.add("omitted_lifecycle_group_events");
+        if (session.unknownOwnerEvents != 0) reasons.add("unattributed_owner_events");
+        if (truncatedMetadataLabels != 0) reasons.add("truncated_metadata_labels");
+        if (afterDeadline) reasons.add("end_observed_after_deadline");
+        if (((Number) end.getOrDefault("inFlightTasks", 0)).longValue() != 0) reasons.add("in_flight_tasks_at_end");
+        return List.copyOf(reasons);
+    }
+
+    private static void inventoryReasons(String boundary, Map<String, Object> inventory, List<String> reasons) {
+        if (Boolean.TRUE.equals(inventory.get("complete"))) return;
+        if (!Boolean.TRUE.equals(inventory.getOrDefault("available", true))) { reasons.add(boundary + "_inventory_unavailable"); return; }
+        if (((Number) inventory.getOrDefault("unknownMetadataTasks", 0)).longValue() != 0) reasons.add(boundary + "_unknown_metadata_tasks");
+        if (((Number) inventory.getOrDefault("unattributedTasks", 0)).longValue() != 0) reasons.add(boundary + "_unattributed_tasks");
+        if (((Number) inventory.getOrDefault("omittedGroupTasks", 0)).longValue() != 0) reasons.add(boundary + "_omitted_group_tasks");
+        if (reasons.stream().noneMatch(reason -> reason.startsWith(boundary + "_"))) reasons.add(boundary + "_truncated_metadata_labels");
     }
 
     private boolean observing() { return session != null && clock.getAsLong() < session.deadline; }

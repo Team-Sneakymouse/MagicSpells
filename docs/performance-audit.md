@@ -45,7 +45,7 @@ it recorded more keys than can be exported. Coverage is explicit for each view.
 `PerformanceDiagnostics` owns registration and idle execution ownership. The optional
 `SneakyDiagnosticsHook` registers `MagicSpellsProbe` after load and closes registration
 before unload. SneakyDiagnostics owns capture commands, deadlines and report writing.
-The instrumentation schema is `magicspells-execution-3`; there is no `/ms perf` writer.
+The instrumentation schema is `magicspells-execution-4`; there is no `/ms perf` writer.
 
 Shared seams are normal cast preparation and execution, four subspell execution
 methods, passive activation, listener dispatch, scheduling helpers, and shared
@@ -83,6 +83,35 @@ Minecraft gameplay; timings must not become CI thresholds.
 Earlier measurements predate aggregate-first recording and are not comparable overhead
 claims for this implementation. Measure the current build with a representative loaded
 spell set and compare recording on/off on an isolated server before deployment.
+
+## Timeline placement (execution-4)
+
+Aggregates rank spells and operations but cannot say *when* the time was spent. Execution-4 adds two
+fixed-size views so a slow tick in the timeline can be matched to MagicSpells work:
+
+- `series`: one-second windows of capture offset, assigned by scope **end** (like the shared probe). Per
+  operation, `calls` and `selfNanos` (additive across operations; operations with no calls are absent), and
+  `rootNanos`/`rootCalls`, the inclusive time of outermost scopes: MagicSpells-measured wall time in that second
+  without double counting nested scopes. Arrays are allocated at capture start (operations x (seconds + 1)): the
+  extra slot keeps scopes that end at or after the deadline apart as `series.late` (with `fromMillis` and
+  `lastEndOffsetMillis`), instead of folding them into the last regular window.
+- `slowOperations`: the 256 longest scopes of at least 1 ms (`thresholdNanos`), each with operation, spell,
+  detail, nesting `depth` (0 = outermost), `startOffsetMicros`/`endOffsetMicros` from the shared capture origin,
+  `nanos` (inclusive), `selfNanos`, `tick` (`Bukkit.getCurrentTick()`, read only for slow scopes on the capture
+  thread), `unfinishedAtStop` and `endedAfterDeadline`. `observed` counts every slow scope; `evicted` the ones
+  left out for capacity, so `complete` is false when the list is partial. It does not change the provider's
+  `complete` flag, which still describes the aggregates.
+
+The report budget reserves room for both (sized by the capture's duration) before spell and detail rows.
+`counterCoverage` states that `MATCH_CALLS` is no longer observed: magic-item matching moved to SneakyItems,
+whose own provider counts `match.calls`. The counter stays in the schema at 0 for compatibility; read it as
+unobserved, not as zero matching. Tasks scheduled where the owning spell is known at the call site (spell
+constructors' cleanup timers, incantations, right-click cast items) now pass that spell as owner.
+
+`taskLifecycle.incompleteReasons` names every reason `lifecycleComplete` is false (it is empty exactly when it is
+true), and `endObservedLateMillis` gives the end-inventory delay past the deadline. Listener and manager tasks
+without a spell owner (variable saves, mana regeneration, buff monitor, casts not yet resolved) remain
+`[unattributed]` by design and keep `lifecycleComplete` false; that is limited coverage, not a broken hook.
 
 ## Pending task inventory and lifecycle (execution-3)
 

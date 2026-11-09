@@ -64,7 +64,7 @@ class PerformanceAggregatesTest {
         var report = recorder.stop("completed");
         assertEquals(10_000, report.rows().size());
         assertEquals(0, report.droppedScopes());
-        assertEquals(PerformanceReport.detailCapacity(1), report.maxDetailKeys());
+        assertEquals(PerformanceReport.detailCapacity(1, 60), report.maxDetailKeys());
         assertTrue(PerformanceReport.detailCapacity(1) > PerformanceReport.detailCapacity(1000));
         assertTrue(PerformanceReport.encode(report, "id", 0, 0).complete());
     }

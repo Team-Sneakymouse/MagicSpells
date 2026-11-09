@@ -96,7 +96,7 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 		relativeCastLocationOffset = getConfigVector("relative-cast-position-offset", "0,0,0");
 		absoluteCastLocationOffset = getConfigVector("absolute-cast-position-offset", "0,0,0");
 
-		taskId = MagicSpells.scheduleRepeatingTask(
+		taskId = MagicSpells.scheduleRepeatingTask(this,
 				() -> fireballs.entrySet().removeIf(fireballFloatEntry -> fireballFloatEntry.getKey().isDead()),
 				TimeUtil.TICKS_PER_MINUTE, TimeUtil.TICKS_PER_MINUTE);
 	}

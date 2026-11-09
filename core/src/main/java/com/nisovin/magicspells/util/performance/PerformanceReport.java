@@ -16,12 +16,36 @@ final class PerformanceReport {
     private static final int DETAIL_VALUES = valueCount(detail(new PerformanceRecorder.Row(
             new PerformanceRecorder.Key("", "", ""), 0, 0, 0, 0, Map.of()), new long[1]));
     private static final int BASE_VALUES = valueCount(base());
+    /** MATCH_CALLS stays in the counters for compatibility; nothing in MagicSpells counts it any more. */
+    static final Map<String, Object> COUNTER_COVERAGE = Map.of("INVENTORY_SLOTS", "observed",
+            "MATCH_CALLS", "unobserved: magic-item matching moved to SneakyItems; see the SneakyItems provider's match.calls");
+    private static final int SLOW_VALUES = valueCount(slowOperations(java.util.Collections.nCopies(PerformanceRecorder.MAX_SLOW,
+            new PerformanceRecorder.Slow("", "", "", 0, 0, 0, 0, 0, false, false)), 0, new long[1]));
     record Encoded(Map<String, Object> measurements, boolean complete) {}
 
     /** Reserve room for every loaded spell and every operation, even if all counters become nonzero. */
     static int detailCapacity(int spellNames) {
         if (spellNames < 0) throw new IllegalArgumentException("Spell count must be nonnegative");
         return (int) Math.max(0, (MAX_VALUES - BASE_VALUES - (long) spellNames * SUMMARY_VALUES) / DETAIL_VALUES);
+    }
+
+    /** As {@link #detailCapacity(int)}, also reserving the per-second series of a capture this long and the slow operations. */
+    static int detailCapacity(int spellNames, int seconds) {
+        if (spellNames < 0) throw new IllegalArgumentException("Spell count must be nonnegative");
+        long reserved = BASE_VALUES + (long) spellNames * SUMMARY_VALUES + seriesValues(seconds) + SLOW_VALUES;
+        return (int) Math.max(0, (MAX_VALUES - reserved) / DETAIL_VALUES);
+    }
+
+    /** Values of a full series: every operation present in every window. */
+    static int seriesValues(int seconds) {
+        int windows = Math.max(1, seconds);
+        var operations = new java.util.LinkedHashMap<String, long[]>();
+        long[] full = new long[windows + 1];
+        java.util.Arrays.fill(full, 1);                      // every operation in every window and in the late slot
+        for (String operation : PerformanceRecorder.OPERATIONS) operations.put(operation, full);
+        operations.put(PerformanceRecorder.OTHER_OPERATION, full);
+        return valueCount(series(new PerformanceRecorder.Series(windows, full, full, operations, operations, 0),
+                (long) windows * 1_000_000_000L));
     }
 
     static Encoded encode(PerformanceRecorder.Report source, String id, long startedAfterMillis, long finishedAfterMillis) {
@@ -44,6 +68,11 @@ final class PerformanceReport {
         report.put("totals", measurement(source.totals()));
         report.put("unattributedSpellTotals", measurement(source.unattributedSpellTotals()));
         report.put("operationTotals", source.operationTotals().stream().map(row -> named(row, "operation", truncated)).toList());
+        report.put("counterCoverage", COUNTER_COVERAGE);
+        if (source.series() != null) report.put("series", series(source.series(), source.elapsedNanos()));
+        long[] truncatedSlowLabels = {0};
+        if (source.slowOperations() != null)
+            report.put("slowOperations", slowOperations(source.slowOperations(), source.slowObserved(), truncatedSlowLabels));
         var limits = limits(source.maxDetailKeys(), source.configuredSpellNames(), source.rows().size(), 0);
         report.put("limits", limits);
         var spells = new ArrayList<Map<String, Object>>();
@@ -74,7 +103,7 @@ final class PerformanceReport {
         report.put("omittedDetailCalls", omittedCalls);
         report.put("detailOverflowScopes", source.droppedScopes());
         report.put("droppedScopes", source.droppedScopes() + omittedCalls);
-        report.put("truncatedLabels", truncatedSpellLabels + truncatedDetailLabels[0]);
+        report.put("truncatedLabels", truncatedSpellLabels + truncatedDetailLabels[0] + truncatedSlowLabels[0]);
         report.put("truncatedSpellLabels", truncatedSpellLabels);
         report.put("truncatedDetailLabels", truncatedDetailLabels[0]);
         boolean totalsComplete = source.unfinishedScopesAtStop() == 0;
@@ -130,6 +159,84 @@ final class PerformanceReport {
                 + "Details retain the first keys encountered, not the most expensive keys. Scope timings can extend beyond the deadline. "
                 + "Dedicated spatial-query, altered-block lifecycle, undo and particle probes are not included.");
         return report;
+    }
+
+    private static Map<String, Object> series(PerformanceRecorder.Series series, long elapsedNanos) {
+        int shown = (int) Math.min(series.windows(), Math.max(0, elapsedNanos) / 1_000_000_000L + 1);
+        var result = new LinkedHashMap<String, Object>();
+        result.put("windowMillis", 1000L);
+        result.put("rootNanos", window(series.rootNanos(), shown));
+        result.put("rootCalls", window(series.rootCalls(), shown));
+        var operations = new LinkedHashMap<String, Object>();
+        series.operationCalls().forEach((operation, calls) -> {
+            var row = new LinkedHashMap<String, Object>();
+            row.put("calls", window(calls, shown));
+            row.put("selfNanos", window(series.operationSelfNanos().get(operation), shown));
+            operations.put(operation, row);
+        });
+        result.put("operations", operations);
+        int late = series.windows();
+        if (series.rootCalls()[late] != 0) {
+            // Scopes that ended at or after the deadline, kept apart: placing them in the last regular window would
+            // move them up to a second (or a whole stall) earlier than the tick they ended in.
+            var lateTotals = new LinkedHashMap<String, Object>();
+            lateTotals.put("fromMillis", (long) late * 1000L);
+            lateTotals.put("lastEndOffsetMillis", series.lateLastEndNanos() / 1_000_000);
+            lateTotals.put("rootNanos", series.rootNanos()[late]);
+            lateTotals.put("rootCalls", series.rootCalls()[late]);
+            var lateOperations = new LinkedHashMap<String, Object>();
+            series.operationCalls().forEach((operation, calls) -> {
+                if (calls[late] == 0) return;
+                var row = new LinkedHashMap<String, Object>();
+                row.put("calls", calls[late]);
+                row.put("selfNanos", series.operationSelfNanos().get(operation)[late]);
+                lateOperations.put(operation, row);
+            });
+            lateTotals.put("operations", lateOperations);
+            result.put("late", lateTotals);
+        }
+        result.put("note", "One-second windows of capture offset by scope end. selfNanos is additive across operations "
+                + "(absent operations had no calls); rootNanos is the inclusive time of outermost scopes, without double counting. "
+                + "late: scopes that ended at or after the deadline, from fromMillis up to lastEndOffsetMillis.");
+        return result;
+    }
+
+    private static List<Object> window(long[] values, int shown) {
+        var list = new ArrayList<Object>(shown);
+        for (int i = 0; i < shown; i++) list.add(values[i]);
+        return list;
+    }
+
+    private static Map<String, Object> slowOperations(List<PerformanceRecorder.Slow> slow, long observed, long[] truncated) {
+        var records = new ArrayList<Object>(slow.size());
+        for (var op : slow) {
+            var row = new LinkedHashMap<String, Object>();
+            row.put("operation", op.operation());
+            row.put("spell", label(op.spell(), truncated));
+            row.put("spellKey", label(op.spell().toLowerCase(java.util.Locale.ROOT), new long[1]));
+            row.put("detail", label(op.detail(), truncated));
+            row.put("depth", (long) op.depth());
+            row.put("startOffsetMicros", op.startOffsetNanos() / 1_000);
+            row.put("endOffsetMicros", (op.startOffsetNanos() + op.nanos()) / 1_000);
+            row.put("nanos", op.nanos());
+            row.put("selfNanos", op.selfNanos());
+            row.put("thread", "server");
+            if (op.tick() != PerformanceRecorder.NO_TICK) row.put("tick", (long) op.tick());
+            row.put("unfinishedAtStop", op.unfinishedAtStop());
+            row.put("endedAfterDeadline", op.endedAfterDeadline());
+            records.add(row);
+        }
+        var result = new LinkedHashMap<String, Object>();
+        result.put("thresholdNanos", PerformanceRecorder.SLOW_NANOS);
+        result.put("capacity", (long) PerformanceRecorder.MAX_SLOW);
+        result.put("observed", observed);
+        result.put("retained", (long) records.size());
+        result.put("evicted", observed - records.size());
+        result.put("complete", observed == records.size());
+        result.put("note", "The longest scopes of at least thresholdNanos; evicted counts the others. Offsets are microseconds "
+                + "from the capture origin, nanos is inclusive, tick is the server tick. Records nest and overlap.");
+        result.put("records", records);
+        return result;
     }
 
     private static Map<String, Object> limits(int details, int spells, int recorded, int reported) {
