@@ -12,7 +12,7 @@
 
 JUnit 5 / Mockito tests call the real listeners; server, spell execution and item parser/resolver boundaries are mocked. No MockBukkit or test server was added. The invalid-item regressions were observed failing with unwanted activation before the fix. Entity tests first failed for absent handlers; the overlap regression first failed with two casts instead of one.
 
-The checkout's baseline dependency `SneakyVoiceChat:BUMP-AFTER-SneakyVoiceChat-4` cannot resolve. Local verification uses a scratch-only Gradle init script substituting the genuine cached published version `2026.11.02-d30ec916109c`; no dependency files are changed by this fix. Production target is the source build's Paper 26.2 / Java 25, not the older AGENTS.md runtime table.
+The build pins the published `SneakyVoiceChat:2026.11.02-d30ec916109c` release; no dependency override is required. Production target is the source build's Paper 26.2 / Java 25, not the older AGENTS.md runtime table.
 
 ## In-game checklist (not performed)
 
