@@ -12,6 +12,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Spellbook;
@@ -60,20 +62,33 @@ public class LeftClickListener implements Listener {
 		if (event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 		if (!event.hasItem()) return;
 
-		ItemStack item = event.getItem();
-		if (item == null) return;
+		cast(event.getPlayer(), event.getItem());
+	}
+
+	@EventHandler
+	public void onMeleeHit(EntityDamageByEntityEvent event) {
+		if (event.getCause() != DamageCause.ENTITY_ATTACK || !(event.getDamager() instanceof Player player)) return;
+		if (cast(player, player.getInventory().getItemInMainHand())) {
+			event.setCancelled(true);
+			// The same attack also emits an arm swing; suppress the queued bound cast.
+			CastListener bound = MagicSpells.getInstance().castListener;
+			if (bound != null) bound.setNoCast(player);
+		}
+	}
+
+	private boolean cast(Player player, ItemStack item) {
+		if (item == null) return false;
 
 		final Spell spell = CastItemSpellResolver.resolve(leftClickCastItems, leftClickCastTags, item);
-		if (spell == null) return;
+		if (spell == null) return false;
 
-		Player player = event.getPlayer();
 		Spellbook spellbook = MagicSpells.getSpellbook(player);
 
-		if (!spellbook.hasSpell(spell) || !spellbook.canCast(spell)) return;
+		if (!spellbook.hasSpell(spell) || !spellbook.canCast(spell)) return false;
 
 		if (!spell.isIgnoringGlobalCooldown()) {
 			Long lastCastTime = lastCast.get(player.getName());
-			if (lastCastTime != null && lastCastTime + MagicSpells.getGlobalCooldown() > System.currentTimeMillis()) return;
+			if (lastCastTime != null && lastCastTime + MagicSpells.getGlobalCooldown() > System.currentTimeMillis()) return false;
 			lastCast.put(player.getName(), System.currentTimeMillis());
 		}
 
@@ -86,6 +101,7 @@ public class LeftClickListener implements Listener {
 		final String[] castArgs = args;
 		MagicSpells.scheduleDelayedTask(
 				() -> spell.hardCast(new SpellData(player, 1.0F, castArgs).castItem(castStack)), 0);
+		return true;
 	}
 
 }
