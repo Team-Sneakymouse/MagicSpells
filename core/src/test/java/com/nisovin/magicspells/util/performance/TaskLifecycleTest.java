@@ -104,7 +104,27 @@ class TaskLifecycleTest {
         assertEquals(0L, map(report.get("totals")).get("executions"));
         assertEquals(0, tasks.retainedTasks());
         assertEquals(true, report.get("endObservedAfterDeadline"));
+        assertEquals(100L, report.get("endObservedLateMillis"));
+        assertEquals(List.of("end_observed_after_deadline"), report.get("incompleteReasons"));
         assertEquals(false, report.get("lifecycleComplete"));
+    }
+
+    @Test void incompleteReasonsNameEveryGapAndAreEmptyExactlyWhenTheLifecycleIsComplete() {
+        var clock = new AtomicLong();
+        var tasks = new TaskLifecycle(clock::get, 10, 10);
+        tasks.start(0, 60, List::of);
+        tasks.schedule("spell", "site", 1, -1, () -> {}, callback -> { callback.run(); return 1; });
+        var complete = tasks.stop(List::of);
+        assertEquals(List.of(), complete.get("incompleteReasons"));
+        assertEquals(true, complete.get("lifecycleComplete"));
+        assertEquals(0L, complete.get("endObservedLateMillis"));
+
+        tasks.start(0, 60, () -> List.of(new TaskLifecycle.Pending(99, true)));
+        tasks.schedule(null, "manager", 1, 1, () -> {}, callback -> { callback.run(); return 2; });
+        var partial = tasks.stop(() -> List.of(new TaskLifecycle.Pending(99, true), new TaskLifecycle.Pending(2, true)));
+        assertEquals(List.of("start_unknown_metadata_tasks", "end_unknown_metadata_tasks", "end_unattributed_tasks",
+                "unattributed_owner_events"), partial.get("incompleteReasons"));
+        assertEquals(false, partial.get("lifecycleComplete"));
     }
 
     @Test void cancellationsBeforeCaptureArePrunedWithoutBeingCountedInsideTheCapture() {

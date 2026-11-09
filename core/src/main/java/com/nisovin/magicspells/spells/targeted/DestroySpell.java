@@ -134,7 +134,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		}
 
 		registerEvents(new FallingBlockListener());
-		MagicSpells.scheduleRepeatingTask(() -> {
+		MagicSpells.scheduleRepeatingTask(this, () -> {
 			if (fallingBlocks.isEmpty())
 				return;
 			fallingBlocks.keySet().removeIf(fallingBlock -> !fallingBlock.isValid());

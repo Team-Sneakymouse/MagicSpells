@@ -64,7 +64,7 @@ public class MagicChatListener implements Listener {
 		if (spell != null) {
 			Spellbook spellbook = MagicSpells.getSpellbook(player);
 			if (spellbook.hasSpell(spell)) {
-				MagicSpells.scheduleDelayedTask(() -> spell.cast(player), 0);
+				MagicSpells.scheduleDelayedTask(spell, () -> spell.cast(player), 0);
 				return true;
 			}
 		}

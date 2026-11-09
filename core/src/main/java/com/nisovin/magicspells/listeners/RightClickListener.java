@@ -84,7 +84,7 @@ public class RightClickListener implements Listener {
 		}
 		final ItemStack castStack = item.clone();
 		final String[] castArgs = args;
-		MagicSpells.scheduleDelayedTask(
+		MagicSpells.scheduleDelayedTask(spell,
 				() -> spell.hardCast(new SpellData(player, 1.0F, castArgs).castItem(castStack)), 0);
 		event.setCancelled(true);
 	}
