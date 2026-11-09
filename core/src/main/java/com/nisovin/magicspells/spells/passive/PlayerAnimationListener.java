@@ -18,10 +18,12 @@ import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 public class PlayerAnimationListener extends PassiveListener {
 
 	private final Set<MagicItemData> items = new HashSet<>();
+	private boolean itemRestricted;
 
 	@Override
 	public void initialize(String var) {
 		if (var == null || var.isEmpty()) return;
+		itemRestricted = true;
 
 		String[] split = var.split("\\|");
 		for (String s : split) {
@@ -45,7 +47,7 @@ public class PlayerAnimationListener extends PassiveListener {
 		Player caster = event.getPlayer();
 		if (!hasSpell(event.getPlayer()) || !canTrigger(caster)) return;
 
-		if (!items.isEmpty()) {
+		if (itemRestricted) {
 			ItemStack item = caster.getInventory().getItemInMainHand();
 			if (!contains(item)) return;
 		}
