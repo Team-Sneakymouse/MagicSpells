@@ -132,7 +132,11 @@ class EntityCastItemTest {
             when(book.hasSpell(spell)).thenReturn(true);
             when(book.canCast(spell)).thenReturn(allowed);
             plugin.when(() -> MagicSpells.getSpellbook(player)).thenReturn(book);
-            plugin.when(() -> MagicSpells.scheduleDelayedTask(any(Runnable.class), anyLong())).thenAnswer(i -> { tasks.add(i.getArgument(0)); return tasks.size(); });
+            plugin.when(() -> MagicSpells.scheduleDelayedTask(any(Runnable.class), anyLong()))
+                    .thenAnswer(i -> { tasks.add(i.getArgument(0)); return tasks.size(); });
+            // RightClickListener schedules with the Spell-owner overload.
+            plugin.when(() -> MagicSpells.scheduleDelayedTask(any(), any(Runnable.class), anyLong()))
+                    .thenAnswer(i -> { tasks.add(i.getArgument(1)); return tasks.size(); });
             resolver.when(() -> CastItemSpellResolver.resolve(anyMap(), anyMap(), same(item))).thenReturn(spell);
         }
         public void close() { resolver.close(); plugin.close(); }
