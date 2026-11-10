@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import com.sneakyutils.util.DisplayOnlyInventoryHolder;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
@@ -205,7 +206,9 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		if (radius > 0) players.removeIf(player -> opener.getLocation().distance(player.getLocation()) > radius);
 
 		int size = Math.max((int) Math.ceil(Math.min(players.size(), 54) / 9.0) * 9, 9);
-		Inventory inv = Bukkit.createInventory(opener, size, Component.text(internalName));
+		PlayerMenuHolder holder = new PlayerMenuHolder();
+		Inventory inv = Bukkit.createInventory(holder, size, Component.text(internalName));
+		holder.setInventory(inv);
 		SpellData spellData = data.spellData;
 		String[] args = spellData.args();
 
@@ -334,5 +337,20 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 	}
 
 	public record MenuData(SpellData spellData, int page) {}
+
+	private static final class PlayerMenuHolder implements DisplayOnlyInventoryHolder {
+
+		private Inventory inventory;
+
+		@Override
+		public Inventory getInventory() {
+			return inventory;
+		}
+
+		private void setInventory(Inventory inventory) {
+			this.inventory = inventory;
+		}
+
+	}
 
 }

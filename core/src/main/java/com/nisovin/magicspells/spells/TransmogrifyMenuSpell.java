@@ -23,9 +23,10 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import com.sneakyutils.util.DisplayOnlyInventoryHolder;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -457,7 +458,7 @@ public class TransmogrifyMenuSpell extends InstantSpell {
 			int page, Map<Integer, String> slotOptions) {
 	}
 
-	private static final class TransmogrifyMenuHolder implements InventoryHolder {
+	private static final class TransmogrifyMenuHolder implements DisplayOnlyInventoryHolder {
 
 		private final String spellName;
 		private Inventory inventory;

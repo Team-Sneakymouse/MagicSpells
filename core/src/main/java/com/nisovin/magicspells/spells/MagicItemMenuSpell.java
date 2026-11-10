@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import com.sneakyutils.util.DisplayOnlyInventoryHolder;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
@@ -180,7 +181,9 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 			entries.add(magicItem.getItemStack());
 		}
 
-		Inventory inv = Bukkit.createInventory(opener, 54, Component.text(internalName));
+		MagicItemMenuHolder holder = new MagicItemMenuHolder();
+		Inventory inv = Bukkit.createInventory(holder, 54, Component.text(internalName));
+		holder.setInventory(inv);
 
 		for (int i = (page * 50); i < Math.min(entries.size(), (page + 1) * 50); i++) {
 			inv.setItem(i%50, entries.get(i));
@@ -263,6 +266,21 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 	}
 
 	public record ItemMenuData(SpellData spellData, String category, int subCategoryAmount, int page) {
+
+	}
+
+	private static final class MagicItemMenuHolder implements DisplayOnlyInventoryHolder {
+
+		private Inventory inventory;
+
+		@Override
+		public Inventory getInventory() {
+			return inventory;
+		}
+
+		private void setInventory(Inventory inventory) {
+			this.inventory = inventory;
+		}
 
 	}
 }
