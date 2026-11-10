@@ -27,7 +27,6 @@ import java.nio.file.Files;
 import com.sneakyitems.api.MagicItemRegistry;
 import com.sneakyitems.api.SneakyItemsAPI;
 import com.sneakyitems.platform.SneakyItemsPlatform;
-import com.sneakyitems.util.magicitems.MagicItemUpdater;
 import de.slikey.effectlib.EffectManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -740,12 +739,8 @@ public class MagicSpells extends JavaPlugin {
 		// Call loaded event
 		pm.callEvent(new MagicSpellsLoadedEvent(this));
 		loaded = true;
-		// Refresh stacks against newly registered SneakyItems definitions.
-		if (enableUpdateItemData) {
-			for (Player player : Bukkit.getOnlinePlayers()) {
-				MagicItemUpdater.processPlayerInventories(player);
-			}
-		}
+		// No stack refresh here: SneakyItems sees the registrations above and re-checks online players,
+		// item entities and item displays itself (rate-limited, only items whose definition changed).
 		// Consumer-only reload: passives are ready; the provider retains all scheduling state.
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			com.sneakyitems.util.items.ItemExpirationScheduler.purgeExpiredForPlayer(player);
