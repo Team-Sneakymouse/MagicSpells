@@ -3,23 +3,19 @@ package com.nisovin.magicspells.listeners;
 import java.util.Map;
 import java.util.HashMap;
 
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 
 import com.nisovin.magicspells.Spell;
-import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.CastItem;
-import com.nisovin.magicspells.util.SpellData;
-import com.nisovin.magicspells.util.CastItemSpellResolver;
+import com.nisovin.magicspells.util.CastItemClicks;
+import com.sneakyitems.events.MagicItemClickEvent;
 
 public class RightClickListener implements Listener {
 
@@ -60,42 +56,34 @@ public class RightClickListener implements Listener {
 	public void onRightClick(final PlayerInteractEvent event) {
 		if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 		if (!event.hasItem()) return;
+		if (CastItemClicks.isRegisteredMagicItem(event.getItem())) return;
 
 		if (cast(event.getPlayer(), event.getItem())) event.setCancelled(true);
 	}
 
 	@EventHandler
 	public void onRightClickEntity(PlayerInteractEntityEvent event) {
-		if (cast(event.getPlayer(), event.getPlayer().getInventory().getItem(event.getHand())))
-			event.setCancelled(true);
+		ItemStack item = event.getPlayer().getInventory().getItem(event.getHand());
+		if (CastItemClicks.isRegisteredMagicItem(item)) return;
+
+		if (cast(event.getPlayer(), item)) event.setCancelled(true);
+	}
+
+	@EventHandler
+	public void onMagicItemClick(MagicItemClickEvent event) {
+		if (!event.isRightClick() || event.isAlreadyDenied()) return;
+
+		if (cast(event.getPlayer(), event.getItem())) event.setCancelled(true);
 	}
 
 	private boolean cast(Player player, ItemStack item) {
-		if (item == null) return false;
-
-		final Spell spell = CastItemSpellResolver.resolve(rightClickCastItems, rightClickCastTags, item);
-		if (spell == null) return false;
-
-		Spellbook spellbook = MagicSpells.getSpellbook(player);
-
-		if (!spellbook.hasSpell(spell) || !spellbook.canCast(spell)) return false;
-
-		if (!spell.isIgnoringGlobalCooldown()) {
-			Long lastCastTime = lastCast.get(player.getName());
-			if (lastCastTime != null && lastCastTime + MagicSpells.getGlobalCooldown() > System.currentTimeMillis()) return false;
-			lastCast.put(player.getName(), System.currentTimeMillis());
-		}
-
-		PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
-		String[] args = null;
-		if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
-			args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
-		}
-		final ItemStack castStack = item.clone();
-		final String[] castArgs = args;
-		MagicSpells.scheduleDelayedTask(spell,
-				() -> spell.hardCast(new SpellData(player, 1.0F, castArgs).castItem(castStack)), 0);
-		return true;
+		return CastItemClicks.cast(
+				player,
+				item,
+				rightClickCastItems,
+				rightClickCastTags,
+				lastCast,
+				CastItemClicks.ScheduleStyle.WITH_SPELL_OWNER);
 	}
-	
+
 }
