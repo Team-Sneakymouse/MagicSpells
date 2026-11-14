@@ -3,24 +3,20 @@ package com.nisovin.magicspells.listeners;
 import java.util.Map;
 import java.util.HashMap;
 
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
 import com.nisovin.magicspells.Spell;
-import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.CastItem;
-import com.nisovin.magicspells.util.SpellData;
-import com.nisovin.magicspells.util.CastItemSpellResolver;
+import com.nisovin.magicspells.util.CastItemClicks;
+import com.sneakyitems.events.MagicItemClickEvent;
 
 public class LeftClickListener implements Listener {
 
@@ -61,6 +57,7 @@ public class LeftClickListener implements Listener {
 	public void onLeftClick(final PlayerInteractEvent event) {
 		if (event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 		if (!event.hasItem()) return;
+		if (CastItemClicks.isRegisteredMagicItem(event.getItem())) return;
 
 		cast(event.getPlayer(), event.getItem());
 	}
@@ -68,7 +65,11 @@ public class LeftClickListener implements Listener {
 	@EventHandler
 	public void onMeleeHit(EntityDamageByEntityEvent event) {
 		if (event.getCause() != DamageCause.ENTITY_ATTACK || !(event.getDamager() instanceof Player player)) return;
-		if (cast(player, player.getInventory().getItemInMainHand())) {
+
+		ItemStack item = player.getInventory().getItemInMainHand();
+		if (CastItemClicks.isRegisteredMagicItem(item)) return;
+
+		if (cast(player, item)) {
 			event.setCancelled(true);
 			// The same attack also emits an arm swing; suppress the queued bound cast.
 			CastListener bound = MagicSpells.getInstance().castListener;
@@ -76,32 +77,32 @@ public class LeftClickListener implements Listener {
 		}
 	}
 
+	@EventHandler
+	public void onMagicItemClick(MagicItemClickEvent event) {
+		if (!event.isLeftClick()) return;
+
+		switch (event.getTrigger()) {
+			case ENTITY -> {
+				if (event.isAlreadyDenied()) return;
+				if (cast(event.getPlayer(), event.getItem())) {
+					event.setCancelled(true);
+					CastListener bound = MagicSpells.getInstance().castListener;
+					if (bound != null) bound.setNoCast(event.getPlayer());
+				}
+			}
+			case BLOCK, AIR, ARM_SWING -> cast(event.getPlayer(), event.getItem());
+			default -> { }
+		}
+	}
+
 	private boolean cast(Player player, ItemStack item) {
-		if (item == null) return false;
-
-		final Spell spell = CastItemSpellResolver.resolve(leftClickCastItems, leftClickCastTags, item);
-		if (spell == null) return false;
-
-		Spellbook spellbook = MagicSpells.getSpellbook(player);
-
-		if (!spellbook.hasSpell(spell) || !spellbook.canCast(spell)) return false;
-
-		if (!spell.isIgnoringGlobalCooldown()) {
-			Long lastCastTime = lastCast.get(player.getName());
-			if (lastCastTime != null && lastCastTime + MagicSpells.getGlobalCooldown() > System.currentTimeMillis()) return false;
-			lastCast.put(player.getName(), System.currentTimeMillis());
-		}
-
-		PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
-		String[] args = null;
-		if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
-			args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
-		}
-		final ItemStack castStack = item.clone();
-		final String[] castArgs = args;
-		MagicSpells.scheduleDelayedTask(
-				() -> spell.hardCast(new SpellData(player, 1.0F, castArgs).castItem(castStack)), 0);
-		return true;
+		return CastItemClicks.cast(
+				player,
+				item,
+				leftClickCastItems,
+				leftClickCastTags,
+				lastCast,
+				CastItemClicks.ScheduleStyle.DEFAULT);
 	}
 
 }
