@@ -101,6 +101,7 @@ class MagicItemCastClickTest {
 			when(inventory.getItem(any(EquipmentSlot.class))).thenReturn(item);
 			when(player.getName()).thenReturn("caster");
 			when(instance.getName()).thenReturn("MagicSpells");
+			when(instance.namespace()).thenReturn("magicspells");
 			plugin.when(MagicSpells::getInstance).thenReturn(instance);
 			plugin.when(MagicSpells::getSpells).thenReturn(Map.of("test", spell));
 			when(book.hasSpell(spell)).thenReturn(true);
