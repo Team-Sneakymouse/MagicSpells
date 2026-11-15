@@ -56,7 +56,7 @@ public class CarpetSpell extends BuffSpell {
 	
 	@Override
 	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.put(entity.getUniqueId(), new BlockPlatform(internalName, platformMaterial, Material.AIR, entity.getLocation().getBlock().getRelative(0, -1, 0), platformSize.get(entity, null, power, args), true, "square"));
+		entities.put(entity.getUniqueId(), new BlockPlatform(internalName, platformMaterial, Material.AIR, entity.getLocation().getBlock().getRelative(0, -1, 0), platformSize.get(entity, null, power, args), true, "square", blockCauses));
 		return true;
 	}
 

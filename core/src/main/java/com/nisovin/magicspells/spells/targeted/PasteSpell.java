@@ -366,7 +366,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			Block block = entry.getKey();
 			BlockData fromData = entry.getValue();
 			if (block.getBlockData().matches(fromData)) continue;
-			paste.changes.add(manager.register(internalName, block, fromData, null));
+			paste.changes.add(manager.register(internalName, block, fromData, null, blockCauses));
 		}
 
 		if (paste.changes.isEmpty()) return;
@@ -506,7 +506,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		private void setBlockTemporary(Block block, BlockData data) {
 			if (temporary) {
-				changes.add(MagicSpells.getAlteredBlockManager().apply(internalName, block, data, false));
+				changes.add(MagicSpells.getAlteredBlockManager().apply(internalName, block, data, false, blockCauses));
 			} else {
 				block.setBlockData(data, false);
 			}

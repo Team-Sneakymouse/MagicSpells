@@ -11,6 +11,8 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.sneakyutils.util.AlteredBlockCauses;
+
 import com.google.common.collect.Multimap;
 import com.google.common.collect.LinkedListMultimap;
 
@@ -100,6 +102,11 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected List<String> modifierStrings;
 	protected List<String> modifierCastedStrings;
 	protected List<String> worldRestrictions;
+	/**
+	 * Causes recorded on this spell's AlteredBlockManager changes ({@code block-causes}): one name or a list
+	 * from SneakyUtils' fixed {@link AlteredBlockCauses} set. Unknown names are reported and dropped.
+	 */
+	protected Set<String> blockCauses = Set.of();
 	protected ConfigData<List<String>> rawSharedCooldownsData;
 	protected List<String> targetModifierStrings;
 	protected List<String> locationModifierStrings;
@@ -234,6 +241,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		permName = config.getString(path + "permission-name", MagicSpells.setDefaultPermNames() ? spellName : null);
 		incantations = config.getStringList(path + "incantations", null);
 		incantationsRegex = config.getStringList(path + "incantations-regex", null);
+		blockCauses = readBlockCauses(config, path + "block-causes");
 
 		// General options
 		description = config.getString(path + "description", "");
@@ -781,6 +789,26 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	protected List<?> getConfigList(String key, List<?> defaultValue) {
 		return config.getList("spells." + internalName + "." + key, defaultValue);
+	}
+
+	private Set<String> readBlockCauses(MagicConfig config, String key) {
+		if (!config.contains(key)) return Set.of();
+		List<String> raw = config.isList(key) ? config.getStringList(key, List.of()) : List.of(config.getString(key, ""));
+		return parseBlockCauses(raw, "block-causes");
+	}
+
+	/**
+	 * Lower-cased {@link AlteredBlockCauses} names from {@code raw}; each unknown entry is reported against
+	 * {@code option} and dropped.
+	 */
+	protected Set<String> parseBlockCauses(List<String> raw, String option) {
+		return BlockCauseConfig.parse(raw, entry -> MagicSpells.error("Spell '" + internalName + "' has an invalid "
+				+ option + " entry '" + entry + "'; valid causes: " + String.join(", ", AlteredBlockCauses.ALL)));
+	}
+
+	/** This spell's {@code block-causes}, to pass to AlteredBlockManager when it changes blocks. */
+	public Set<String> getBlockCauses() {
+		return blockCauses;
 	}
 
 	protected List<Integer> getConfigIntList(String key, List<Integer> defaultValue) {

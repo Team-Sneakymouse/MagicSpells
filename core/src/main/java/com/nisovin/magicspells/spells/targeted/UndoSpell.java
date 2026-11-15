@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -30,6 +31,8 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private List<String> spellNames;
 	private List<Spell> spells;
+	private Set<String> causes;
+	private boolean causeFilterBroken;
 
 	public UndoSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -40,6 +43,10 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 		applyPhysics = getConfigBoolean("apply-physics", true);
 		spellNames = getConfigStringList("spells", null);
 		spells = new ArrayList<>();
+		List<String> causeNames = getConfigStringList("causes", List.of());
+		causes = parseBlockCauses(causeNames, "causes");
+		// Every entry invalid: undo nothing rather than every change in range.
+		causeFilterBroken = !causeNames.isEmpty() && causes.isEmpty();
 	}
 
 	@Override
@@ -102,7 +109,9 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 			return false;
 		}
 
+		if (causeFilterBroken) return false;
 		boolean filterBySpell = !spells.isEmpty();
+		boolean filterByCause = !causes.isEmpty();
 		boolean success = false;
 		AlteredBlockManager manager = MagicSpells.getAlteredBlockManager();
 
@@ -119,6 +128,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 					} else {
 						changes = manager.getByBlock(block);
 					}
+					if (filterByCause) changes.removeIf(change -> !change.hasAnyCause(causes));
 					if (!changes.isEmpty()) {
 						success = true;
 						for (int i = changes.size() - 1; i >= 0; i--) {

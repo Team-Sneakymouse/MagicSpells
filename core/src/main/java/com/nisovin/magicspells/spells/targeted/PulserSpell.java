@@ -238,7 +238,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		if (blockData == null)
 			return;
 		AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, block, blockData,
-				false);
+				false, blockCauses);
 		pulsers.put(block, new Pulser(caster, block, from, power, args, change));
 		ticker.start();
 		if (caster != null)

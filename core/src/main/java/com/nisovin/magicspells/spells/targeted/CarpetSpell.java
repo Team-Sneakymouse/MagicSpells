@@ -187,7 +187,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 
 				AlteredBlockManager.Change change = null;
 				if (temporary) {
-					change = MagicSpells.getAlteredBlockManager().apply(internalName, b, material, false);
+					change = MagicSpells.getAlteredBlockManager().apply(internalName, b, material, false, blockCauses);
 					changeList.add(change);
 				} else {
 					b.setType(material, false);

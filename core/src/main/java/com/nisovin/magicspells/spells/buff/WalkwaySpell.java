@@ -257,7 +257,7 @@ public class WalkwaySpell extends BuffSpell {
 			for (Block b : blocks) {
 				if (platform.containsKey(b)) continue;
 				if (!BlockUtils.isAir(b.getType())) continue;
-				platform.put(b, MagicSpells.getAlteredBlockManager().apply(internalName, b, mat, false));
+				platform.put(b, MagicSpells.getAlteredBlockManager().apply(internalName, b, mat, false, blockCauses));
 			}
 		}
 

@@ -147,7 +147,7 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 			if (!BlockUtils.isAir(b.getType()))
 				continue;
 			AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, b, material,
-					false);
+					false, blockCauses);
 			tombChanges.add(change);
 			blocks.put(b, change);
 			playSpellEffects(EffectPosition.SPECIAL, b.getLocation().add(0.5, 0.5, 0.5), data);

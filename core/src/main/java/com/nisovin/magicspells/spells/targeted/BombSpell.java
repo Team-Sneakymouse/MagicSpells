@@ -121,7 +121,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 			return false;
 
 		AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, block, material,
-				false);
+				false, blockCauses);
 		blocks.put(block, change);
 
 		final SpellData effectData = data.location(loc.clone().add(0.5, 0, 0.5));
