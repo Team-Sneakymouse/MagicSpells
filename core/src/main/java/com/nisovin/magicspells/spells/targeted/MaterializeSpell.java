@@ -383,7 +383,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		AlteredBlockManager.Change change = null;
 		if (!falling) {
 			if (temporary) {
-				change = MagicSpells.getAlteredBlockManager().apply(internalName, block, material, applyPhysics);
+				change = MagicSpells.getAlteredBlockManager().apply(internalName, block, material, applyPhysics, blockCauses);
 			} else {
 				block.setType(material, applyPhysics);
 			}

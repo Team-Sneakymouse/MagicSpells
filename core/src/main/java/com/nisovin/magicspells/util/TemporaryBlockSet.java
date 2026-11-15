@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.util;
 
+import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
@@ -32,6 +33,7 @@ public class TemporaryBlockSet implements Runnable {
 	private BlockSetRemovalCallback callback;
 
 	private boolean bypassDippGen;
+	private Set<String> blockCauses = Set.of();
 	
 	public TemporaryBlockSet(String internalName, Material original, Material replaceWith, boolean callPlaceEvent,
 			Entity livingEntity, boolean bypassDippGen) {
@@ -73,19 +75,25 @@ public class TemporaryBlockSet implements Runnable {
 		changes = new ArrayList<>();
 	}
 	
+	/** Sets the AlteredBlockManager causes recorded on blocks added from now on. */
+	public TemporaryBlockSet withBlockCauses(Set<String> blockCauses) {
+		this.blockCauses = blockCauses;
+		return this;
+	}
+
 	public void add(Block block) {
 		if (block.getType() != original) return;
 		int r = random.nextInt(replaceMaterials.size());
 		Material replaceWith = replaceMaterials.get(r);
 
 		if (!callPlaceEvent) {
-			changes.add(MagicSpells.getAlteredBlockManager().apply(internalName, block, replaceWith, applyPhysics));
+			changes.add(MagicSpells.getAlteredBlockManager().apply(internalName, block, replaceWith, applyPhysics, blockCauses));
 			return;
 		}
 
 		BlockState state = block.getState();
 		AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, block, replaceWith,
-				false);
+				false, blockCauses);
 		MagicSpellsBlockPlaceEvent event = null;
 		if (livingEntity instanceof Player player) {
 			event = new MagicSpellsBlockPlaceEvent(block, state, block, player.getInventory().getItemInMainHand(),

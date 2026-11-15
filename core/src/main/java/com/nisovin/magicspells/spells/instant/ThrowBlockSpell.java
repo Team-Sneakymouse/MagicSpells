@@ -288,7 +288,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 						Block b = block.getLocation().getBlock();
 						if (b.getType() == Material.AIR) {
 							info.change = MagicSpells.getAlteredBlockManager().apply(internalName, b,
-									block.getBlockData(), true);
+									block.getBlockData(), true, blockCauses);
 							info.targetBlock = b;
 						}
 					}
@@ -385,7 +385,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 					if (landBlock != null) {
 						if (info != null) {
 							info.change = MagicSpells.getAlteredBlockManager().apply(internalName, landBlock,
-									event.getBlockData(), false);
+									event.getBlockData(), false, blockCauses);
 							info.targetBlock = landBlock;
 						} else {
 							landBlock.setBlockData(event.getBlockData(), false);

@@ -277,7 +277,7 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 							if (!BlockUtils.isAir(loc.getWorld().getBlockAt(x, y, z).getType()))
 								continue;
 							Block b = loc.getWorld().getBlockAt(x, y, z);
-							fires.add(MagicSpells.getAlteredBlockManager().apply(internalName, b, Material.FIRE, false));
+							fires.add(MagicSpells.getAlteredBlockManager().apply(internalName, b, Material.FIRE, false, blockCauses));
 						}
 					}
 				}

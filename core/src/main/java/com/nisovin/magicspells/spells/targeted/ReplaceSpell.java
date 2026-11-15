@@ -310,7 +310,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 						AlteredBlockManager.Change change = null;
 						if (replaceDuration > 0) {
-							change = MagicSpells.getAlteredBlockManager().apply(internalName, block, merged, applyPhysics);
+							change = MagicSpells.getAlteredBlockManager().apply(internalName, block, merged, applyPhysics, blockCauses);
 						} else {
 							block.setBlockData(merged, applyPhysics);
 						}

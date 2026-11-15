@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.util;
 
+import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -23,10 +24,18 @@ public class BlockPlatform {
 	private boolean moving;
 	private String type;
 	private Map<Block, AlteredBlockManager.Change> changes;
-		
+	private final Set<String> blockCauses;
+
 	public BlockPlatform(String internalName, Material platformType, Material replaceType, Block center, int size,
 			boolean moving, String type) {
+		this(internalName, platformType, replaceType, center, size, moving, type, Set.of());
+	}
+
+	/** @param blockCauses AlteredBlockManager causes recorded on the platform's block changes */
+	public BlockPlatform(String internalName, Material platformType, Material replaceType, Block center, int size,
+			boolean moving, String type, Set<String> blockCauses) {
 		this.internalName = internalName;
+		this.blockCauses = blockCauses;
 		this.platformType = platformType;
 		this.replaceType = replaceType;
 		this.center = center;
@@ -91,7 +100,7 @@ public class BlockPlatform {
 		for (Block block : platform) {
 			if (changes == null || !changes.containsKey(block)) {
 				if (moving) {
-					changes.put(block, MagicSpells.getAlteredBlockManager().apply(internalName, block, platformType, false));
+					changes.put(block, MagicSpells.getAlteredBlockManager().apply(internalName, block, platformType, false, blockCauses));
 				} else {
 					block.setType(platformType, false);
 				}

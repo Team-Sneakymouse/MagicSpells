@@ -285,7 +285,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			if (duration > 0) {
 				AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, b,
-						Material.AIR, false);
+						Material.AIR, false, blockCauses);
 				MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
 			} else {
 				b.setType(Material.AIR, false);
@@ -308,7 +308,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			if (duration > 0) {
 				AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, b,
-						Material.AIR, false);
+						Material.AIR, false, blockCauses);
 				MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
 			} else {
 				b.setType(Material.AIR, false);
@@ -384,7 +384,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 								if (duration >= 1) {
 									AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager()
-											.apply(internalName, landBlock, event.getBlockData(), false);
+											.apply(internalName, landBlock, event.getBlockData(), false, blockCauses);
 									MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
 								} else {
 									landBlock.setBlockData(event.getBlockData(), false);

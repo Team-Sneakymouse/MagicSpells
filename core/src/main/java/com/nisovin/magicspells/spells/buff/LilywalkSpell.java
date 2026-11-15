@@ -132,7 +132,7 @@ public class LilywalkSpell extends BuffSpell {
 			
 			BlockState state = block.getRelative(BlockFace.DOWN).getState();
 			if ((state.getType() == Material.WATER) && BlockUtils.getWaterLevel(state) == 0) {
-				blocks.put(block, MagicSpells.getAlteredBlockManager().apply(internalName, block, Material.LILY_PAD, false));
+				blocks.put(block, MagicSpells.getAlteredBlockManager().apply(internalName, block, Material.LILY_PAD, false, blockCauses));
 			}
 		}
 		

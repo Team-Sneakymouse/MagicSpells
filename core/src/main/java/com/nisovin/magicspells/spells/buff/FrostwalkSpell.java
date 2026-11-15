@@ -42,7 +42,7 @@ public class FrostwalkSpell extends BuffSpell {
 
 	@Override
 	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.put(entity.getUniqueId(), new BlockPlatform(internalName, Material.ICE, Material.WATER, entity.getLocation().getBlock().getRelative(0, -1, 0), size.get(entity, null, power, args), !leaveFrozen, "square"));
+		entities.put(entity.getUniqueId(), new BlockPlatform(internalName, Material.ICE, Material.WATER, entity.getLocation().getBlock().getRelative(0, -1, 0), size.get(entity, null, power, args), !leaveFrozen, "square", blockCauses));
 		return true;
 	}
 
