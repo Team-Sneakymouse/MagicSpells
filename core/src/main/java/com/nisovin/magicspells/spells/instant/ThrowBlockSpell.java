@@ -39,6 +39,8 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
 import com.sneakyutils.util.AlteredBlockManager;
 
+import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
+
 public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpell {
 
 	public static List<ThrownBlock> thrownBlocks;
@@ -134,6 +136,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			registerEvents(new ThrowBlockListener(this));
 		else if (tntFuse != null)
 			registerEvents(new TntListener());
+		registerEvents(new RemovedEntityListener());
 	}
 
 	@Override
@@ -142,11 +145,13 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			for (ThrownBlock thrownBlock : thrownBlocks) {
 				thrownBlock.undo();
 			}
-			for (Entity block : fallingBlocks.keySet()) {
+			// remove() fires EntityRemoveFromWorldEvent, which removes from the map: iterate a copy.
+			List<Entity> entities = new ArrayList<>(fallingBlocks.keySet());
+			fallingBlocks.clear();
+			for (Entity block : entities) {
 				if (block != null)
 					block.remove();
 			}
-			fallingBlocks.clear();
 		}
 	}
 
@@ -402,6 +407,20 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 						info.undo();
 				}
 			}
+		}
+
+	}
+
+	/**
+	 * Drops the map entry of a thrown entity that leaves the world without landing (void, despawn, chunk unload,
+	 * another plugin), so the map does not keep it, and the entity, forever.
+	 */
+	private class RemovedEntityListener implements Listener {
+
+		@EventHandler
+		private void onRemove(EntityRemoveFromWorldEvent event) {
+			if (!fallingBlocks.isEmpty())
+				fallingBlocks.remove(event.getEntity());
 		}
 
 	}
