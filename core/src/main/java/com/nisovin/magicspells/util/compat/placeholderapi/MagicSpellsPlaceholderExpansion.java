@@ -1,18 +1,8 @@
 package com.nisovin.magicspells.util.compat.placeholderapi;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.BiFunction;
-
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -31,29 +21,21 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.data.DataLivingEntity;
 import com.sneakyitems.util.magicitems.MagicItem;
 import com.sneakyitems.util.magicitems.MagicItems;
-import com.nisovin.magicspells.util.managers.VariableManager;
-import com.nisovin.magicspells.variables.Variable;
-import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
-import com.nisovin.magicspells.variables.variabletypes.GlobalVariable;
-
-import com.sneakyvariables.api.OwnerRef;
-import com.sneakyvariables.api.SneakyVariables;
 
 /**
- * Built-in PlaceholderAPI expansion ({@code %ms_...%}).
+ * Built-in PlaceholderAPI expansion ({@code %ms_...%}). Variables have their placeholders in SneakyVariables
+ * ({@code %sneakyvariables_...%}), which replaced {@code %ms_variable_...%} and {@code %ms_offlinevar_...%}.
  * <p>
  * Ported from <a href="https://github.com/JasperLorelai/Expansion-MagicSpells">JasperLorelai/Expansion-MagicSpells</a>
  * (GPL-3.0) so MagicSpells no longer needs a separate expansion jar.
  */
-public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implements Listener, Cacheable {
+public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implements Cacheable {
 
 	private static final String IDENTIFIER = "ms";
 	private static final String PLUGIN = "MagicSpells";
 	private static final String NAME = "magicspells";
 
 	private MagicSpells plugin;
-	private final OfflineVariableCache offlineCache = new OfflineVariableCache();
-	private boolean eventsRegistered;
 
 	@Override
 	public boolean canRegister() {
@@ -72,20 +54,7 @@ public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implem
 		plugin = (MagicSpells) Bukkit.getPluginManager().getPlugin(getRequiredPlugin());
 		if (plugin == null) return false;
 
-		registerEvents();
 		return super.register();
-	}
-
-	private void registerEvents() {
-		if (eventsRegistered || plugin == null) return;
-		Bukkit.getPluginManager().registerEvents(this, plugin);
-		eventsRegistered = true;
-	}
-
-	private void unregisterEvents() {
-		if (!eventsRegistered) return;
-		HandlerList.unregisterAll(this);
-		eventsRegistered = false;
 	}
 
 	@NotNull
@@ -136,8 +105,6 @@ public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implem
 		}
 
 		return switch (name) {
-			case "variable" -> processVariable(player, args, debug);
-			case "offlinevar" -> processOfflineVariable(offlinePlayer, args, debug);
 			case "cooldown" -> processCooldown(player, args, debug);
 			case "charges" -> processCharges(player, args, debug);
 			case "mana" -> processMana(player, args, debug);
@@ -151,120 +118,11 @@ public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implem
 
 	@Override
 	public void clear() {
-		unregisterEvents();
 		plugin = null;
-		offlineCache.clear();
 	}
 
 	private String error(String string, boolean debug) {
 		return debug ? PLUGIN + ": " + string : "";
-	}
-
-	private enum VariableValue {
-		MAX,
-		MIN,
-		CURRENT
-	}
-
-	private String processVariableCommon(OfflinePlayer player, String args,
-			BiFunction<Variable, String, String> function, boolean debug) {
-		if (args == null) return null;
-		VariableManager manager = MagicSpells.getVariableManager();
-		if (manager == null) return error("Variable manager not loaded.", debug);
-
-		String[] splits = args.split("_", 2);
-		VariableValue type = switch (splits[0]) {
-			case "max" -> VariableValue.MAX;
-			case "min" -> VariableValue.MIN;
-			default -> VariableValue.CURRENT;
-		};
-
-		String varName;
-		if (type == VariableValue.CURRENT) varName = args;
-		else {
-			if (splits.length < 2) return null;
-			varName = splits[1];
-		}
-
-		String precision = null;
-		if (varName.contains(",")) {
-			splits = varName.split(",", 2);
-			varName = splits[0];
-			precision = splits[1];
-		}
-
-		varName = PlaceholderAPI.setBracketPlaceholders(player, varName).trim();
-		Variable variable = manager.getVariable(varName);
-		if (variable == null) return error("Variable '" + varName + "' wasn't found.", debug);
-
-		Player live = player instanceof Player p ? p : (player != null ? player.getPlayer() : null);
-
-		String value = null;
-		switch (type) {
-			case MAX -> value = String.valueOf(variable.getMaxValue(live));
-			case MIN -> value = String.valueOf(variable.getMinValue(live));
-			case CURRENT -> {
-				if (variable instanceof GlobalVariable || variable instanceof GlobalStringVariable) {
-					value = variable.getStringValue((String) null);
-					break;
-				}
-				if (player == null) return error("Player target not found.", debug);
-				value = function.apply(variable, varName);
-			}
-		}
-		if (value == null) return null;
-
-		return PlaceholderPrecision.apply(value, precision);
-	}
-
-	/**
-	 * variable     [varname],(precision)
-	 * variable max [varname],(precision)
-	 * variable min [varname],(precision)
-	 */
-	private String processVariable(Player player, String args, boolean debug) {
-		return processVariableCommon(player, args, (variable, varName) -> variable.getStringValue(player), debug);
-	}
-
-	/**
-	 * offlinevar     [varname],(precision)
-	 * offlinevar max [varname],(precision)
-	 * offlinevar min [varname],(precision)
-	 */
-	private String processOfflineVariable(OfflinePlayer player, String args, boolean debug) {
-		return processVariableCommon(player, args, (variable, varName) -> {
-			if (player.isOnline()) return variable.getStringValue((Player) player);
-			UUID uuid = player.getUniqueId();
-			String cached = offlineCache.get(uuid, varName);
-			if (cached != null) return cached;
-			requestOfflineFill(uuid);
-			return "";
-		}, debug);
-	}
-
-	private void requestOfflineFill(UUID uuid) {
-		if (plugin == null || !offlineCache.beginFill(uuid)) return;
-		SneakyVariables.api().offline().all(OwnerRef.player(uuid)).whenComplete((values, error) -> {
-			if (error != null) {
-				offlineCache.endFill(uuid);
-				return;
-			}
-			Map<String, String> strings = OfflineVariableCache.stringify(values);
-			Bukkit.getScheduler().runTask(plugin, () -> offlineCache.putAll(uuid, strings));
-		});
-	}
-
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onPlayerJoin(PlayerJoinEvent event) {
-		offlineCache.drop(event.getPlayer().getUniqueId());
-	}
-
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onPlayerQuit(PlayerQuitEvent event) {
-		if (plugin == null) return;
-		UUID uuid = event.getPlayer().getUniqueId();
-		offlineCache.drop(uuid);
-		requestOfflineFill(uuid);
 	}
 
 	/**
