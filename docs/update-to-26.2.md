@@ -35,7 +35,7 @@ Recommended version set as of the assessment date:
 | Shadow | `io.github.goooler` 8.1.7 | `com.gradleup.shadow` 9.6.1 | Maintained Gradle 9-compatible plugin ([Plugin Portal](https://plugins.gradle.org/plugin/com.gradleup.shadow)) |
 | run-paper | 2.3.1 | 3.0.2 | Current official release ([Plugin Portal](https://plugins.gradle.org/search?term=xyz.jpenilla.run-)) |
 | Foojay resolver | 0.8.0 | 1.0.0 | Current official release and prepared for Gradle 9 ([Plugin Portal](https://plugins.gradle.org/plugin/org.gradle.toolchains.foojay-resolver-convention)) |
-| Maven Publish | vanniktech 0.34–0.37 (Maven Central) | Gradle `maven-publish` → sneakyrp | Self-hosted `https://maven.sneakyrp.com/releases`; no Central/signing plugin |
+| Maven Publish | vanniktech 0.34–0.37 (Maven Central) | Gradle `maven-publish` → sneakyrp | Self-hosted `https://maven.sneakyrp.com/sneakymouse`; no Central/signing plugin |
 
 The audit successfully configured the project with Gradle 9.5.0, Java 25, Kotlin 2.4.10, Shadow 9.6.1, run-paper 3.0.2, Paperweight beta.22, and Foojay 1.0.0. Publishing targets sneakyrp with git-derived versions.
 

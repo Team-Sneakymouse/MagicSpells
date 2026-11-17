@@ -21,7 +21,7 @@ repositories {
     mavenCentral()
     maven {
         name = "sneakyrp"
-        url = uri("https://maven.sneakyrp.com/releases")
+        url = uri("https://maven.sneakyrp.com/sneakymouse")
     }
 }
 
@@ -50,6 +50,8 @@ dependencies {
     compileOnly("io.github.team-sneakymouse:sneakybagofholding:2026.10.09-a79a55f6d44b") { transitive = false }
     compileOnly("io.github.team-sneakymouse:sneakyvaults:2026.10.09-306ea91d36ff") { transitive = false }
     compileOnly("io.github.team-sneakymouse:SneakyVoiceChat:2026.11.02-d30ec916109c") { transitive = false }
+    compileOnly("io.github.team-sneakymouse:sneakyvariables:2026.11.17-8fcaabc393e3")
+    testImplementation("io.github.team-sneakymouse:sneakyvariables:2026.11.17-8fcaabc393e3")
     implementation("com.comphenix.protocol:ProtocolLib:5.1.0") { transitive = false }
     implementation("com.github.libraryaddict:LibsDisguises:v10.0.25") { transitive = false }
     // VaultAPI only — Vault is provided at runtime. Avoid vault:master-SNAPSHOT (JitPack metadata flaky).

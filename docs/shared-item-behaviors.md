@@ -33,7 +33,7 @@ Update permission grants separately; do not rewrite item data.
 `f8f8c4cb7512d82671733f53c980febe66fa4db0`; publish run `41307785625`
 succeeded. Maven metadata, the published POM and JAR confirm
 `io.github.team-sneakymouse:sneakyutils:2026.11.01-f8f8c4cb7512`
-from `https://maven.sneakyrp.com/releases`. The JAR contains `ItemBehaviors`
+from `https://maven.sneakyrp.com/sneakymouse`. The JAR contains `ItemBehaviors`
 and `ItemExpireEvent`; its SHA-256 is
 `036234a01a1162047d370f007b119412fb4a703492d9083ba759f4b2cdf2f36b`.
 
