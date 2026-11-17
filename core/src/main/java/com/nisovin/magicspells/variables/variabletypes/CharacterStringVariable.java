@@ -1,21 +1,12 @@
 package com.nisovin.magicspells.variables.variabletypes;
 
-import java.util.Map;
-
-import com.nisovin.magicspells.util.CharacterVariableValues;
-import com.nisovin.magicspells.util.PlayerNameUtils;
-import net.coreprotect.CoreProtect;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
+
+import com.nisovin.magicspells.variables.VariableOwners;
+
+import com.sneakyvariables.api.VariableOwner;
 
 public class CharacterStringVariable extends CharacterVariable {
-
-	private final CharacterVariableValues<String> data;
-
-	public CharacterStringVariable() {
-		data = new CharacterVariableValues<>();
-	}
 
 	@Override
 	public void loadExtraData(ConfigurationSection section) {
@@ -25,54 +16,37 @@ public class CharacterStringVariable extends CharacterVariable {
 
 	@Override
 	public String getStringValue(String player) {
-		String compositeKey = getCompositeKey(player);
-		if (compositeKey == null) return defaultStringValue;
-		return data.getOrDefault(compositeKey, defaultStringValue);
+		VariableOwner owner = VariableOwners.character(player);
+		if (owner == null) return defaultStringValue;
+		return owner.getString(name);
+	}
+
+	@Override
+	public double getValue(String player) {
+		try {
+			return Double.parseDouble(getStringValue(player));
+		} catch (NumberFormatException e) {
+			return 0;
+		}
+	}
+
+	@Override
+	public void set(String player, double amount) {
+		parseAndSet(player, Double.toString(amount));
 	}
 
 	@Override
 	public void parseAndSet(String player, String textValue) {
-		String compositeKey = getCompositeKey(player);
-		if (compositeKey == null) return;
-
-		String current = data.get(compositeKey);
-
-		data.put(compositeKey, textValue);
-		Player p = PlayerNameUtils.getPlayerExact(player);
-		if (current != null && !current.equals(textValue) && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect"))
-			CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + " =" + textValue);
+		VariableOwner owner = VariableOwners.character(player);
+		if (owner == null) return;
+		owner.setString(name, textValue);
 	}
 
 	@Override
 	public void reset(String player) {
-		String compositeKey = getCompositeKey(player);
-		if (compositeKey == null) return;
-
-		String current = data.remove(compositeKey);
-		Player p = PlayerNameUtils.getPlayerExact(player);
-		if (current != null && !current.equals(defaultStringValue) && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect"))
-			CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + " =" + defaultStringValue);
-	}
-
-	/**
-	 * Gets all stored string values for this variable (used for saving).
-	 * Returns map with composite keys.
-	 */
-	public Map<String, String> getAllStringValues() {
-		return data.copy();
-	}
-
-	/**
-	 * Sets a string value directly with composite key (used for loading from file).
-	 */
-	public void setStringWithCompositeKey(String compositeKey, String value) {
-		data.put(compositeKey, value);
-	}
-
-	/** Owner-thread cursor over just this player's history; never pass live data to a writer. */
-	public Map.Entry<String, String> getNextPersistenceStringValue(String player, String previous) {
-		return data.next(player, previous);
+		VariableOwner owner = VariableOwners.character(player);
+		if (owner == null) return;
+		owner.reset(name);
 	}
 
 }
-

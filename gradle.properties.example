@@ -4,7 +4,7 @@
 # Publish version is derived from the git HEAD commit (yyyy.MM.dd-<12-char-hash>), not from this file.
 
 # --- sneakyrp Maven (Reposilite) ---
-# https://maven.sneakyrp.com/releases
+# https://maven.sneakyrp.com/sneakymouse
 # For Reposilite, sneakyrpUsername is the token name; sneakyrpPassword is its secret.
 sneakyrpUsername=YOUR_UPLOAD_USERNAME
 sneakyrpPassword=YOUR_UPLOAD_TOKEN

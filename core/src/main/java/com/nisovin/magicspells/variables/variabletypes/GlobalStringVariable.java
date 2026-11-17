@@ -1,30 +1,28 @@
 package com.nisovin.magicspells.variables.variabletypes;
 
-import com.nisovin.magicspells.variables.Variable;
-
-import net.coreprotect.CoreProtect;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 
-public class GlobalStringVariable extends Variable {
+import com.nisovin.magicspells.variables.Variable;
+import com.nisovin.magicspells.variables.VariableOwners;
 
-	private String value;
+import com.sneakyvariables.api.VariableOwner;
+
+public class GlobalStringVariable extends Variable {
 
 	@Override
 	public void loadExtraData(ConfigurationSection section) {
 		super.loadExtraData(section);
-
-		value = section.getString("default-value", "");
+		defaultStringValue = section.getString("default-value", "");
 	}
 
 	@Override
 	protected void init() {
-
+		// Defaults come from definition / defaultStringValue.
 	}
 
 	@Override
 	public void set(String player, double amount) {
-
+		// String variables ignore numeric set.
 	}
 
 	@Override
@@ -34,20 +32,18 @@ public class GlobalStringVariable extends Variable {
 
 	@Override
 	public String getStringValue(String player) {
-		return value;
+		return VariableOwners.global().getString(name);
 	}
 
 	@Override
 	public void parseAndSet(String player, String textValue) {
-		value = textValue;
-		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + textValue);
+		VariableOwners.global().setString(name, textValue);
 	}
 
 	@Override
 	public void reset(String player) {
-		String current = value;
-		value = defaultStringValue;
-		if (current != null && !current.equals(defaultStringValue) && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + defaultValue);
+		VariableOwner owner = VariableOwners.global();
+		owner.reset(name);
 	}
 
 }

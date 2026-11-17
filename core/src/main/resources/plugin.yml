@@ -6,6 +6,7 @@ api-version: "26.2"
 depend:
     - SneakyUtils
     - SneakyItems
+    - SneakyVariables
 softdepend:
     - SneakyDiagnostics
     - GriefPrevention

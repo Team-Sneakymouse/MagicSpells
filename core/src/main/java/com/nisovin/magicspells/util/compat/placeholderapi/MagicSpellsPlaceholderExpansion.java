@@ -1,16 +1,8 @@
 package com.nisovin.magicspells.util.compat.placeholderapi;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.UUID;
 import java.util.function.BiFunction;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -43,7 +35,9 @@ import com.nisovin.magicspells.util.managers.VariableManager;
 import com.nisovin.magicspells.variables.Variable;
 import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.variables.variabletypes.GlobalVariable;
-import com.nisovin.magicspells.variables.variabletypes.PlayerVariable;
+
+import com.sneakyvariables.api.OwnerRef;
+import com.sneakyvariables.api.SneakyVariables;
 
 /**
  * Built-in PlaceholderAPI expansion ({@code %ms_...%}).
@@ -53,16 +47,12 @@ import com.nisovin.magicspells.variables.variabletypes.PlayerVariable;
  */
 public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implements Listener, Cacheable {
 
-	private static final Pattern VARIABLE_FILE_PATTERN = Pattern.compile(
-			"PLAYER_(?<id1>\\w{8})(?<id2>\\w{4})(?<id3>\\w{4})(?<id4>\\w{4})(?<id5>\\w{12})\\.txt");
-
 	private static final String IDENTIFIER = "ms";
 	private static final String PLUGIN = "MagicSpells";
 	private static final String NAME = "magicspells";
 
 	private MagicSpells plugin;
-	private File variableDir;
-	private final Map<UUID, Map<String, String>> variableCache = new HashMap<>();
+	private final OfflineVariableCache offlineCache = new OfflineVariableCache();
 	private boolean eventsRegistered;
 
 	@Override
@@ -82,10 +72,7 @@ public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implem
 		plugin = (MagicSpells) Bukkit.getPluginManager().getPlugin(getRequiredPlugin());
 		if (plugin == null) return false;
 
-		variableDir = new File(plugin.getDataFolder(), "vars");
 		registerEvents();
-		cacheOfflineVariableFiles();
-
 		return super.register();
 	}
 
@@ -99,33 +86,6 @@ public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implem
 		if (!eventsRegistered) return;
 		HandlerList.unregisterAll(this);
 		eventsRegistered = false;
-	}
-
-	private void cacheOfflineVariableFiles() {
-		Bukkit.getScheduler().runTask(plugin, () -> {
-			File[] variableFiles = variableDir.listFiles();
-			if (variableFiles == null) return;
-			var onlinePlayers = Bukkit.getOnlinePlayers();
-
-			varLoop:
-			for (File variableFile : variableFiles) {
-				if (variableFile.isDirectory()) continue;
-
-				Matcher matcher = VARIABLE_FILE_PATTERN.matcher(variableFile.getName());
-				if (!matcher.matches()) continue;
-
-				try {
-					UUID uuid = UUID.fromString(Stream.of("id1", "id2", "id3", "id4", "id5")
-							.map(matcher::group)
-							.collect(Collectors.joining("-")));
-					for (Player player : onlinePlayers) {
-						if (player.getUniqueId().equals(uuid)) continue varLoop;
-					}
-					cacheVariableFile(uuid, variableFile);
-				} catch (IllegalArgumentException ignored) {
-				}
-			}
-		});
 	}
 
 	@NotNull
@@ -193,8 +153,7 @@ public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implem
 	public void clear() {
 		unregisterEvents();
 		plugin = null;
-		variableDir = null;
-		variableCache.clear();
+		offlineCache.clear();
 	}
 
 	private String error(String string, boolean debug) {
@@ -275,49 +234,37 @@ public class MagicSpellsPlaceholderExpansion extends PlaceholderExpansion implem
 	private String processOfflineVariable(OfflinePlayer player, String args, boolean debug) {
 		return processVariableCommon(player, args, (variable, varName) -> {
 			if (player.isOnline()) return variable.getStringValue((Player) player);
-			return variableCache.getOrDefault(player.getUniqueId(), Map.of()).getOrDefault(varName, "");
+			UUID uuid = player.getUniqueId();
+			String cached = offlineCache.get(uuid, varName);
+			if (cached != null) return cached;
+			requestOfflineFill(uuid);
+			return "";
 		}, debug);
+	}
+
+	private void requestOfflineFill(UUID uuid) {
+		if (plugin == null || !offlineCache.beginFill(uuid)) return;
+		SneakyVariables.api().offline().all(OwnerRef.player(uuid)).whenComplete((values, error) -> {
+			if (error != null) {
+				offlineCache.endFill(uuid);
+				return;
+			}
+			Map<String, String> strings = OfflineVariableCache.stringify(values);
+			Bukkit.getScheduler().runTask(plugin, () -> offlineCache.putAll(uuid, strings));
+		});
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		variableCache.remove(event.getPlayer().getUniqueId());
+		offlineCache.drop(event.getPlayer().getUniqueId());
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerQuit(PlayerQuitEvent event) {
-		if (plugin == null || variableDir == null) return;
-		Bukkit.getScheduler().runTask(plugin, () -> {
-			if (!variableDir.exists()) return;
-
-			Player player = event.getPlayer();
-			String uniqueId = Util.getUniqueId(player);
-			File file = new File(variableDir, "PLAYER_" + uniqueId + ".txt");
-			if (!file.exists() || file.isDirectory()) return;
-			cacheVariableFile(player.getUniqueId(), file);
-		});
-	}
-
-	private void cacheVariableFile(UUID uuid, File file) {
-		VariableManager manager = MagicSpells.getVariableManager();
-		if (manager == null) return;
-
-		try (Scanner scanner = new Scanner(file, StandardCharsets.UTF_8)) {
-			while (scanner.hasNext()) {
-				String line = scanner.nextLine().trim();
-				if (line.isEmpty()) continue;
-				String[] splits = line.split("=", 2);
-				if (splits.length < 2) continue;
-				String variableName = splits[0];
-				String value = splits[1];
-
-				Variable variable = manager.getVariable(variableName);
-				if (!(variable instanceof PlayerVariable) || !variable.isPermanent()) continue;
-
-				variableCache.computeIfAbsent(uuid, k -> new HashMap<>()).put(variableName, value);
-			}
-		} catch (Exception ignored) {
-		}
+		if (plugin == null) return;
+		UUID uuid = event.getPlayer().getUniqueId();
+		offlineCache.drop(uuid);
+		requestOfflineFill(uuid);
 	}
 
 	/**

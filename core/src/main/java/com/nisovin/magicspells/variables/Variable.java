@@ -175,4 +175,13 @@ public abstract class Variable {
 		this.bossBarNamespacedKey = bossBarNamespacedKey;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public boolean isLogInCoreprotect() {
+		return logInCoreprotect;
+	}
+
 }
+

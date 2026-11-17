@@ -1,48 +1,39 @@
 package com.nisovin.magicspells.util.managers;
 
 import java.util.*;
-import java.io.File;
-import java.nio.charset.StandardCharsets;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
+import org.bukkit.Location;
 import org.bukkit.Registry;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Criteria;
+import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.Location;
 
-import com.nisovin.magicspells.util.BlockLocation;
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.io.VariablePersistence;
-import com.nisovin.magicspells.util.io.VariableScope;
-import com.nisovin.magicspells.util.io.VariableSnapshotCapture;
-import com.nisovin.magicspells.variables.*;
-import com.nisovin.magicspells.util.VariableMod;
-import com.nisovin.magicspells.variables.meta.*;
-import com.nisovin.magicspells.util.PlayerNameUtils;
 import com.nisovin.magicspells.handlers.DebugHandler;
+import com.nisovin.magicspells.util.PlayerNameUtils;
+import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.VariableMod;
+import com.nisovin.magicspells.variables.GlobalVariableAdd;
+import com.nisovin.magicspells.variables.Variable;
+import com.nisovin.magicspells.variables.VariableDefinitions;
+import com.nisovin.magicspells.variables.meta.*;
 import com.nisovin.magicspells.variables.variabletypes.*;
+
+import com.sneakyvariables.api.SneakyVariables;
+import com.sneakyvariables.api.VariableDefinition;
 
 public class VariableManager {
 
 	private static final Map<String, Class<? extends Variable>> variableTypes = new HashMap<>();
 	private static final Map<String, Variable> metaVariables = new HashMap<>();
 	private static final Map<String, Variable> variables = new LinkedHashMap<>();
-	private static File folder;
-
-	private final Thread owner = Thread.currentThread();
-	private final Map<String, String> playerIds = new HashMap<>();
-	private final VariablePersistence persistence = new VariablePersistence(this::captureVariables,
-			message -> MagicSpells.debug(2, message), MagicSpells::error);
-	private int saveTask = -1;
-	private boolean closed;
 
 	public VariableManager() {
 		initialize();
@@ -85,14 +76,6 @@ public class VariableManager {
 		return metaVariables;
 	}
 
-	/** Read-only snapshot. Integrations should use markDirty rather than modifying bookkeeping. */
-	public Set<String> getDirtyPlayerVariables() {
-		Set<String> players = new HashSet<>();
-		for (VariableScope scope : persistence.dirtyScopes())
-			if (scope.kind() == VariableScope.Kind.PLAYER) players.add(scope.player());
-		return Collections.unmodifiableSet(players);
-	}
-
 	private void initialize() {
 		// variable types
 		addVariableType("player", PlayerVariable.class);
@@ -105,6 +88,10 @@ public class VariableManager {
 		addVariableType("characterstring", CharacterStringVariable.class);
 		addVariableType("location", LocationVariable.class);
 		addVariableType("locationstring", LocationStringVariable.class);
+		addVariableType("playerlocation", PlayerLocationVariable.class);
+		addVariableType("playerlocationstring", PlayerLocationStringVariable.class);
+		addVariableType("characterlocation", CharacterLocationVariable.class);
+		addVariableType("characterlocationstring", CharacterLocationStringVariable.class);
 
 		// meta variable types
 		addMetaVariableType("location_x", new CoordXVariable());
@@ -168,22 +155,15 @@ public class VariableManager {
 	// DEBUG INFO: level 1, # variables loaded
 	public void loadVariables(ConfigurationSection section) {
 		checkOwner();
+		SneakyVariables.api().undefineAll(MagicSpells.getInstance());
+		variables.clear();
+
 		if (section == null) {
 			variables.putAll(getMetaVariables());
-
-			// Load vars
-			folder = new File(MagicSpells.getInstance().getDataFolder(), "vars");
-			if (!folder.exists())
-				folder.mkdir();
-			loadGlobalVariables();
-			loadLocationVariables();
 			for (Player player : Bukkit.getOnlinePlayers()) {
-				loadPlayerVariables(player.getName(), Util.getUniqueId(player));
 				loadBossBars(player);
 				loadExpBar(player);
 			}
-
-			startSaveTask();
 			return;
 		}
 
@@ -200,14 +180,6 @@ public class VariableManager {
 			Variable variable = getVariableType(type);
 			if (variable == null) {
 				MagicSpells.error("Variable '" + var + "' has an invalid variable type defined: " + type);
-				continue;
-			}
-
-			// Check if character manager is required but not available
-			if ((variable instanceof CharacterVariable || variable instanceof CharacterStringVariable)
-					&& !Bukkit.getPluginManager().isPluginEnabled("SneakyCharacterManager")) {
-				MagicSpells.error("Variable '" + var
-						+ "' is a character variable but SneakyCharacterManager plugin is not enabled. This variable will not function properly.");
 				continue;
 			}
 
@@ -276,6 +248,14 @@ public class VariableManager {
 			if (bossBarNamespaceKey == null || bossBarNamespaceKey.isEmpty())
 				bossBarNamespaceKey = MagicSpells.getBossBarManager().getNamespaceKeyVariable();
 
+			VariableDefinition definition = VariableDefinitions.from(var, type, varSection);
+			if (definition != null
+					&& !SneakyVariables.api().define(MagicSpells.getInstance(), definition)) {
+				MagicSpells.error("Variable '" + var
+						+ "' could not be defined in SneakyVariables (scope/kind conflict with another plugin).");
+				continue;
+			}
+
 			variable.init(var, def, min, max, perm, logInCoreprotect, objective, expBar, bossBarTitle, bossBarStyle,
 					bossBarColor, bossBarNamespaceKey);
 			variable.loadExtraData(varSection);
@@ -287,26 +267,16 @@ public class VariableManager {
 
 		variables.putAll(getMetaVariables());
 
-		// Load vars
-		folder = new File(MagicSpells.getInstance().getDataFolder(), "vars");
-		if (!folder.exists())
-			folder.mkdir();
-
-		loadGlobalVariables();
-		loadLocationVariables();
 		for (Player player : Bukkit.getOnlinePlayers()) {
-			loadPlayerVariables(player.getName(), Util.getUniqueId(player));
 			loadBossBars(player);
 			loadExpBar(player);
 		}
-
-		startSaveTask();
 	}
 
 	/**
 	 * Adds a variable with the provided name to the list of variables.
 	 * This will replace existing variables if the same name is used.
-	 * 
+	 *
 	 * @param name     the name of the variable
 	 * @param variable the variable to add
 	 * @return Returns true if an existing variable was overwritten
@@ -333,12 +303,9 @@ public class VariableManager {
 		checkOwner();
 		if (variable == null)
 			return;
-		if (variable instanceof CharacterVariable character && !character.hasCharacterContext(player))
+		if (!hasOwnerContext(variable, player))
 			return;
 		variable.set(player, amount);
-		updateBossBar(variable, player);
-		updateExpBar(variable, player);
-		markDirty(variable, player);
 	}
 
 	public void set(String variable, Player player, String amount) {
@@ -354,12 +321,9 @@ public class VariableManager {
 		checkOwner();
 		if (variable == null)
 			return;
-		if (variable instanceof CharacterVariable character && !character.hasCharacterContext(player))
+		if (!hasOwnerContext(variable, player))
 			return;
 		variable.parseAndSet(player, amount);
-		updateBossBar(variable, player);
-		updateExpBar(variable, player);
-		markDirty(variable, player);
 	}
 
 	public double getValue(String variable, Player player) {
@@ -378,6 +342,8 @@ public class VariableManager {
 
 	public double getValueAtLocation(String variable, Location location) {
 		Variable var = variables.get(variable);
+		if (isOwnerLocationType(var))
+			return var != null ? var.getDefaultValue() : 0D;
 		if (var instanceof LocationVariable locVar)
 			return locVar.getValue(location);
 		if (var != null)
@@ -387,6 +353,8 @@ public class VariableManager {
 
 	public String getStringValueAtLocation(String variable, Location location) {
 		Variable var = variables.get(variable);
+		if (isOwnerLocationType(var))
+			return var != null ? var.getDefaultStringValue() : "";
 		if (var instanceof LocationStringVariable locVar)
 			return locVar.getStringValue(location);
 		if (var != null)
@@ -422,32 +390,15 @@ public class VariableManager {
 		if (variable == null)
 			return;
 		String playerName = player != null ? player.getName() : "";
-		if (variable instanceof CharacterVariable character && !character.hasCharacterContext(playerName))
+		if (!hasOwnerContext(variable, playerName))
 			return;
 		variable.reset(player);
-		updateBossBar(variable, playerName);
-		updateExpBar(variable, playerName);
-		markDirty(variable, playerName);
-	}
-
-	/** Explicitly mark a direct owner-thread integration mutation for persistence. */
-	public void markDirty(Variable variable, String player) {
-		checkOwner();
-		if (variable == null || !variable.isPermanent()) return;
-		if (variable instanceof CharacterVariable || variable instanceof PlayerVariable)
-			persistence.markDirty(VariableScope.player(Objects.requireNonNullElse(player, "")));
-		else if (variable instanceof GlobalVariable || variable instanceof GlobalStringVariable)
-			persistence.markDirty(VariableScope.global());
-		else if (variable instanceof LocationVariable || variable instanceof LocationStringVariable)
-			persistence.markDirty(VariableScope.locations());
 	}
 
 	public void updateBossBar(Variable var, String player) {
 		if (var == null)
 			return;
 		if (var.getBossBarTitle() == null)
-			return;
-		if (player == null || player.isEmpty())
 			return;
 		if (var instanceof GlobalVariable || var instanceof GlobalStringVariable) {
 			double pct = var.getValue("") / var.getMaxValue(null);
@@ -461,6 +412,8 @@ public class VariableManager {
 			}
 			return;
 		}
+		if (player == null || player.isEmpty())
+			return;
 		if (var instanceof CharacterVariable || var instanceof CharacterStringVariable
 				|| var instanceof PlayerVariable) {
 			Player pl = PlayerNameUtils.getPlayerExact(player);
@@ -479,197 +432,19 @@ public class VariableManager {
 			return;
 		if (!var.isDisplayedOnExpBar())
 			return;
-		if (player == null || player.isEmpty())
-			return;
 		if (var instanceof GlobalVariable) {
 			double pct = var.getValue("") / var.getMaxValue(null);
 			Util.forEachPlayerOnline(p -> p.sendExperienceChange((float) pct, (int) var.getValue("")));
 			return;
 		}
+		if (player == null || player.isEmpty())
+			return;
 		if (var instanceof CharacterVariable || var instanceof CharacterStringVariable
 				|| var instanceof PlayerVariable) {
 			Player p = PlayerNameUtils.getPlayerExact(player);
 			if (p == null)
 				return;
 			p.sendExperienceChange((float) (var.getValue(p) / var.getMaxValue(p)), (int) var.getValue(p));
-		}
-	}
-
-	public void loadGlobalVariables() {
-		if (!persistence.prepareLoad(VariableScope.global())) return;
-		File file = new File(folder, "GLOBAL.txt");
-		if (!file.exists()) {
-			persistence.markHydrated(VariableScope.global());
-			return;
-		}
-
-		try {
-			Scanner scanner = new Scanner(file, StandardCharsets.UTF_8);
-			while (scanner.hasNext()) {
-				String line = scanner.nextLine().trim();
-				if (!line.isEmpty()) {
-					String[] s = line.split("=", 2);
-					Variable variable = variables.get(s[0]);
-					if (variable instanceof GlobalVariable && variable.isPermanent())
-						variable.parseAndSet("", s[1]);
-					else if (variable instanceof GlobalStringVariable && variable.isPermanent())
-						variable.parseAndSet("", s[1]);
-				}
-			}
-			scanner.close();
-		} catch (Exception e) {
-			MagicSpells.error("ERROR LOADING GLOBAL VARIABLES");
-			MagicSpells.handleException(e);
-		}
-		persistence.markHydrated(VariableScope.global());
-	}
-
-	public void saveGlobalVariables() {
-		persistence.saveNow(VariableScope.global());
-	}
-
-	public void loadPlayerVariables(String player, String uniqueId) {
-		checkOwner();
-		playerIds.put(player, uniqueId);
-		VariableScope scope = VariableScope.player(player);
-		if (!persistence.prepareLoad(scope, other -> other.equals(scope)
-				|| other.kind() == VariableScope.Kind.PLAYER && uniqueId != null
-				&& uniqueId.equals(playerIds.get(other.player())))) return;
-		File file = new File(folder, "PLAYER_" + uniqueId + ".txt");
-		if (!file.exists()) {
-			File file2 = new File(folder, "PLAYER_" + player + ".txt");
-			if (file2.exists())
-				file2.renameTo(file);
-		}
-		if (!file.exists()) {
-			persistence.markHydrated(scope);
-			return;
-		}
-
-		try {
-			Scanner scanner = new Scanner(file, StandardCharsets.UTF_8);
-			while (scanner.hasNext()) {
-				String line = scanner.nextLine().trim();
-				if (!line.isEmpty()) {
-					String[] s = line.split("=", 2);
-					if (s.length < 2)
-						continue;
-
-					// Check if this is a character variable (contains :characterUUID in the key)
-					String key = s[0];
-					if (key.contains(":")) {
-						// Character variable format: variableName:characterUUID=value
-						String[] keyParts = key.split(":", 2);
-						String varName = keyParts[0];
-						String compositeKey = player + ":" + keyParts[1]; // player:characterUUID
-
-						Variable variable = variables.get(varName);
-						// Check CharacterStringVariable first since it extends CharacterVariable
-						if (variable instanceof CharacterStringVariable && variable.isPermanent()) {
-							((CharacterStringVariable) variable).setStringWithCompositeKey(compositeKey, s[1]);
-						} else if (variable instanceof CharacterVariable && variable.isPermanent()) {
-							((CharacterVariable) variable).setWithCompositeKey(compositeKey, Double.parseDouble(s[1]));
-						}
-					} else {
-						// Regular player variable
-						Variable variable = variables.get(key);
-						if (variable instanceof PlayerVariable && variable.isPermanent())
-							variable.parseAndSet(player, s[1]);
-					}
-				}
-			}
-			scanner.close();
-		} catch (Exception e) {
-			MagicSpells.error("ERROR LOADING PLAYER VARIABLES FOR " + player);
-			MagicSpells.handleException(e);
-		}
-		persistence.markHydrated(scope);
-	}
-
-	public void savePlayerVariables(String player, String uniqueId) {
-		checkOwner();
-		playerIds.put(player, uniqueId);
-		persistence.saveNow(VariableScope.player(player));
-	}
-
-	/** Quit schedules current dirty memory; graceful unload remains the durability barrier. */
-	public void requestPlayerSave(String player, String uniqueId) {
-		checkOwner();
-		playerIds.put(player, uniqueId);
-		persistence.requestSave(VariableScope.player(player));
-	}
-
-	public void loadLocationVariables() {
-		if (!persistence.prepareLoad(VariableScope.locations())) return;
-		for (String varName : variables.keySet()) {
-			Variable variable = variables.get(varName);
-			if (!(variable instanceof LocationVariable || variable instanceof LocationStringVariable))
-				continue;
-			if (!variable.isPermanent())
-				continue;
-
-			File file = new File(folder, "LOC_" + varName + ".txt");
-			if (!file.exists())
-				continue;
-
-			try (Scanner scanner = new Scanner(file, StandardCharsets.UTF_8)) {
-				while (scanner.hasNextLine()) {
-					String line = scanner.nextLine().trim();
-					if (line.isEmpty())
-						continue;
-					String[] s = line.split("=", 2);
-					if (s.length < 2)
-						continue;
-
-					BlockLocation loc = BlockLocation.fromString(s[0]);
-					if (loc == null)
-						continue;
-
-					if (variable instanceof LocationVariable lv) {
-						lv.defineRegion(Collections.singleton(loc), Double.parseDouble(s[1]));
-					} else if (variable instanceof LocationStringVariable lsv) {
-						lsv.defineRegion(Collections.singleton(loc), s[1]);
-					}
-				}
-			} catch (Exception e) {
-				MagicSpells.error("ERROR LOADING LOCATION VARIABLE " + varName);
-				MagicSpells.handleException(e);
-			}
-		}
-		persistence.markHydrated(VariableScope.locations());
-	}
-
-	public void saveLocationVariables() {
-		persistence.saveNow(VariableScope.locations());
-	}
-
-	private VariableSnapshotCapture captureVariables(VariableScope scope) {
-		return switch (scope.kind()) {
-			case GLOBAL -> VariableSnapshotCapture.global(folder, variables);
-			case LOCATION -> VariableSnapshotCapture.locations(folder, variables);
-			case PLAYER -> {
-				String uid = playerIds.get(scope.player());
-				if (uid == null) uid = Util.getUniqueId(scope.player());
-				yield uid == null ? null : VariableSnapshotCapture.player(scope.player(), uid, folder, variables);
-			}
-		};
-	}
-
-	private void startSaveTask() {
-		if (saveTask != -1) MagicSpells.cancelTask(saveTask);
-		saveTask = MagicSpells.scheduleRepeatingTask(persistence::tick, 1, 1);
-	}
-
-	private void checkOwner() {
-		if (Thread.currentThread() != owner || closed)
-			throw new IllegalStateException("Variable persistence requires the active manager's owning thread");
-	}
-
-	public void saveAllPlayerVariables() {
-		for (String playerName : getDirtyPlayerVariables()) {
-			String uid = Util.getUniqueId(playerName);
-			if (uid != null)
-				savePlayerVariables(playerName, uid);
 		}
 	}
 
@@ -692,18 +467,9 @@ public class VariableManager {
 		}
 	}
 
-	/** Blocking durability barrier, also used before reload starts tearing down other managers. */
-	public void flushForUnload() {
-		checkOwner();
-		persistence.flush();
-	}
-
 	public void disable() {
 		checkOwner();
-		persistence.close();
-		if (saveTask != -1) MagicSpells.cancelTask(saveTask);
-		closed = true;
-		playerIds.clear();
+		SneakyVariables.api().undefineAll(MagicSpells.getInstance());
 		variables.clear();
 	}
 
@@ -766,6 +532,14 @@ public class VariableManager {
 			}
 		}
 
+		if (variable instanceof GlobalVariable global && GlobalVariableAdd.shouldUseAdd(op.name())) {
+			double delta = mod.getValue(caster, target, power, args);
+			double value = global.add(delta);
+			if (value == variable.getDefaultValue())
+				reset(variable, playerToMod);
+			return Double.toString(value);
+		}
+
 		double value = op.applyTo(variable.getValue(playerToMod), mod.getValue(caster, target, power, args));
 
 		if (value == variable.getDefaultValue() && !(variable instanceof MetaVariable)) {
@@ -782,6 +556,13 @@ public class VariableManager {
 			Player target, float power, String[] args) {
 		checkOwner();
 		VariableMod.Operation op = mod.getOperation();
+
+		if (variable instanceof PlayerLocationStringVariable plsv) {
+			return processOwnerLocationString(plsv, mod, op, locationToMod, caster, target, power, args);
+		}
+		if (variable instanceof CharacterLocationStringVariable clsv) {
+			return processOwnerLocationString(clsv, mod, op, locationToMod, caster, target, power, args);
+		}
 		if (variable instanceof LocationStringVariable lsv) {
 			switch (op) {
 				case SET -> {
@@ -790,16 +571,15 @@ public class VariableManager {
 						lsv.reset(locationToMod);
 					else
 						lsv.set(locationToMod, value);
-					persistence.markDirty(VariableScope.locations());
 					return value;
 				}
 				case ADD -> {
-					String value = lsv.getStringValue(locationToMod) + mod.getStringValue(caster, target, locationToMod, args);
+					String value = lsv.getStringValue(locationToMod)
+							+ mod.getStringValue(caster, target, locationToMod, args);
 					if (value.equals(variable.getDefaultStringValue()))
 						lsv.reset(locationToMod);
 					else
 						lsv.set(locationToMod, value);
-					persistence.markDirty(VariableScope.locations());
 					return value;
 				}
 				case MULTIPLY -> {
@@ -809,20 +589,135 @@ public class VariableManager {
 						lsv.reset(locationToMod);
 					else
 						lsv.set(locationToMod, value);
-					persistence.markDirty(VariableScope.locations());
 					return value;
 				}
 			}
-		} else if (variable instanceof LocationVariable lv) {
-			double value = op.applyTo(lv.getValue(locationToMod), mod.getValue(caster, target, locationToMod, power, args));
+		}
+
+		if (variable instanceof PlayerLocationVariable plv) {
+			if (caster == null) return 0 + "";
+			double value = op.applyTo(plv.getValue(caster, locationToMod),
+					mod.getValue(caster, target, locationToMod, power, args));
+			if (value == variable.getDefaultValue())
+				plv.reset(caster, locationToMod);
+			else
+				plv.set(caster, locationToMod, value);
+			return Double.toString(value);
+		}
+		if (variable instanceof CharacterLocationVariable clv) {
+			if (caster == null) return 0 + "";
+			double value = op.applyTo(clv.getValue(caster, locationToMod),
+					mod.getValue(caster, target, locationToMod, power, args));
+			if (value == variable.getDefaultValue())
+				clv.reset(caster, locationToMod);
+			else
+				clv.set(caster, locationToMod, value);
+			return Double.toString(value);
+		}
+		if (variable instanceof LocationVariable lv) {
+			double value = op.applyTo(lv.getValue(locationToMod),
+					mod.getValue(caster, target, locationToMod, power, args));
 			if (value == variable.getDefaultValue())
 				lv.reset(locationToMod);
 			else
 				lv.set(locationToMod, value);
-			persistence.markDirty(VariableScope.locations());
 			return Double.toString(value);
 		}
 		return 0 + "";
+	}
+
+	private String processOwnerLocationString(PlayerLocationStringVariable variable, VariableMod mod,
+			VariableMod.Operation op, Location locationToMod, Player caster, Player target, float power, String[] args) {
+		if (caster == null) return 0 + "";
+		switch (op) {
+			case SET -> {
+				String value = mod.getStringValue(caster, target, locationToMod, args);
+				if (value.equals(variable.getDefaultStringValue()))
+					variable.reset(caster, locationToMod);
+				else
+					variable.set(caster, locationToMod, value);
+				return value;
+			}
+			case ADD -> {
+				String value = variable.getStringValue(caster, locationToMod)
+						+ mod.getStringValue(caster, target, locationToMod, args);
+				if (value.equals(variable.getDefaultStringValue()))
+					variable.reset(caster, locationToMod);
+				else
+					variable.set(caster, locationToMod, value);
+				return value;
+			}
+			case MULTIPLY -> {
+				int count = (int) mod.getValue(caster, target, locationToMod, power, args);
+				String value = variable.getStringValue(caster, locationToMod).repeat(count);
+				if (value.equals(variable.getDefaultStringValue()))
+					variable.reset(caster, locationToMod);
+				else
+					variable.set(caster, locationToMod, value);
+				return value;
+			}
+			default -> {
+				return 0 + "";
+			}
+		}
+	}
+
+	private String processOwnerLocationString(CharacterLocationStringVariable variable, VariableMod mod,
+			VariableMod.Operation op, Location locationToMod, Player caster, Player target, float power, String[] args) {
+		if (caster == null) return 0 + "";
+		switch (op) {
+			case SET -> {
+				String value = mod.getStringValue(caster, target, locationToMod, args);
+				if (value.equals(variable.getDefaultStringValue()))
+					variable.reset(caster, locationToMod);
+				else
+					variable.set(caster, locationToMod, value);
+				return value;
+			}
+			case ADD -> {
+				String value = variable.getStringValue(caster, locationToMod)
+						+ mod.getStringValue(caster, target, locationToMod, args);
+				if (value.equals(variable.getDefaultStringValue()))
+					variable.reset(caster, locationToMod);
+				else
+					variable.set(caster, locationToMod, value);
+				return value;
+			}
+			case MULTIPLY -> {
+				int count = (int) mod.getValue(caster, target, locationToMod, power, args);
+				String value = variable.getStringValue(caster, locationToMod).repeat(count);
+				if (value.equals(variable.getDefaultStringValue()))
+					variable.reset(caster, locationToMod);
+				else
+					variable.set(caster, locationToMod, value);
+				return value;
+			}
+			default -> {
+				return 0 + "";
+			}
+		}
+	}
+
+	private static boolean hasOwnerContext(Variable variable, String player) {
+		if (variable instanceof CharacterVariable character && !character.hasCharacterContext(player))
+			return false;
+		if (variable instanceof CharacterLocationVariable character && !character.hasCharacterContext(player))
+			return false;
+		if (variable instanceof CharacterLocationStringVariable character && !character.hasCharacterContext(player))
+			return false;
+		return true;
+	}
+
+	private static boolean isOwnerLocationType(Variable var) {
+		return var instanceof PlayerLocationVariable
+				|| var instanceof PlayerLocationStringVariable
+				|| var instanceof CharacterLocationVariable
+				|| var instanceof CharacterLocationStringVariable;
+	}
+
+	private void checkOwner() {
+		if (!Bukkit.isPrimaryThread())
+			throw new IllegalStateException("Variable access requires the main thread");
 	}
 
 }

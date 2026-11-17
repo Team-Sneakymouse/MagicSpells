@@ -1,21 +1,27 @@
 package com.nisovin.magicspells.variables.variabletypes;
 
-import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.Collections;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import com.nisovin.magicspells.variables.Variable;
+
 import com.nisovin.magicspells.util.BlockLocation;
-import com.nisovin.magicspells.util.Region;
+import com.nisovin.magicspells.variables.Variable;
+import com.nisovin.magicspells.variables.VariableOwners;
+
+import com.sneakyvariables.api.BlockVariable;
+import com.sneakyvariables.api.VariableOwner;
 
 public class LocationStringVariable extends Variable {
 
-	private final Map<BlockLocation, Region<String>> blockMap = new HashMap<>();
-	private final Set<Region<String>> regions = new HashSet<>();
+	@Override
+	public void loadExtraData(ConfigurationSection section) {
+		super.loadExtraData(section);
+		defaultStringValue = section.getString("default-value", "");
+	}
 
 	@Override
 	public void set(String player, double amount) {
@@ -24,17 +30,13 @@ public class LocationStringVariable extends Variable {
 
 	public void set(String player, String value) {
 		Player pl = Bukkit.getPlayerExact(player);
-		if (pl != null) {
-			set(pl.getLocation(), value);
-		}
+		if (pl != null) set(pl.getLocation(), value);
 	}
 
 	@Override
 	public void parseAndSet(String player, String textValue) {
 		Player pl = Bukkit.getPlayerExact(player);
-		if (pl != null) {
-			set(pl.getLocation(), textValue);
-		}
+		if (pl != null) set(pl.getLocation(), textValue);
 	}
 
 	@Override
@@ -49,65 +51,59 @@ public class LocationStringVariable extends Variable {
 	@Override
 	public String getStringValue(String player) {
 		Player pl = Bukkit.getPlayerExact(player);
-		if (pl != null) {
-			return getStringValue(pl.getLocation());
-		}
+		if (pl != null) return getStringValue(pl.getLocation());
 		return defaultStringValue;
 	}
 
 	@Override
 	public void reset(String player) {
 		Player pl = Bukkit.getPlayerExact(player);
-		if (pl != null) {
-			reset(pl.getLocation());
-		}
+		if (pl != null) reset(pl.getLocation());
 	}
 
 	public String getStringValue(Location location) {
-		if (location == null) return defaultStringValue;
-		BlockLocation block = new BlockLocation(location);
-		Region<String> region = blockMap.get(block);
-		return region != null ? region.getValue() : defaultStringValue;
+		BlockVariable block = blockAt(location);
+		if (block == null) return defaultStringValue;
+		return block.getString();
 	}
 
 	public void set(Location location, String value) {
-		if (location == null) return;
-		BlockLocation block = new BlockLocation(location);
-		Region<String> region = blockMap.get(block);
-		if (region != null) {
-			region.setValue(value);
-		}
+		BlockVariable block = blockAt(location);
+		if (block == null) return;
+		block.setString(value);
 	}
 
 	public void reset(Location location) {
-		if (location == null) return;
-		set(location, defaultStringValue);
+		BlockVariable block = blockAt(location);
+		if (block == null) return;
+		block.reset();
 	}
 
+	/** Sets each block independently (no shared region value). */
 	public void defineRegion(Set<BlockLocation> blocks, String value) {
-		Region<String> newRegion = new Region<>(value);
+		if (blocks == null) return;
 		for (BlockLocation block : blocks) {
-			Region<String> oldRegion = blockMap.get(block);
-			if (oldRegion != null) {
-				oldRegion.removeBlock(block);
-				if (oldRegion.isEmpty()) {
-					regions.remove(oldRegion);
-				}
-			}
-			newRegion.addBlock(block);
-			blockMap.put(block, newRegion);
-		}
-		if (!newRegion.isEmpty()) {
-			regions.add(newRegion);
+			Location location = toLocation(block);
+			if (location != null) set(location, value);
 		}
 	}
 
-	public Set<Region<String>> getRegions() {
-		return Collections.unmodifiableSet(regions);
+	protected BlockVariable blockAt(Location location) {
+		if (location == null || location.getWorld() == null) return null;
+		VariableOwner owner = owner();
+		if (owner == null) return null;
+		return owner.block(name, location);
 	}
 
-	public Map<BlockLocation, Region<String>> getBlockMap() {
-		return Collections.unmodifiableMap(blockMap);
+	protected VariableOwner owner() {
+		return VariableOwners.global();
+	}
+
+	protected static Location toLocation(BlockLocation block) {
+		if (block == null) return null;
+		World world = Bukkit.getWorld(block.getWorldName());
+		if (world == null) return null;
+		return new Location(world, block.getX(), block.getY(), block.getZ());
 	}
 
 }

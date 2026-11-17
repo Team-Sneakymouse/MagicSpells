@@ -107,7 +107,7 @@ sneakyrpUsername=YOUR_UPLOAD_USERNAME
 sneakyrpPassword=YOUR_UPLOAD_TOKEN
 ```
 
-Publishing targets `https://maven.sneakyrp.com/releases`. For Reposilite, `sneakyrpUsername` is the token name, and `sneakyrpPassword` is its generated secret. The build uses HTTP Basic authentication. Never commit the token or pass it on the command line.
+Publishing targets `https://maven.sneakyrp.com/sneakymouse`. For Reposilite, `sneakyrpUsername` is the token name, and `sneakyrpPassword` is its generated secret. The build uses HTTP Basic authentication. Never commit the token or pass it on the command line.
 
 Dry-run locally (no upload credentials required):
 
@@ -141,7 +141,7 @@ Add the sneakyrp releases repository (and Paper’s repo for `paper-api`):
 
 ```kotlin
 repositories {
-    maven("https://maven.sneakyrp.com/releases")
+    maven("https://maven.sneakyrp.com/sneakymouse")
     maven("https://repo.papermc.io/repository/maven-public/")
     mavenCentral()
 }
