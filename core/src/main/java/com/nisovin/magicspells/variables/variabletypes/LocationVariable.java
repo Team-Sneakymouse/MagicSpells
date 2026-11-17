@@ -1,96 +1,83 @@
 package com.nisovin.magicspells.variables.variabletypes;
 
-import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.Collections;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
-import com.nisovin.magicspells.variables.Variable;
+
 import com.nisovin.magicspells.util.BlockLocation;
-import com.nisovin.magicspells.util.Region;
+import com.nisovin.magicspells.variables.Variable;
+import com.nisovin.magicspells.variables.VariableOwners;
+
+import com.sneakyvariables.api.BlockVariable;
+import com.sneakyvariables.api.VariableOwner;
 
 public class LocationVariable extends Variable {
-
-	private final Map<BlockLocation, Region<Double>> blockMap = new HashMap<>();
-	private final Set<Region<Double>> regions = new HashSet<>();
 
 	@Override
 	public void set(String player, double amount) {
 		Player pl = Bukkit.getPlayerExact(player);
-		if (pl != null) {
-			set(pl.getLocation(), amount);
-		}
+		if (pl != null) set(pl.getLocation(), amount);
 	}
 
 	@Override
 	public double getValue(String player) {
 		Player pl = Bukkit.getPlayerExact(player);
-		if (pl != null) {
-			return getValue(pl.getLocation());
-		}
+		if (pl != null) return getValue(pl.getLocation());
 		return defaultValue;
 	}
 
 	@Override
 	public void reset(String player) {
 		Player pl = Bukkit.getPlayerExact(player);
-		if (pl != null) {
-			reset(pl.getLocation());
-		}
+		if (pl != null) reset(pl.getLocation());
 	}
 
 	public double getValue(Location location) {
-		if (location == null) return defaultValue;
-		BlockLocation block = new BlockLocation(location);
-		Region<Double> region = blockMap.get(block);
-		return region != null ? region.getValue() : defaultValue;
+		BlockVariable block = blockAt(location);
+		if (block == null) return defaultValue;
+		return block.getNumber();
 	}
 
 	public void set(Location location, double amount) {
-		if (location == null) return;
-		BlockLocation block = new BlockLocation(location);
-		Region<Double> region = blockMap.get(block);
-		if (region != null) {
-			double min = getMinValue(null);
-			double max = getMaxValue(null);
-			if (amount > max) amount = max;
-			else if (amount < min) amount = min;
-			region.setValue(amount);
-		}
+		BlockVariable block = blockAt(location);
+		if (block == null) return;
+		block.setNumber(amount);
 	}
 
 	public void reset(Location location) {
-		if (location == null) return;
-		set(location, defaultValue);
+		BlockVariable block = blockAt(location);
+		if (block == null) return;
+		block.reset();
 	}
 
+	/** Sets each block independently (no shared region value). */
 	public void defineRegion(Set<BlockLocation> blocks, double value) {
-		Region<Double> newRegion = new Region<>(value);
+		if (blocks == null) return;
 		for (BlockLocation block : blocks) {
-			Region<Double> oldRegion = blockMap.get(block);
-			if (oldRegion != null) {
-				oldRegion.removeBlock(block);
-				if (oldRegion.isEmpty()) {
-					regions.remove(oldRegion);
-				}
-			}
-			newRegion.addBlock(block);
-			blockMap.put(block, newRegion);
-		}
-		if (!newRegion.isEmpty()) {
-			regions.add(newRegion);
+			Location location = toLocation(block);
+			if (location != null) set(location, value);
 		}
 	}
 
-	public Set<Region<Double>> getRegions() {
-		return Collections.unmodifiableSet(regions);
+	protected BlockVariable blockAt(Location location) {
+		if (location == null || location.getWorld() == null) return null;
+		VariableOwner owner = owner();
+		if (owner == null) return null;
+		return owner.block(name, location);
 	}
 
-	public Map<BlockLocation, Region<Double>> getBlockMap() {
-		return Collections.unmodifiableMap(blockMap);
+	protected VariableOwner owner() {
+		return VariableOwners.global();
+	}
+
+	protected static Location toLocation(BlockLocation block) {
+		if (block == null) return null;
+		World world = Bukkit.getWorld(block.getWorldName());
+		if (world == null) return null;
+		return new Location(world, block.getX(), block.getY(), block.getZ());
 	}
 
 }

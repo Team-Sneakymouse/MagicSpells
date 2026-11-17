@@ -21,6 +21,7 @@ Build commands, architecture facts and recorded local exceptions in this file ar
 | Workspace | parent `MagicSpells-Workspace/` (wiki submodule, workspace agent rules, `Ms_Scripts` symlink) |
 | Runtime targets | Paper 26.2 (`runServer`; NMS module `:nms:v26_2`) |
 | Magic items | Owned by **SneakyItems** (`compileOnly` + hard `depend`). MagicSpells parses `magic-items:` and registers into SneakyItems with PDC namespace `magicspells`. Legacy ItemTag mappings live in SneakyItems, not `ItemTagSpell`. |
+| Variables | Stored in **SneakyVariables** (`compileOnly` + hard `depend`). MagicSpells registers YAML definitions and adapts `Variable` types; no `plugins/MagicSpells/vars/` I/O. Global `+`/`-` mods use atomic `add`. |
 | Deployment | branches listed in `.github/workflows/publish.yml` publish to sneakyrp |
 
 **Branches / sneakyrp publish:** live vs milestone vs feature — see **Branch roles** in `MagicSpells-Workspace/.cursor/rules/workspace-overview.mdc`; publisher list is `.github/workflows/publish.yml`.

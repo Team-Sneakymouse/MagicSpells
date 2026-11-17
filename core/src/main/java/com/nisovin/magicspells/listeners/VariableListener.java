@@ -7,12 +7,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 
 import com.nisovin.magicspells.Spell;
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.VariableMod;
 import com.nisovin.magicspells.events.SpellCastEvent;
@@ -36,15 +33,8 @@ public class VariableListener implements Listener {
 	@EventHandler
 	public void onJoin(PlayerJoinEvent event) {
 		final Player player = event.getPlayer();
-		variableManager.loadPlayerVariables(player.getName(), Util.getUniqueId(player));
 		variableManager.loadBossBars(player);
 		MagicSpells.scheduleDelayedTask(() -> variableManager.loadExpBar(player), 10);
-	}
-
-	@EventHandler
-	public void onQuit(PlayerQuitEvent event) {
-		Player player = event.getPlayer();
-		variableManager.requestPlayerSave(player.getName(), Util.getUniqueId(player));
 	}
 
 	// DEBUG INFO: Debug log level 3, variable was modified for player by amount

@@ -126,11 +126,20 @@ public class LocationVariableSpell extends TargetedSpell implements TargetedLoca
 		}
 		
 		if (blocks.isEmpty()) return new CastResult(PostCastAction.ALREADY_HANDLED, data);
-		
+
 		if (var instanceof LocationVariable lv) {
-		lv.defineRegion(blocks, Double.parseDouble(value));
+			double number = Double.parseDouble(value);
+			for (BlockLocation block : blocks) {
+				org.bukkit.World world = data.location().getWorld();
+				if (world == null) continue;
+				lv.set(new Location(world, block.getX(), block.getY(), block.getZ()), number);
+			}
 		} else if (var instanceof LocationStringVariable lsv) {
-		lsv.defineRegion(blocks, value);
+			for (BlockLocation block : blocks) {
+				org.bukkit.World world = data.location().getWorld();
+				if (world == null) continue;
+				lsv.set(new Location(world, block.getX(), block.getY(), block.getZ()), value);
+			}
 		}
 		
 		return new CastResult(PostCastAction.HANDLE_NORMALLY, data);

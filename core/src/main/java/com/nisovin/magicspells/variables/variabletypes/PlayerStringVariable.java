@@ -1,47 +1,52 @@
 package com.nisovin.magicspells.variables.variabletypes;
 
-import java.util.Map;
-import java.util.HashMap;
-
-import com.nisovin.magicspells.util.PlayerNameUtils;
-import net.coreprotect.CoreProtect;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
+
+import com.nisovin.magicspells.variables.VariableOwners;
+
+import com.sneakyvariables.api.VariableOwner;
 
 public class PlayerStringVariable extends PlayerVariable {
 
-	private final Map<String, String> data;
-	
-	public PlayerStringVariable() {
-		data = new HashMap<>();
-	}
-	
 	@Override
 	public void loadExtraData(ConfigurationSection section) {
 		super.loadExtraData(section);
 		defaultStringValue = section.getString("default-value", "");
 	}
-	
+
 	@Override
 	public String getStringValue(String player) {
-		return data.getOrDefault(player, defaultStringValue);
+		VariableOwner owner = VariableOwners.player(player);
+		if (owner == null) return defaultStringValue;
+		return owner.getString(name);
 	}
-	
+
+	@Override
+	public double getValue(String player) {
+		try {
+			return Double.parseDouble(getStringValue(player));
+		} catch (NumberFormatException e) {
+			return 0;
+		}
+	}
+
+	@Override
+	public void set(String player, double amount) {
+		parseAndSet(player, Double.toString(amount));
+	}
+
 	@Override
 	public void parseAndSet(String player, String textValue) {
-		String current = data.get(player);
-
-		data.put(player, textValue);
-		Player p = PlayerNameUtils.getPlayerExact(player);
-		if (current != null && !current.equals(textValue) && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + " =" + textValue);
+		VariableOwner owner = VariableOwners.player(player);
+		if (owner == null) return;
+		owner.setString(name, textValue);
 	}
-	
+
 	@Override
 	public void reset(String player) {
-		String current = data.remove(player);
-		Player p = PlayerNameUtils.getPlayerExact(player);
-		if (current != null && !current.equals(defaultStringValue) && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + " =" + defaultStringValue);
+		VariableOwner owner = VariableOwners.player(player);
+		if (owner == null) return;
+		owner.reset(name);
 	}
-	
+
 }

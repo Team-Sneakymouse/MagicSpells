@@ -801,8 +801,10 @@ public class MagicSpells extends JavaPlugin {
 
 		spells.values().forEach(Spell::initializeVariables);
 
-		if (!variableManager.getVariables().isEmpty())
+		if (!variableManager.getVariables().isEmpty()) {
 			registerEvents(new VariableListener());
+			registerEvents(new VariableEffectsListener());
+		}
 
 		log("...variable meta types loaded: " + variableManager.getMetaVariables().size());
 		log("...variable types loaded: " + variableManager.getVariableTypes().size());
@@ -2410,8 +2412,6 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public void unload() {
-		// Fail before destructive reload teardown if variable storage cannot accept the final state.
-		if (variableManager != null) variableManager.flushForUnload();
 		PerformanceDiagnostics.unregister();
 		loaded = false;
 
